@@ -40,8 +40,8 @@ body {
     linear-gradient(
       155deg,
       var(--space-warm) 0%,
-      var(--space-mid) 34%,
-      var(--space-cool) 68%,
+      var(--space-mid) 42%,
+      var(--space-cool) 74%,
       var(--space-deep) 100%
     );
 }

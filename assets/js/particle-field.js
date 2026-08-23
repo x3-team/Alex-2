@@ -33,9 +33,9 @@ const PALETTE = [
 
 const DEFAULTS = {
   /** One particle per N css pixels of viewport area. */
-  areaPerParticle: 9200,
-  minParticles: 46,
-  maxParticles: 190,
+  areaPerParticle: 12000,
+  minParticles: 40,
+  maxParticles: 155,
   /** Share of particles rendered as 4-point sparkles. */
   sparkleRatio: 0.05,
   /** Seconds for a particle to take up / shed pointer wind. Higher = more glide. */
@@ -299,7 +299,9 @@ export class ParticleField {
       paletteIndex,
       // Base radius in css px before depth scaling.
       radius: randomIn(9, 30),
-      alpha: randomIn(0.55, 1),
+      // Kept below full opacity so the field stays hazy like the comp rather
+      // than reading as a contrasty starfield.
+      alpha: randomIn(0.4, 0.88),
       // Constant personal drift so particles never move in lockstep. Tuned so
       // the field is legibly alive with the pointer idle — much slower than
       // this and it reads as a still image.
