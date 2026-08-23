@@ -1,22 +1,104 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+<script setup>
+import { ref } from 'vue';
 
-html,
-body {
-  height: 100%;
-  margin: 0;
-}
+import arrowDark from '@/assets/icons/arrow-right-dark.svg';
+import arrowLight from '@/assets/icons/arrow-right-light.svg';
+import { useParticleField } from '@/composables/useParticleField.js';
 
-body {
+const props = defineProps({
+  title: {
+    type: String,
+    default: 'Ошибка 404',
+  },
+  subtitle: {
+    type: String,
+    default: 'Вы попали на сайт ALEX2, но мы не смогли найти именно то, что вы искали',
+  },
+  /**
+   * Destinations shown as buttons. `primary` picks the dark treatment.
+   */
+  navItems: {
+    type: Array,
+    default: () => [
+      { label: 'Вернуться на главную', to: '/', primary: true },
+      { label: 'Блог', to: '/blog' },
+      { label: 'Личный кабинет', to: '/account' },
+      { label: 'Корзина', to: '/cart' },
+    ],
+  },
+  /**
+   * Element or component used for each button. Pass RouterLink to navigate
+   * client-side; the default plain anchor keeps this view router-agnostic.
+   */
+  linkComponent: {
+    type: [String, Object, Function],
+    default: 'a',
+  },
+  /**
+   * Tuning overrides forwarded to the particle engine. See ParticleField.
+   */
+  fieldOptions: {
+    type: Object,
+    default: () => ({}),
+  },
+});
+
+const canvas = ref(null);
+
+useParticleField(canvas, props.fieldOptions);
+
+const linkProps = (item) =>
+  props.linkComponent === 'a' ? { href: item.to } : { to: item.to };
+</script>
+
+<template>
+  <div class="error-404">
+    <div class="space" aria-hidden="true">
+      <canvas ref="canvas" class="space__particles" />
+    </div>
+    <div class="space__scrim" aria-hidden="true" />
+
+    <main class="error-page">
+      <div class="error-card">
+        <header class="error-head">
+          <h1 class="error-title">{{ title }}</h1>
+          <p class="error-subtitle">{{ subtitle }}</p>
+        </header>
+
+        <nav class="error-nav" aria-label="Основные разделы">
+          <component
+            :is="linkComponent"
+            v-for="item in navItems"
+            :key="item.to"
+            class="nav-btn"
+            :class="{ 'nav-btn--primary': item.primary }"
+            v-bind="linkProps(item)"
+          >
+            <span class="nav-btn__label">{{ item.label }}</span>
+            <img
+              class="nav-btn__icon"
+              :src="item.primary ? arrowLight : arrowDark"
+              alt=""
+              width="24"
+              height="24"
+            />
+          </component>
+        </nav>
+      </div>
+    </main>
+  </div>
+</template>
+
+<style scoped>
+/* Fixed to the viewport so the view is self-contained: dropping it into an
+   existing layout does not require global body styles. */
+.error-404 {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
   font-family: var(--font-sans);
   color: var(--color-white);
   background-color: var(--space-deep);
-  overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
 }
 
 /* ---------------------------------------------------------------------------
@@ -27,9 +109,8 @@ body {
    --------------------------------------------------------------------------- */
 
 .space,
-.space__particles,
 .space__scrim {
-  position: fixed;
+  position: absolute;
   inset: 0;
 }
 
@@ -47,9 +128,9 @@ body {
 }
 
 .space__particles {
+  display: block;
   width: 100%;
   height: 100%;
-  display: block;
 }
 
 /* Radial darkening centred on the card: keeps the copy legible while letting
@@ -79,7 +160,7 @@ body {
 .error-page {
   position: relative;
   z-index: 1;
-  min-height: 100%;
+  height: 100%;
   display: grid;
   place-items: center;
   padding: 40px 24px;
@@ -304,3 +385,4 @@ body {
     transform: translateX(-100%);
   }
 }
+</style>

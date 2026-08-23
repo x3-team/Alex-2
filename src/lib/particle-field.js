@@ -158,7 +158,12 @@ export class ParticleField {
   #rafId = null;
   #lastFrame = 0;
   #elapsed = 0;
-  #running = false;
+  /**
+   * Whether animation is wanted, kept separate from whether the loop is
+   * currently scheduled. A hidden tab pauses the loop without clearing intent,
+   * so restoring the tab must not override an explicit stop().
+   */
+  #shouldAnimate = false;
 
   // Raw pointer sample, its smoothed velocity, and the resulting wind field.
   #pointer = { x: 0, y: 0, active: false, hasSample: false };
@@ -208,11 +213,19 @@ export class ParticleField {
     };
 
     const onVisibilityChange = () => {
-      if (document.hidden) this.stop();
-      else if (this.#running) this.start();
+      if (document.hidden) this.#pauseLoop();
+      else this.#resumeLoop();
     };
 
-    this.#boundHandlers = { onPointerMove, onTouchMove, onPointerLeave, onVisibilityChange };
+    const onResize = () => this.#resize();
+
+    this.#boundHandlers = {
+      onPointerMove,
+      onTouchMove,
+      onPointerLeave,
+      onVisibilityChange,
+      onResize,
+    };
 
     window.addEventListener('pointermove', onPointerMove, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: true });
@@ -221,10 +234,10 @@ export class ParticleField {
     document.addEventListener('visibilitychange', onVisibilityChange);
 
     if (typeof ResizeObserver === 'function') {
-      this.#resizeObserver = new ResizeObserver(() => this.#resize());
+      this.#resizeObserver = new ResizeObserver(onResize);
       this.#resizeObserver.observe(this.#canvas);
     } else {
-      window.addEventListener('resize', this.#resize.bind(this));
+      window.addEventListener('resize', onResize);
     }
   }
 
@@ -280,7 +293,9 @@ export class ParticleField {
       this.#reconcileCount();
     }
 
-    if (!this.#running) this.#draw();
+    // Repaint immediately when no loop is scheduled, so a resize while paused
+    // (hidden tab, reduced motion) still leaves a correctly sized frame.
+    if (this.#rafId === null) this.#draw();
   }
 
   #targetCount() {
@@ -457,7 +472,7 @@ export class ParticleField {
   }
 
   #tick = (now) => {
-    if (!this.#running) return;
+    if (!this.#shouldAnimate) return;
     // Clamp dt so a backgrounded tab does not teleport the whole field.
     const dt = Math.min((now - this.#lastFrame) / 1000, 1 / 20);
     this.#lastFrame = now;
@@ -469,18 +484,27 @@ export class ParticleField {
     this.#rafId = requestAnimationFrame(this.#tick);
   };
 
-  start() {
-    if (this.#rafId !== null) return;
-    this.#running = true;
+  #resumeLoop() {
+    if (this.#rafId !== null || !this.#shouldAnimate || document.hidden) return;
     this.#lastFrame = performance.now();
     this.#rafId = requestAnimationFrame(this.#tick);
   }
 
-  stop() {
+  #pauseLoop() {
     if (this.#rafId !== null) {
       cancelAnimationFrame(this.#rafId);
       this.#rafId = null;
     }
+  }
+
+  start() {
+    this.#shouldAnimate = true;
+    this.#resumeLoop();
+  }
+
+  stop() {
+    this.#shouldAnimate = false;
+    this.#pauseLoop();
   }
 
   /** Single static frame, for users who asked for reduced motion. */
@@ -491,12 +515,12 @@ export class ParticleField {
 
   destroy() {
     this.stop();
-    this.#running = false;
     const h = this.#boundHandlers;
     window.removeEventListener('pointermove', h.onPointerMove);
     window.removeEventListener('touchmove', h.onTouchMove);
     window.removeEventListener('pointerleave', h.onPointerLeave);
     window.removeEventListener('blur', h.onPointerLeave);
+    window.removeEventListener('resize', h.onResize);
     document.removeEventListener('visibilitychange', h.onVisibilityChange);
     this.#resizeObserver?.disconnect();
     this.#particles = [];
