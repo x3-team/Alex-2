@@ -303,8 +303,12 @@ export class ParticleField {
       // Constant personal drift so particles never move in lockstep. Tuned so
       // the field is legibly alive with the pointer idle — much slower than
       // this and it reads as a still image.
-      driftX: randomIn(-15, 15),
-      driftY: randomIn(-16, 8),
+      driftX: randomIn(-26, 26),
+      driftY: randomIn(-28, 14),
+      // Depth drift. Moving through the focal plane changes size, blur and
+      // opacity at once, so it registers far more than lateral travel does and
+      // it is what makes the field feel like a volume rather than a plane.
+      driftZ: randomIn(-0.04, 0.04),
       // Wind-induced velocity, decays back to zero.
       windX: 0,
       windY: 0,
@@ -378,12 +382,22 @@ export class ParticleField {
       }
 
       // Ambient flow field — large, slow sinusoids for organic wandering.
-      const flowX = Math.sin(p.y * 0.0016 + t * 0.09 + p.phase) * 11;
-      const flowY = Math.cos(p.x * 0.0014 - t * 0.07 + p.phase) * 9;
-      const wobble = Math.sin(t * p.wobbleRate + p.phase) * 4;
+      const flowX = Math.sin(p.y * 0.0016 + t * 0.09 + p.phase) * 18;
+      const flowY = Math.cos(p.x * 0.0014 - t * 0.07 + p.phase) * 15;
+      const wobble = Math.sin(t * p.wobbleRate + p.phase) * 6;
 
       p.x += (p.driftX + flowX + wobble + p.windX) * dt;
       p.y += (p.driftY + flowY + p.windY) * dt;
+
+      // Bounce off the depth limits so particles never pop between planes.
+      p.z += p.driftZ * dt;
+      if (p.z < 0.02) {
+        p.z = 0.02;
+        p.driftZ = Math.abs(p.driftZ);
+      } else if (p.z > 0.99) {
+        p.z = 0.99;
+        p.driftZ = -Math.abs(p.driftZ);
+      }
 
       // Wrap with a margin so particles fade in off-screen rather than popping.
       if (p.x < -margin) p.x = this.#width + margin;
@@ -391,6 +405,10 @@ export class ParticleField {
       if (p.y < -margin) p.y = this.#height + margin;
       else if (p.y > this.#height + margin) p.y = -margin;
     }
+
+    // Depth drift invalidates the paint order. The array stays nearly sorted
+    // between frames, so this is cheap at these counts.
+    this.#sortByDepth();
   }
 
   #draw() {
@@ -410,6 +428,10 @@ export class ParticleField {
       // Quadratic depth scaling reads as stronger perspective than linear.
       const size = p.radius * (0.3 + p.z * p.z * 2.4) * (softness * 1.6 + 1);
       let alpha = p.alpha * (0.14 + 0.74 * sharpness);
+
+      // Slow opacity breathing. Small in amplitude, but it keeps the field
+      // reading as alive even where lateral travel is barely perceptible.
+      alpha *= 0.82 + 0.18 * Math.sin(t * p.wobbleRate * 2.4 + p.phase);
 
       if (p.isSparkle) {
         alpha *= 0.55 + 0.45 * Math.sin(t * p.twinkleRate + p.phase);
