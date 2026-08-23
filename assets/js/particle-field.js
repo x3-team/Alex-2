@@ -300,9 +300,11 @@ export class ParticleField {
       // Base radius in css px before depth scaling.
       radius: randomIn(9, 30),
       alpha: randomIn(0.55, 1),
-      // Constant personal drift so particles never move in lockstep.
-      driftX: randomIn(-6, 6),
-      driftY: randomIn(-7, 3),
+      // Constant personal drift so particles never move in lockstep. Tuned so
+      // the field is legibly alive with the pointer idle — much slower than
+      // this and it reads as a still image.
+      driftX: randomIn(-15, 15),
+      driftY: randomIn(-16, 8),
       // Wind-induced velocity, decays back to zero.
       windX: 0,
       windY: 0,
@@ -376,9 +378,9 @@ export class ParticleField {
       }
 
       // Ambient flow field — large, slow sinusoids for organic wandering.
-      const flowX = Math.sin(p.y * 0.0016 + t * 0.09 + p.phase) * 5.2;
-      const flowY = Math.cos(p.x * 0.0014 - t * 0.07 + p.phase) * 4.4;
-      const wobble = Math.sin(t * p.wobbleRate + p.phase) * 2.4;
+      const flowX = Math.sin(p.y * 0.0016 + t * 0.09 + p.phase) * 11;
+      const flowY = Math.cos(p.x * 0.0014 - t * 0.07 + p.phase) * 9;
+      const wobble = Math.sin(t * p.wobbleRate + p.phase) * 4;
 
       p.x += (p.driftX + flowX + wobble + p.windX) * dt;
       p.y += (p.driftY + flowY + p.windY) * dt;
