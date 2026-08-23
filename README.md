@@ -10,6 +10,10 @@
 | --- | --- | --- |
 | Ошибка 404 | `src/views/Error404.vue` | [node 1559-7381](https://www.figma.com/design/2OA0OkBE2lPA4DaWjBofbI/%D0%98%D0%BD%D0%BC%D1%83%D0%BD%D1%82%D0%B5%D1%85?node-id=1559-7381) |
 
+Живое демо страницы 404: <https://alex2-404-particles.onrender.com>
+(бесплатный план Render засыпает после простоя, первый запрос может занять
+около минуты).
+
 ## Запуск
 
 ```bash
@@ -18,6 +22,29 @@ npm run dev      # дев-сервер
 npm run build    # прод-сборка в dist/
 npm run preview  # посмотреть прод-сборку
 ```
+
+## Перенос в существующий проект
+
+Если страница 404 встраивается в уже готовое Vue-приложение, из этого
+репозитория нужны только пять файлов:
+
+```
+src/views/Error404.vue                страница
+src/composables/useParticleField.js   привязка к жизненному циклу
+src/lib/particle-field.js             движок частиц
+src/assets/icons/arrow-right-light.svg
+src/assets/icons/arrow-right-dark.svg
+```
+
+Плюс переменные из `src/assets/css/tokens.css` — либо файл целиком, либо только
+блок с токенами страницы 404 (`--space-*`, `--glass-*`, `--radius-*`,
+`--shadow-*`, `--ease-out-soft`, `--duration-*`, `--font-*`, `--color-*`).
+
+Дополнительных зависимостей нет — только Vue 3. Импорты используют алиас `@` на
+`src`; если в проекте он называется иначе, поправить нужно три строки в шапке
+`Error404.vue` и одну в `useParticleField.js`.
+
+Шрифт страницы — Roboto, подключается в `index.html`.
 
 ## Структура
 
