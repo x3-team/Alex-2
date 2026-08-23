@@ -1,0 +1,306 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-white);
+  background-color: var(--space-deep);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------------------------------------------------------------------------
+   Backdrop
+   The comp used a flat bitmap for the nebula. These layers rebuild it with
+   gradients so it stays crisp at any viewport and the particles above it can
+   move independently.
+   --------------------------------------------------------------------------- */
+
+.space,
+.space__particles,
+.space__scrim {
+  position: fixed;
+  inset: 0;
+}
+
+.space {
+  background:
+    radial-gradient(ellipse 62% 56% at 12% 6%, var(--space-glow-warm), transparent 72%),
+    radial-gradient(ellipse 72% 62% at 86% 94%, var(--space-glow-cool), transparent 74%),
+    linear-gradient(
+      155deg,
+      var(--space-warm) 0%,
+      var(--space-mid) 34%,
+      var(--space-cool) 68%,
+      var(--space-deep) 100%
+    );
+}
+
+.space__particles {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Radial darkening centred on the card: keeps the copy legible while letting
+   the corners of the field stay luminous. */
+.space__scrim {
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 66% 58% at 50% 50%,
+      rgba(6, 10, 18, 0.56) 0%,
+      rgba(6, 10, 18, 0.2) 58%,
+      rgba(6, 10, 18, 0) 100%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(6, 10, 18, 0.26) 0%,
+      rgba(6, 10, 18, 0) 32%,
+      rgba(6, 10, 18, 0) 68%,
+      rgba(6, 10, 18, 0.34) 100%
+    );
+}
+
+/* ---------------------------------------------------------------------------
+   Layout
+   --------------------------------------------------------------------------- */
+
+.error-page {
+  position: relative;
+  z-index: 1;
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 40px 24px;
+}
+
+.error-card {
+  width: 100%;
+  max-width: 414px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 64px;
+  animation: card-enter 720ms var(--ease-out-soft) both;
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.error-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.error-title {
+  margin: 0;
+  font-size: var(--font-size-h1);
+  font-weight: 400;
+  line-height: 1.16;
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 18px rgba(6, 10, 18, 0.45);
+}
+
+.error-subtitle {
+  margin: 0;
+  max-width: 400px;
+  font-size: var(--font-size-h4);
+  font-weight: 400;
+  line-height: 1.32;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 12px rgba(6, 10, 18, 0.45);
+}
+
+.error-nav {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------------------------------------------------------------------------
+   Navigation buttons
+   --------------------------------------------------------------------------- */
+
+.nav-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 72px;
+  padding: 0 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--color-ink);
+  font-size: var(--font-size-h4);
+  text-decoration: none;
+  overflow: hidden;
+  isolation: isolate;
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    var(--shadow-resting);
+  transition:
+    transform var(--duration-base) var(--ease-out-soft),
+    box-shadow var(--duration-base) var(--ease-out-soft),
+    background-color var(--duration-base) var(--ease-out-soft),
+    border-color var(--duration-base) var(--ease-out-soft);
+}
+
+.nav-btn__label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-btn__icon {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  transition: transform var(--duration-base) var(--ease-out-soft);
+}
+
+.nav-btn:hover {
+  transform: translateY(-2px);
+  background: var(--glass-bg-hover);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    var(--shadow-raised);
+}
+
+.nav-btn:hover .nav-btn__icon {
+  transform: translateX(4px);
+}
+
+.nav-btn:active {
+  transform: translateY(0);
+  transition-duration: var(--duration-fast);
+}
+
+.nav-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 3px;
+}
+
+/* Primary — the dark option from the comp, with a slight vertical sheen. */
+.nav-btn--primary {
+  background: linear-gradient(180deg, var(--color-ink-raised) 0%, var(--color-ink) 100%);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: var(--color-white);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    var(--shadow-resting);
+}
+
+.nav-btn--primary:hover {
+  background: linear-gradient(180deg, #2b2f36 0%, #14171c 100%);
+  border-color: rgba(255, 255, 255, 0.26);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    var(--shadow-raised);
+}
+
+/* Light sweep that crosses the primary button on hover. */
+.nav-btn--primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.13) 48%,
+    transparent 76%
+  );
+  transform: translateX(-100%);
+  transition: transform 620ms var(--ease-out-soft);
+}
+
+.nav-btn--primary:hover::after {
+  transform: translateX(100%);
+}
+
+/* ---------------------------------------------------------------------------
+   Responsive — mirrors the 420px mobile frame
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .error-page {
+    padding: 32px 16px;
+  }
+
+  .error-card {
+    gap: 44px;
+  }
+
+  .error-title {
+    font-size: 34px;
+  }
+
+  .error-subtitle {
+    font-size: 18px;
+  }
+
+  .nav-btn {
+    height: 66px;
+    padding: 0 20px;
+    font-size: 18px;
+    border-radius: var(--radius-md);
+  }
+}
+
+@media (max-height: 620px) {
+  .error-card {
+    gap: 32px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion — the field renders one static frame and nothing animates.
+   --------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .error-card {
+    animation: none;
+  }
+
+  .nav-btn,
+  .nav-btn__icon,
+  .nav-btn--primary::after {
+    transition: none;
+  }
+
+  .nav-btn:hover {
+    transform: none;
+  }
+
+  .nav-btn--primary:hover::after {
+    transform: translateX(-100%);
+  }
+}

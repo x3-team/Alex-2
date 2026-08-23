@@ -1,0 +1,47 @@
+/**
+ * Shared design tokens for the ALEX² site.
+ * Values are taken from the Инмунтех Figma file.
+ */
+
+:root {
+  /* Typography — the 404 comp specifies Roboto Regular at 42px / 21px. */
+  --font-sans: 'Roboto', 'Helvetica Neue', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  --font-size-h1: 42px;
+  --font-size-h4: 21px;
+  --font-size-body: 17px;
+
+  /* Neutrals */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-ink: #0c0e12;
+  --color-ink-raised: #23262c;
+  --color-border-subtle: #dfdfdf;
+
+  /* Deep-space backdrop of the 404 screen */
+  --space-warm: #9a8b73;
+  --space-mid: #7c7b77;
+  --space-cool: #5b6675;
+  --space-deep: #46556a;
+  --space-glow-warm: rgba(228, 188, 124, 0.55);
+  --space-glow-cool: rgba(68, 96, 132, 0.5);
+
+  /* Glass surfaces */
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-bg-hover: rgba(255, 255, 255, 0.97);
+  --glass-border: rgba(255, 255, 255, 0.72);
+  --glass-blur: 18px;
+
+  /* Radii — the comp ships square buttons; these soften them slightly. */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+
+  /* Elevation */
+  --shadow-resting: 0 8px 24px -14px rgba(8, 12, 20, 0.55);
+  --shadow-raised: 0 18px 40px -18px rgba(8, 12, 20, 0.62);
+
+  /* Motion */
+  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --duration-fast: 180ms;
+  --duration-base: 320ms;
+}
