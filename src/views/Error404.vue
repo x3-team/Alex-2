@@ -225,8 +225,9 @@ const linkProps = (item) =>
    Navigation buttons
    --------------------------------------------------------------------------- */
 
+/* Flat by design: the rest of the site never lifts, shades or gradients a
+   button, so state is carried by the fill alone. */
 .nav-btn {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -234,21 +235,13 @@ const linkProps = (item) =>
   height: 72px;
   padding: 0 24px;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
+  border: 1px solid var(--btn-border);
+  background: var(--btn-bg);
   color: var(--color-ink);
   font-size: var(--font-size-h4);
   text-decoration: none;
   overflow: hidden;
-  isolation: isolate;
-  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    var(--shadow-resting);
   transition:
-    transform var(--duration-base) var(--ease-out-soft),
-    box-shadow var(--duration-base) var(--ease-out-soft),
     background-color var(--duration-base) var(--ease-out-soft),
     border-color var(--duration-base) var(--ease-out-soft);
 }
@@ -267,64 +260,31 @@ const linkProps = (item) =>
 }
 
 .nav-btn:hover {
-  transform: translateY(-2px);
-  background: var(--glass-bg-hover);
-  border-color: rgba(255, 255, 255, 0.9);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    var(--shadow-raised);
+  background: var(--btn-bg-hover);
+  border-color: var(--btn-border-hover);
 }
 
+/* The only movement on hover: a short nudge on the arrow, to hint direction
+   without introducing elevation the design language does not use. */
 .nav-btn:hover .nav-btn__icon {
-  transform: translateX(4px);
-}
-
-.nav-btn:active {
-  transform: translateY(0);
-  transition-duration: var(--duration-fast);
+  transform: translateX(3px);
 }
 
 .nav-btn:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline: 2px solid var(--color-white);
   outline-offset: 3px;
 }
 
-/* Primary — the dark option from the comp, with a slight vertical sheen. */
+/* Primary — the solid dark CTA fill used across the site. */
 .nav-btn--primary {
-  background: linear-gradient(180deg, var(--color-ink-raised) 0%, var(--color-ink) 100%);
-  border-color: rgba(255, 255, 255, 0.16);
+  background: var(--btn-primary-bg);
+  border-color: var(--btn-primary-bg);
   color: var(--color-white);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    var(--shadow-resting);
 }
 
 .nav-btn--primary:hover {
-  background: linear-gradient(180deg, #2b2f36 0%, #14171c 100%);
-  border-color: rgba(255, 255, 255, 0.26);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    var(--shadow-raised);
-}
-
-/* Light sweep that crosses the primary button on hover. */
-.nav-btn--primary::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(
-    100deg,
-    transparent 20%,
-    rgba(255, 255, 255, 0.13) 48%,
-    transparent 76%
-  );
-  transform: translateX(-100%);
-  transition: transform 620ms var(--ease-out-soft);
-}
-
-.nav-btn--primary:hover::after {
-  transform: translateX(100%);
+  background: var(--btn-primary-bg-hover);
+  border-color: var(--btn-primary-bg-hover);
 }
 
 /* ---------------------------------------------------------------------------
@@ -372,17 +332,12 @@ const linkProps = (item) =>
   }
 
   .nav-btn,
-  .nav-btn__icon,
-  .nav-btn--primary::after {
+  .nav-btn__icon {
     transition: none;
   }
 
-  .nav-btn:hover {
+  .nav-btn:hover .nav-btn__icon {
     transform: none;
-  }
-
-  .nav-btn--primary:hover::after {
-    transform: translateX(-100%);
   }
 }
 </style>

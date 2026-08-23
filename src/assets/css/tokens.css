@@ -13,9 +13,7 @@
   /* Neutrals */
   --color-white: #ffffff;
   --color-black: #000000;
-  --color-ink: #0c0e12;
-  --color-ink-raised: #23262c;
-  --color-border-subtle: #dfdfdf;
+  --color-ink: #121212;
 
   /* Deep-space backdrop of the 404 screen */
   --space-warm: #9d8d74;
@@ -25,20 +23,21 @@
   --space-glow-warm: rgba(228, 188, 124, 0.55);
   --space-glow-cool: rgba(68, 96, 132, 0.5);
 
-  /* Glass surfaces */
-  --glass-bg: rgba(255, 255, 255, 0.9);
-  --glass-bg-hover: rgba(255, 255, 255, 0.97);
-  --glass-border: rgba(255, 255, 255, 0.72);
-  --glass-blur: 18px;
+  /* Buttons.
+     The design signals state purely by swapping a flat fill — the active nav
+     item is #f1f5ee on a #dfdfdf border, and CTAs are solid #121212 with no
+     shadow or gradient. Hover states here reuse those same fills. */
+  --btn-bg: #ffffff;
+  --btn-bg-hover: #f1f5ee;
+  --btn-border: #dfdfdf;
+  --btn-border-hover: #cfd6cb;
+  --btn-primary-bg: #121212;
+  --btn-primary-bg-hover: #2a2a2a;
 
   /* Radii — the comp ships square buttons; these soften them slightly. */
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
-
-  /* Elevation */
-  --shadow-resting: 0 8px 24px -14px rgba(8, 12, 20, 0.55);
-  --shadow-raised: 0 18px 40px -18px rgba(8, 12, 20, 0.62);
 
   /* Motion */
   --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);

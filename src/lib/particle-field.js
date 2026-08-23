@@ -36,18 +36,30 @@ const DEFAULTS = {
   areaPerParticle: 12000,
   minParticles: 40,
   maxParticles: 155,
-  /** Share of particles rendered as 4-point sparkles. */
-  sparkleRatio: 0.05,
   /** Seconds for a particle to take up / shed pointer wind. Higher = more glide. */
   responseTau: 1.5,
   /** Seconds of smoothing on raw pointer velocity. Higher = softer onset. */
   pointerTau: 0.35,
-  /** Fraction of pointer speed handed to the field. */
-  coupling: 0.16,
-  /** Ceiling on wind speed (css px/s) so fast flicks stay graceful. */
-  maxWind: 260,
-  /** Radius (css px) inside which the pointer also swirls particles locally. */
-  swirlRadius: 260,
+  /**
+   * Fraction of pointer speed handed to the field as a directional drag. Kept
+   * low: scattering, not dragging, is meant to be the dominant response.
+   */
+  coupling: 0.09,
+  /** Ceiling on drag speed (css px/s) so fast flicks stay graceful. */
+  maxWind: 200,
+  /** Radius (css px) within which the pointer pushes particles outwards. */
+  scatterRadius: 300,
+  /** Peak outward acceleration at the pointer, css px/s². */
+  scatterStrength: 650,
+  /** Seconds for scatter velocity to bleed off. Higher = longer coast. */
+  scatterTau: 1.6,
+  /**
+   * Ceiling on scatter speed (css px/s). Together with the radius this is what
+   * keeps the effect a parting rather than a purge: uncapped, a single sweep
+   * carries particles most of the way across the viewport and strips the area
+   * bare.
+   */
+  maxScatter: 320,
   dprCap: 2,
 };
 
@@ -111,47 +123,12 @@ function renderBlobSprite(rgb, softness) {
   return canvas;
 }
 
-/** Four-point star accent, matching the sparkle in the original comp. */
-function renderSparkleSprite(rgb) {
-  const canvas = document.createElement('canvas');
-  canvas.width = SPRITE_SIZE;
-  canvas.height = SPRITE_SIZE;
-  const ctx = canvas.getContext('2d');
-  const mid = SPRITE_SIZE / 2;
-  const [r, g, b] = rgb;
-
-  const glow = ctx.createRadialGradient(mid, mid, 0, mid, mid, mid * 0.42);
-  glow.addColorStop(0, `rgba(${r},${g},${b},0.85)`);
-  glow.addColorStop(0.45, `rgba(${r},${g},${b},0.16)`);
-  glow.addColorStop(1, `rgba(${r},${g},${b},0)`);
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, SPRITE_SIZE, SPRITE_SIZE);
-
-  ctx.translate(mid, mid);
-  for (let i = 0; i < 2; i += 1) {
-    const spike = ctx.createLinearGradient(-mid, 0, mid, 0);
-    spike.addColorStop(0, `rgba(${r},${g},${b},0)`);
-    spike.addColorStop(0.5, `rgba(${r},${g},${b},0.9)`);
-    spike.addColorStop(1, `rgba(${r},${g},${b},0)`);
-    ctx.fillStyle = spike;
-    ctx.beginPath();
-    ctx.moveTo(-mid, 0);
-    ctx.quadraticCurveTo(0, -mid * 0.12, mid, 0);
-    ctx.quadraticCurveTo(0, mid * 0.12, -mid, 0);
-    ctx.fill();
-    ctx.rotate(Math.PI / 2);
-  }
-
-  return canvas;
-}
-
 export class ParticleField {
   #canvas;
   #ctx;
   #options;
   #particles = [];
   #blobSprites = [];
-  #sparkleSprites = [];
   #width = 0;
   #height = 0;
   #dpr = 1;
@@ -191,7 +168,6 @@ export class ParticleField {
       }
       return steps;
     });
-    this.#sparkleSprites = PALETTE.map(({ rgb }) => renderSparkleSprite(rgb));
   }
 
   #bindEvents() {
@@ -326,13 +302,16 @@ export class ParticleField {
       // opacity at once, so it registers far more than lateral travel does and
       // it is what makes the field feel like a volume rather than a plane.
       driftZ: randomIn(-0.04, 0.04),
-      // Wind-induced velocity, decays back to zero.
+      // Directional drag from the pointer, follows the wind field.
       windX: 0,
       windY: 0,
+      // Outward push away from the pointer. Held separately from windX/windY
+      // because that pair is continuously smoothed towards the wind target,
+      // which would erase a radial impulse as fast as it was applied.
+      scatterX: 0,
+      scatterY: 0,
       phase: Math.random() * TAU,
       wobbleRate: randomIn(0.05, 0.16),
-      isSparkle: Math.random() < this.#options.sparkleRatio,
-      twinkleRate: randomIn(0.25, 0.6),
     };
   }
 
@@ -368,33 +347,51 @@ export class ParticleField {
     this.#wind.x = smooth(this.#wind.x, targetWindX, opts.pointerTau, dt);
     this.#wind.y = smooth(this.#wind.y, targetWindY, opts.pointerTau, dt);
 
-    const swirlRadius = opts.swirlRadius;
-    const swirlRadiusSq = swirlRadius * swirlRadius;
-    const pointerSpeed = Math.hypot(this.#wind.x, this.#wind.y);
+    const scatterRadius = opts.scatterRadius;
+    const scatterRadiusSq = scatterRadius * scatterRadius;
+    // Scatter is driven by how fast the pointer is actually travelling, not by
+    // the coupled drag speed, so it stays strong even with a light coupling.
+    const pointerSpeed = Math.hypot(this.#pointerVelocity.x, this.#pointerVelocity.y);
+    const speedFactor = clamp(pointerSpeed / 400, 0, 1.6);
+    const scattering = this.#pointer.active && speedFactor > 0.02;
     const margin = 140;
     const t = this.#elapsed;
 
     for (const p of this.#particles) {
-      // Near particles answer the wind more than distant ones, which sells depth.
+      // Near particles answer the pointer more than distant ones, which sells depth.
       const depthResponse = 0.35 + p.z * 1.15;
-      const targetWX = this.#wind.x * depthResponse;
-      const targetWY = this.#wind.y * depthResponse;
 
-      p.windX = smooth(p.windX, targetWX, opts.responseTau, dt);
-      p.windY = smooth(p.windY, targetWY, opts.responseTau, dt);
+      p.windX = smooth(p.windX, this.#wind.x * depthResponse, opts.responseTau, dt);
+      p.windY = smooth(p.windY, this.#wind.y * depthResponse, opts.responseTau, dt);
 
-      // Local swirl: pushes particles out of the cursor's path and adds a slight
-      // tangential curl so the disturbance rolls rather than shoves.
-      if (this.#pointer.active && pointerSpeed > 6) {
+      // Scatter bleeds off on its own timeline rather than being pulled towards
+      // a target, so an outward impulse survives long enough to be seen.
+      p.scatterX = smooth(p.scatterX, 0, opts.scatterTau, dt);
+      p.scatterY = smooth(p.scatterY, 0, opts.scatterTau, dt);
+
+      if (scattering) {
         const dx = p.x - this.#pointer.x;
         const dy = p.y - this.#pointer.y;
         const distSq = dx * dx + dy * dy;
-        if (distSq < swirlRadiusSq && distSq > 0.01) {
-          const dist = Math.sqrt(distSq);
-          const falloff = (1 - dist / swirlRadius) ** 2;
-          const push = falloff * pointerSpeed * 0.5 * depthResponse;
-          p.windX += ((dx / dist) * push - (dy / dist) * push * 0.35) * dt;
-          p.windY += ((dy / dist) * push + (dx / dist) * push * 0.35) * dt;
+        if (distSq < scatterRadiusSq) {
+          const dist = Math.sqrt(distSq) || 0.001;
+          // Exponent below 2 widens the fan, so particles well away from the
+          // cursor still get carried rather than only those right under it.
+          const falloff = (1 - dist / scatterRadius) ** 1.6;
+          const push = falloff * opts.scatterStrength * speedFactor * depthResponse;
+          const nx = dx / dist;
+          const ny = dy / dist;
+          // Mostly radial, with a little curl so the disturbance rolls outwards
+          // instead of looking like a rigid shove.
+          p.scatterX += (nx * push - ny * push * 0.15) * dt;
+          p.scatterY += (ny * push + nx * push * 0.15) * dt;
+
+          const speed = Math.hypot(p.scatterX, p.scatterY);
+          if (speed > opts.maxScatter) {
+            const scale = opts.maxScatter / speed;
+            p.scatterX *= scale;
+            p.scatterY *= scale;
+          }
         }
       }
 
@@ -403,8 +400,8 @@ export class ParticleField {
       const flowY = Math.cos(p.x * 0.0014 - t * 0.07 + p.phase) * 15;
       const wobble = Math.sin(t * p.wobbleRate + p.phase) * 6;
 
-      p.x += (p.driftX + flowX + wobble + p.windX) * dt;
-      p.y += (p.driftY + flowY + p.windY) * dt;
+      p.x += (p.driftX + flowX + wobble + p.windX + p.scatterX) * dt;
+      p.y += (p.driftY + flowY + p.windY + p.scatterY) * dt;
 
       // Bounce off the depth limits so particles never pop between planes.
       p.z += p.driftZ * dt;
@@ -450,19 +447,13 @@ export class ParticleField {
       // reading as alive even where lateral travel is barely perceptible.
       alpha *= 0.82 + 0.18 * Math.sin(t * p.wobbleRate * 2.4 + p.phase);
 
-      if (p.isSparkle) {
-        alpha *= 0.55 + 0.45 * Math.sin(t * p.twinkleRate + p.phase);
-      }
-
       if (alpha <= 0.004 || size < 0.6) continue;
 
-      const sprite = p.isSparkle
-        ? this.#sparkleSprites[p.paletteIndex]
-        : this.#blobSprites[p.paletteIndex][
-            Math.min(SOFTNESS_STEPS - 1, Math.round(softness * (SOFTNESS_STEPS - 1)))
-          ];
+      const sprite = this.#blobSprites[p.paletteIndex][
+        Math.min(SOFTNESS_STEPS - 1, Math.round(softness * (SOFTNESS_STEPS - 1)))
+      ];
 
-      const drawSize = p.isSparkle ? size * 2.1 : size * 2;
+      const drawSize = size * 2;
       ctx.globalAlpha = clamp(alpha, 0, 1);
       ctx.drawImage(sprite, p.x - drawSize / 2, p.y - drawSize / 2, drawSize, drawSize);
     }
