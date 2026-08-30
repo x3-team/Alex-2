@@ -195,20 +195,20 @@ defineProps({
 .hint__swipe {
   position: absolute;
   bottom: 0;
-  width: 9px;
+  width: 12px;
   height: 84px;
 }
 
 /* Dot only: flush left, so it lines up with the headline below. */
 .hint--dot .hint__swipe {
   left: 0;
-  width: 9px;
+  width: 12px;
   height: 96px;
 }
 
 /* Alongside chevrons the dot sits under their centre. */
 .hint--dot-chevrons .hint__swipe {
-  left: 11px;
+  left: 10px;
   height: 60px;
 }
 
@@ -218,9 +218,9 @@ defineProps({
   position: absolute;
   left: 0;
   bottom: 0;
-  width: 9px;
+  width: 12px;
   height: 72px;
-  border-radius: 5px;
+  border-radius: 6px;
   background: linear-gradient(
     to top,
     rgba(0, 0, 0, 0) 0%,
@@ -239,8 +239,8 @@ defineProps({
   position: absolute;
   left: 0;
   bottom: 0;
-  width: 9px;
-  height: 9px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.8);
   animation: swipe-head 2.4s cubic-bezier(0.33, 0, 0.2, 1) infinite;
