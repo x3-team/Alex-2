@@ -87,9 +87,12 @@ const style = computed(() => ({
   color: #ffffff;
   font-size: 21px;
   text-decoration: none;
-  overflow: hidden;
   isolation: isolate;
 }
+
+/* No overflow clipping here on purpose. The shine band clips itself against
+   .cta__shine, whereas the glow spreads outward — clipping the button hid the
+   glow variant entirely. */
 
 .cta__label {
   position: relative;
@@ -179,7 +182,7 @@ const style = computed(() => ({
   inset: -1px;
   z-index: 0;
   pointer-events: none;
-  box-shadow: 0 0 34px 2px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 40px 6px rgba(255, 255, 255, 0.42);
   opacity: 0;
   animation: cta-glow var(--cta-period) ease-in-out var(--cta-cycles) both;
 }
