@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import CtaLab from '@/views/CtaLab.vue';
+import SwipeLab from '@/views/SwipeLab.vue';
 import Error404 from '@/views/Error404.vue';
 
 // Standalone harness. In the real app the 404 view belongs on a catch-all route
@@ -14,7 +15,8 @@ const onHashChange = () => {
 onMounted(() => window.addEventListener('hashchange', onHashChange));
 onBeforeUnmount(() => window.removeEventListener('hashchange', onHashChange));
 
-const view = computed(() => (hash.value === '#cta' ? CtaLab : Error404));
+const views = { '#cta': CtaLab, '#swipe': SwipeLab };
+const view = computed(() => views[hash.value] ?? Error404);
 </script>
 
 <template>

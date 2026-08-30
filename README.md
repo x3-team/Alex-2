@@ -172,6 +172,64 @@ import Error404 from '@/views/Error404.vue';
 вкладку не перезапускает анимацию, выключенную явно. При
 `prefers-reduced-motion: reduce` рисуется один статичный кадр без цикла.
 
+## Подсказка прокрутки на телефоне
+
+На десктопе главная показывает мышь с шевронами вниз (`.figma-scroll-icon`). На
+телефоне колёсика нет, поэтому подсказка заменяется на телефон со стрелкой вверх
+и шевроны разворачиваются: сторителлинг проматывается свайпом снизу вверх.
+
+Живое сравнение вариантов: <https://alex2-404-particles.onrender.com/#swipe>
+
+Иконка — `src/assets/icons/figma-swipe-up.svg`, нарисована в том же стиле, что
+существующие ассеты: 74×74, обводка `black / 0.8`, толщина 5, круглые концы.
+
+Готовый фрагмент для сайта. Шаблон менять не нужно: мышь скрывается, глиф
+подставляется фоном, шевроны переставляются и разворачиваются.
+
+```css
+@media (max-width: 1024px) {
+  /* колёсика на тач-устройстве нет */
+  .figma-scroll-icon .scroll-mouse {
+    display: none;
+  }
+
+  /* глиф в той же клетке 74×74, но снизу — там, где начинается свайп */
+  .figma-scroll-icon::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: calc(45 * var(--mobile-fixed-unit));
+    width: calc(74 * var(--mobile-fixed-unit));
+    height: calc(74 * var(--mobile-fixed-unit));
+    background: url('/assets/figma-swipe-up.svg') no-repeat center / contain;
+  }
+
+  /* шевроны уходят над глифом и смотрят вверх. Первый остаётся нижним, поэтому
+     существующий каскад 1-2-3 сам начинает идти вверх — keyframes не трогаем */
+  .figma-scroll-icon .scroll-chevron {
+    transform: rotate(180deg);
+  }
+  .figma-scroll-icon .scroll-chevron-1 {
+    top: calc(30 * var(--mobile-fixed-unit));
+  }
+  .figma-scroll-icon .scroll-chevron-2 {
+    top: calc(15 * var(--mobile-fixed-unit));
+  }
+  .figma-scroll-icon .scroll-chevron-3 {
+    top: 0;
+  }
+
+  /* инверсия в режиме для врачей: существующее правило целится в img,
+     поэтому псевдоэлемент нужно указать отдельно */
+  .home-page-container.doctor-mode .figma-scroll-icon::after {
+    filter: invert(1);
+  }
+}
+```
+
+Высота контейнера не меняется: шевроны занимают 0–43, глиф 45–119 из тех же 119
+единиц, поэтому заголовок под иконкой не сдвигается.
+
 ## Отличия от макета
 
 - **Кнопки скруглены.** В макете `border-radius: 0`; здесь `18px` на десктопе и
