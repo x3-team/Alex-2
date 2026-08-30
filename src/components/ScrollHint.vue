@@ -1,30 +1,46 @@
 <script setup>
 defineProps({
   /**
-   * 'mouse' reproduces what is on the site today. The rest are swipe glyphs for
-   * touch, where a scroll wheel has no meaning.
+   * 'mouse' reproduces the desktop hint. The rest are touch variants, where a
+   * scroll wheel has no meaning.
    */
   glyph: {
     type: String,
-    default: 'phone',
-    validator: (v) => ['mouse', 'phone', 'hand', 'none'].includes(v),
+    default: 'dot',
+    validator: (v) => ['mouse', 'chevrons', 'dot', 'dot-chevrons'].includes(v),
   },
 });
 </script>
 
 <template>
-  <!-- Chevrons sit above the glyph and pulse upward, because the gesture that
-       advances the story is a swipe up. On the wheel version they sit below and
-       pulse down. -->
-  <div class="hint" :class="glyph === 'mouse' ? 'hint--down' : 'hint--up'">
-    <div class="hint__chevrons">
+  <div class="hint" :class="`hint--${glyph}`">
+    <!-- Wheel version: glyph on top, chevrons flowing down. -->
+    <svg v-if="glyph === 'mouse'" class="hint__glyph" width="74" height="74" viewBox="0 0 74 74" fill="none">
+      <path
+        d="M37 18.5013V30.8346M37 6.16797C48.9201 6.16797 58.5833 15.8312 58.5833 27.7513V46.2513C58.5833 58.1714 48.9201 67.8346 37 67.8346C25.0798 67.8346 15.4166 58.1714 15.4166 46.2513V27.7513C15.4166 15.8312 25.0798 6.16797 37 6.16797Z"
+        stroke="black"
+        stroke-opacity="0.8"
+        stroke-width="5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+
+    <!-- A dot that runs bottom to top leaving a fading tail: it does not
+         describe the gesture, it performs it. -->
+    <span v-if="glyph === 'dot' || glyph === 'dot-chevrons'" class="hint__swipe" aria-hidden="true">
+      <span class="hint__trail" />
+      <span class="hint__head" />
+    </span>
+
+    <div v-if="glyph !== 'dot'" class="hint__chevrons">
       <svg
         v-for="i in 3"
         :key="i"
         class="hint__chevron"
         :class="`hint__chevron--${i}`"
-        width="36"
-        height="17"
+        width="32"
+        height="13"
         viewBox="-3 -3 36 17"
         fill="none"
       >
@@ -37,83 +53,40 @@ defineProps({
         />
       </svg>
     </div>
-
-    <svg class="hint__glyph" width="74" height="74" viewBox="0 0 74 74" fill="none">
-      <!-- Existing site asset, kept verbatim for comparison -->
-      <path
-        v-if="glyph === 'mouse'"
-        d="M37 18.5013V30.8346M37 6.16797C48.9201 6.16797 58.5833 15.8312 58.5833 27.7513V46.2513C58.5833 58.1714 48.9201 67.8346 37 67.8346C25.0798 67.8346 15.4166 58.1714 15.4166 46.2513V27.7513C15.4166 15.8312 25.0798 6.16797 37 6.16797Z"
-        stroke="black"
-        stroke-opacity="0.8"
-        stroke-width="5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-
-      <!-- Phone outline with an arrow inside: mirrors how the mouse is built,
-           a recognisable device plus an inner cue. -->
-      <template v-else-if="glyph === 'phone'">
-        <rect
-          x="21"
-          y="7"
-          width="32"
-          height="60"
-          rx="8"
-          stroke="black"
-          stroke-opacity="0.8"
-          stroke-width="5"
-        />
-        <path
-          d="M37 51V29M30 36L37 29L44 36"
-          stroke="black"
-          stroke-opacity="0.8"
-          stroke-width="5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </template>
-
-      <!-- Hand silhouette with the index finger raised. -->
-      <template v-else-if="glyph === 'hand'">
-        <path
-          d="M28 44V23C28 19.134 31.134 16 35 16C38.866 16 42 19.134 42 23V44"
-          stroke="black"
-          stroke-opacity="0.8"
-          stroke-width="5"
-          stroke-linecap="round"
-        />
-        <path
-          d="M24 44H48C54.0751 44 59 48.9249 59 55V57C59 63.0751 54.0751 68 48 68H35C28.9249 68 24 63.0751 24 57V44Z"
-          stroke="black"
-          stroke-opacity="0.8"
-          stroke-width="5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </template>
-    </svg>
   </div>
 </template>
 
 <style scoped>
 .hint {
   position: relative;
-  width: 74px;
   height: 119px;
+}
+
+.hint--mouse {
+  width: 74px;
+}
+
+/* Without a glyph there is nothing to centre the chevrons under, so the 21px
+   indent the site uses would leave them hanging off the text edge. These
+   variants are flush left instead, aligning with the headline below. */
+.hint--chevrons,
+.hint--dot,
+.hint--dot-chevrons {
+  width: 32px;
 }
 
 .hint__glyph {
   position: absolute;
   left: 0;
+  top: 0;
   width: 74px;
   height: 74px;
 }
 
 .hint__chevrons {
   position: absolute;
-  left: 21px;
   width: 32px;
-  height: 45px;
+  height: 43px;
 }
 
 .hint__chevron {
@@ -123,51 +96,47 @@ defineProps({
   height: 13px;
 }
 
-/* Wheel version, as on the site today: glyph on top, chevrons flowing down. */
-.hint--down .hint__glyph {
-  top: 0;
-}
-
-.hint--down .hint__chevrons {
+/* Mouse: chevrons below the glyph, centred under it, cascading down. */
+.hint--mouse .hint__chevrons {
+  left: 21px;
   top: 76px;
 }
-
-.hint--down .hint__chevron--1 {
+.hint--mouse .hint__chevron--1 {
   top: 0;
 }
-.hint--down .hint__chevron--2 {
+.hint--mouse .hint__chevron--2 {
   top: 15px;
 }
-.hint--down .hint__chevron--3 {
+.hint--mouse .hint__chevron--3 {
   top: 30px;
 }
 
-/* Swipe version: glyph at the bottom where the thumb starts, chevrons above it
-   flowing up. Chevron 1 is the lowest, so the site's existing 1-2-3 cascade
-   travels upward without touching the keyframes. */
-.hint--up .hint__chevrons {
+/* Touch: chevrons at the top, rotated, cascading up. Chevron 1 stays the
+   lowest, so the site's existing 1-2-3 pulse travels upward untouched. */
+.hint--chevrons .hint__chevrons,
+.hint--dot-chevrons .hint__chevrons {
+  left: 0;
   top: 0;
 }
 
-.hint--up .hint__glyph {
-  top: 45px;
-}
-
-.hint--up .hint__chevron--1 {
-  top: 30px;
-}
-.hint--up .hint__chevron--2 {
-  top: 15px;
-}
-.hint--up .hint__chevron--3 {
-  top: 0;
-}
-
-.hint--up .hint__chevron {
+.hint--chevrons .hint__chevron,
+.hint--dot-chevrons .hint__chevron {
   transform: rotate(180deg);
 }
 
-/* Keyframes copied from the site so the rhythm is identical. */
+.hint--chevrons .hint__chevron--1,
+.hint--dot-chevrons .hint__chevron--1 {
+  top: 30px;
+}
+.hint--chevrons .hint__chevron--2,
+.hint--dot-chevrons .hint__chevron--2 {
+  top: 15px;
+}
+.hint--chevrons .hint__chevron--3,
+.hint--dot-chevrons .hint__chevron--3 {
+  top: 0;
+}
+
 .hint__chevron--1 {
   animation: chevron-pulse-1 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
@@ -217,14 +186,138 @@ defineProps({
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Swipe dot
+   The head is a solid dot; the trail is a bar with a gradient that fades away
+   from it, so the pair reads as one moving object rather than two elements.
+   --------------------------------------------------------------------------- */
+
+.hint__swipe {
+  position: absolute;
+  bottom: 0;
+  width: 9px;
+  height: 84px;
+}
+
+/* Dot only: flush left, so it lines up with the headline below. */
+.hint--dot .hint__swipe {
+  left: 0;
+  width: 9px;
+  height: 96px;
+}
+
+/* Alongside chevrons the dot sits under their centre. */
+.hint--dot-chevrons .hint__swipe {
+  left: 11px;
+  height: 60px;
+}
+
+/* The trail is as wide as the head so the pair reads as one moving object;
+   a narrower bar turns the pair into a pin in any still frame. */
+.hint__trail {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 9px;
+  height: 72px;
+  border-radius: 5px;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.12) 30%,
+    rgba(0, 0, 0, 0.42) 100%
+  );
+  transform-origin: bottom center;
+  animation: swipe-trail 2.4s cubic-bezier(0.33, 0, 0.2, 1) infinite;
+}
+
+.hint--dot-chevrons .hint__trail {
+  height: 40px;
+}
+
+.hint__head {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.8);
+  animation: swipe-head 2.4s cubic-bezier(0.33, 0, 0.2, 1) infinite;
+}
+
+/* The head leads, the trail stretches to follow it, then both release at the
+   top and the field rests before the next pass. */
+@keyframes swipe-head {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  8% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  58% {
+    transform: translateY(calc(-1 * var(--swipe-travel, 58px)));
+    opacity: 1;
+  }
+  74% {
+    transform: translateY(calc(-1 * var(--swipe-travel, 58px) - 14px));
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(calc(-1 * var(--swipe-travel, 58px) - 14px));
+    opacity: 0;
+  }
+}
+
+@keyframes swipe-trail {
+  0% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  8% {
+    transform: scaleY(0);
+    opacity: 1;
+  }
+  58% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  74% {
+    transform: scaleY(1);
+    opacity: 0;
+  }
+  100% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+}
+
+.hint--dot .hint__head,
+.hint--dot .hint__trail {
+  --swipe-travel: 72px;
+}
+
+.hint--dot-chevrons .hint__head,
+.hint--dot-chevrons .hint__trail {
+  --swipe-travel: 40px;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .hint__chevron {
+  .hint__chevron,
+  .hint__trail,
+  .hint__head {
     animation: none;
   }
-  .hint--up .hint__chevron--1,
-  .hint--up .hint__chevron--2,
-  .hint--up .hint__chevron--3 {
+
+  .hint__chevron {
     opacity: 0.6;
+  }
+
+  .hint__trail {
+    transform: scaleY(1);
+    opacity: 1;
   }
 }
 </style>

@@ -3,9 +3,9 @@ import ScrollHint from '@/components/ScrollHint.vue';
 
 const variants = [
   { glyph: 'mouse', title: 'Сейчас', note: 'Мышь и колёсико — на телефоне бессмысленно' },
-  { glyph: 'hand', title: 'Кисть', note: 'Рука с поднятым указательным пальцем' },
-  { glyph: 'phone', title: 'Телефон', note: 'Экран со стрелкой вверх внутри' },
-  { glyph: 'none', title: 'Только шевроны', note: 'Без глифа — самый минимальный вариант' },
+  { glyph: 'chevrons', title: 'Только шевроны', note: 'Выровнены по левому краю заголовка' },
+  { glyph: 'dot', title: 'Точка со шлейфом', note: 'Точка уходит снизу вверх, шлейф тянется за ней' },
+  { glyph: 'dot-chevrons', title: 'Точка и шевроны', note: 'Шлейф плюс пульсация вверх' },
 ];
 </script>
 
@@ -15,8 +15,9 @@ const variants = [
       <h1 class="lab__title">Подсказка прокрутки на телефоне</h1>
       <p class="lab__lead">
         Слева — то, что на сайте сейчас: мышь и шевроны вниз. Остальные — свайп снизу
-        вверх. Шевроны развёрнуты и переставлены над иконкой, ритм пульсации взят с сайта
-        без изменений.
+        вверх. Тонкая красная линия отмечает левый край заголовка: у мыши шевроны
+        сдвинуты от неё на 21px, потому что центрируются под глифом, у остальных
+        вариантов они выровнены по тексту.
       </p>
     </header>
 
@@ -31,6 +32,7 @@ const variants = [
              screenshot of the live site, so contrast is judged for real. -->
         <div class="phone">
           <div class="phone__hero">
+            <span class="phone__guide" aria-hidden="true" />
             <ScrollHint class="phone__hint" :glyph="v.glyph" />
             <h3 class="phone__title">
               Тест на аллергию ALEX² — один анализ, который даёт ответы
@@ -129,6 +131,16 @@ const variants = [
   position: absolute;
   left: 16px;
   bottom: 132px;
+}
+
+/* Guide at the headline's left edge, to check the hint lines up with it. */
+.phone__guide {
+  position: absolute;
+  left: 16px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(200, 0, 0, 0.45);
 }
 
 .phone__title {
