@@ -3,7 +3,7 @@ import { ref } from 'vue';
 
 import CtaButton from '@/components/CtaButton.vue';
 
-const period = ref(8);
+const period = ref(14);
 const cycles = ref(null);
 
 const variants = [
@@ -24,14 +24,14 @@ const variants = [
       <h1 class="lab__title">Периодический акцент на кнопке «Записаться на тест»</h1>
       <p class="lab__lead">
         Все четыре варианта запускаются одновременно и с одним интервалом, чтобы их можно
-        было сравнивать. Сам жест всегда длится около 1,6 секунды — меняется только пауза
-        между повторами.
+        было сравнивать. Сам жест всегда длится около 1,6 секунды — ползунком меняется
+        только пауза между повторами.
       </p>
 
       <div class="lab__controls">
         <label class="control">
           <span class="control__label">Интервал: {{ period }} с</span>
-          <input v-model.number="period" type="range" min="3" max="20" step="1" />
+          <input v-model.number="period" type="range" min="6" max="26" step="1" />
         </label>
 
         <label class="control control--inline">

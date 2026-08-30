@@ -19,10 +19,16 @@ const props = defineProps({
     default: 'shine',
     validator: (v) => ['none', 'shine', 'glow', 'shine-nudge'].includes(v),
   },
-  /** Seconds between two firings. The gesture itself always lasts ~1.6s. */
+  /**
+   * Seconds between two firings. The gesture itself always lasts ~1.6s, so the
+   * interval is what decides whether this reads as an occasional nudge or a
+   * loop. At 8s the button is in motion around a fifth of the time and fires
+   * some fifteen times across two minutes of reading, which is too much for a
+   * control that sits in a permanently visible sidebar.
+   */
   period: {
     type: Number,
-    default: 8,
+    default: 14,
   },
   /**
    * How many times to fire. Null runs indefinitely; a number is useful if the
