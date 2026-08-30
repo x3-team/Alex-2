@@ -1,0 +1,24 @@
+{
+  "name": "alex-2",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Фронтенд сайта ALEX² (аллергочип, ИНМУНОТЕХ)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/x3-team/Alex-2.git"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "vue": "^3.5.41"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.8",
+    "vite": "^8.2.2"
+  }
+}
