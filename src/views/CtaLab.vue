@@ -74,26 +74,26 @@ const variants = [
 <style scoped>
 .lab {
   min-height: 100%;
-  padding: 56px 40px 80px;
+  padding: 32px 40px 48px;
   background: #f5f5f5;
   color: #121212;
 }
 
 .lab__head {
-  max-width: 760px;
-  margin: 0 auto 48px;
+  max-width: 1040px;
+  margin: 0 auto 28px;
 }
 
 .lab__title {
-  margin: 0 0 16px;
-  font-size: 32px;
+  margin: 0 0 10px;
+  font-size: 26px;
   font-weight: 400;
   line-height: 1.2;
 }
 
 .lab__lead {
-  margin: 0 0 32px;
-  font-size: 18px;
+  margin: 0 0 20px;
+  font-size: 16px;
   line-height: 1.45;
   color: #6b6b6b;
 }
@@ -103,7 +103,7 @@ const variants = [
   flex-wrap: wrap;
   gap: 32px;
   align-items: center;
-  padding: 24px;
+  padding: 16px 24px;
   background: #ffffff;
   border: 1px solid #dfdfdf;
 }
@@ -132,16 +132,20 @@ const variants = [
   accent-color: #121212;
 }
 
+/* Two by two rather than four across: the button label does not wrap, which
+   puts a hard floor of about 470px on a panel. Four of those overflow a 1920
+   viewport, and all four variants fire at once so they must be on screen
+   together. */
 .lab__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-  gap: 40px;
-  max-width: 1600px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px 32px;
+  max-width: 1040px;
   margin: 0 auto;
 }
 
 .lab__caption {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .lab__name {
@@ -161,8 +165,8 @@ const variants = [
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 40px;
-  min-height: 420px;
+  gap: 28px;
+  min-height: 340px;
   padding: 24px;
   background: linear-gradient(180deg, #a3b2a2 0%, #90a08f 55%, #889887 100%);
 }
@@ -173,13 +177,13 @@ const variants = [
 
 .panel__wordmark {
   margin: 0;
-  font-size: 64px;
+  font-size: 48px;
   line-height: 1;
   letter-spacing: 0.02em;
 }
 
 .panel__sup {
-  font-size: 32px;
+  font-size: 24px;
   vertical-align: super;
 }
 
@@ -190,20 +194,21 @@ const variants = [
 }
 
 .panel__desc {
-  margin: 24px 0 0;
+  margin: 18px 0 0;
   max-width: 420px;
   font-size: 16px;
   line-height: 1.45;
   color: rgba(255, 255, 255, 0.92);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .lab {
     padding: 32px 16px 56px;
   }
 
   .lab__grid {
     grid-template-columns: 1fr;
+    max-width: 480px;
   }
 }
 </style>

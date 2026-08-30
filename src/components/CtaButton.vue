@@ -9,9 +9,14 @@ const props = defineProps({
   /**
    * Which periodic accent to run. 'none' leaves the button static.
    */
+  /**
+   * Default is the bare light pass: it points somewhere without moving any
+   * interface element. Adding the arrow drift on top reads as a demand for
+   * attention rather than an accent, which is too much for this brand.
+   */
   effect: {
     type: String,
-    default: 'shine-nudge',
+    default: 'shine',
     validator: (v) => ['none', 'shine', 'glow', 'shine-nudge'].includes(v),
   },
   /** Seconds between two firings. The gesture itself always lasts ~1.6s. */
@@ -133,25 +138,27 @@ const style = computed(() => ({
     var(--cta-cycles) both;
 }
 
-/* Travel occupies the first 18% of the period, then the band parks off-canvas
-   until the next firing. */
+/* Travel occupies the first fifth of the period, then the band parks off-canvas
+   until the next firing. The band starts and ends just outside the surface
+   rather than far away, so most of the animation is spent actually crossing the
+   button instead of travelling unseen. */
 @keyframes cta-shine {
   0% {
-    transform: translateX(-140%) skewX(-14deg);
+    transform: translateX(-115%) skewX(-14deg);
     opacity: 0;
   }
-  2% {
+  3% {
     opacity: 1;
   }
-  16% {
+  18% {
     opacity: 1;
   }
-  19% {
-    transform: translateX(320%) skewX(-14deg);
+  22% {
+    transform: translateX(245%) skewX(-14deg);
     opacity: 0;
   }
   100% {
-    transform: translateX(320%) skewX(-14deg);
+    transform: translateX(245%) skewX(-14deg);
     opacity: 0;
   }
 }
