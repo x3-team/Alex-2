@@ -29,3 +29,28 @@
 //
 // 5) Do NOT wrap /doctors/* in auth, guest, or admin.
 //    Laravel `guest` sends authenticated users to patient HOME (/dashboard).
+//
+// 6) Do NOT add 'detect.site' to Route::middleware() groups. DetectSiteMiddleware
+//    is already prepended to `web`; the alias is missing on production and
+//    caused `Target class [detect.site] does not exist` / HTTP 500 on /doctors*.
+//    DoctorsRouteServiceProvider uses only ['web'].
+//
+// 7) Guest auth redirects must stay on the doctors contour when the request
+//    is /doctors or Host doc.* (otherwise cabinet guests hit patient /login):
+//
+//     $middleware->redirectGuestsTo(function () {
+//         $request = request();
+//         $onDoctors = $request->is('doctors', 'doctors/*')
+//             || str_starts_with(strtolower($request->getHost()), 'doc.');
+//
+//         if ($onDoctors) {
+//             if (\Illuminate\Support\Facades\Route::has('doctors.path.login')) {
+//                 return route('doctors.path.login');
+//             }
+//             if (\Illuminate\Support\Facades\Route::has('doctors.login')) {
+//                 return route('doctors.login');
+//             }
+//         }
+//
+//         return route('login');
+//     });

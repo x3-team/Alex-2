@@ -20,7 +20,7 @@ class DoctorsRouteServiceProvider extends ServiceProvider
             // Never bind doctors routes to the patient apex host — that would
             // steal /login and /register from the patient site.
             if ($doctorsHost !== '' && $doctorsHost !== $apexHost) {
-                Route::middleware(['web', 'detect.site'])
+                Route::middleware(['web'])
                     ->domain($doctorsHost)
                     ->group(function () use ($registerDoctorsRoutes) {
                         $registerDoctorsRoutes('doctors.');
@@ -28,7 +28,7 @@ class DoctorsRouteServiceProvider extends ServiceProvider
             }
 
             if (config('doctors.path_preview')) {
-                Route::middleware(['web', 'detect.site'])
+                Route::middleware(['web'])
                     ->prefix($prefix)
                     ->group(function () use ($registerDoctorsRoutes) {
                         $registerDoctorsRoutes('doctors.path.');
