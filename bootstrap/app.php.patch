@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * Merge these changes into bootstrap/app.php on the production Laravel app.
+ */
+
+// 1) Register middleware aliases inside ->withMiddleware():
+//
+//     $middleware->alias([
+//         'detect.site' => \App\Http\Middleware\DetectSiteMiddleware::class,
+//         'doctor' => \App\Http\Middleware\EnsureDoctor::class,
+//     ]);
+//
+// 2) Prepend DetectSite to the web group (before auth redirects):
+//
+//     $middleware->web(prepend: [
+//         \App\Http\Middleware\DetectSiteMiddleware::class,
+//     ]);
+//
+// 3) Register DoctorsRouteServiceProvider in bootstrap/providers.php:
+//
+//     App\Providers\DoctorsRouteServiceProvider::class,

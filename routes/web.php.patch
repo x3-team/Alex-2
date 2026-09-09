@@ -1,0 +1,16 @@
+<?php
+
+/**
+ * Merge into routes/web.php on production.
+ */
+
+use App\Http\Controllers\Doctors\DoctorMaterialsController;
+use App\Services\DetectSite;
+use Illuminate\Support\Facades\Route;
+
+// Legacy public doctors materials URL (kept until doc.* cutover).
+Route::get('/doctor-materials', [DoctorMaterialsController::class, 'legacy'])
+    ->middleware(['web', 'detect.site'])
+    ->name('doctor-materials.legacy');
+
+// REMOVE any auth/admin middleware group that previously wrapped Route::prefix('doctors').
