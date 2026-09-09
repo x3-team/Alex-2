@@ -1,0 +1,18 @@
+:root {
+    --doctor-theme-color: #cba98e;
+}
+
+.sidebar-container.doctor-theme .promo-card,
+.site-sidebar.doctor-theme .promo-card {
+    background: var(--doctor-theme-color, #cba98e);
+}
+
+.sidebar-container.doctor-theme,
+.site-sidebar.doctor-theme,
+.doctors-sidebar {
+    --doctor-theme-color: #cba98e;
+}
+
+.doctors-shell {
+    --doctor-theme-color: #cba98e;
+}

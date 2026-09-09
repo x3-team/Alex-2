@@ -1,0 +1,26 @@
+<?php
+
+/**
+ * Merge into routes/web.php on production. Do not replace the file.
+ */
+
+use App\Http\Controllers\Doctors\DoctorMaterialsController;
+
+// 1) REMOVE the current auth gate on /doctors (production Ziggy: home.doctors).
+//    That route currently 302s guests to /login (patient Breeze).
+//    After DoctorsRouteServiceProvider is registered, GET /doctors is public
+//    and redirects to /doctors/materials. Delete or comment the old route:
+//
+//        Route::get('/doctors', ...)->name('home.doctors');
+//        Route::prefix('doctors')->middleware('auth')->group(...);
+
+// 2) Keep /doctor-materials public. Point it at Variant B (optional):
+Route::get('/doctor-materials', [DoctorMaterialsController::class, 'legacy'])
+    ->middleware(['web', 'detect.site'])
+    ->name('doctor-materials.legacy');
+
+// If production already has doctor-materials.index, change that route's
+// controller to DoctorMaterialsController@legacy instead of adding a duplicate.
+
+// 3) Patient dashboard must not become the doctor home:
+//    Route::middleware(['auth', 'doctor.not-patient'])->get('/dashboard', ...);
