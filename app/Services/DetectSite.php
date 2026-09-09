@@ -10,13 +10,63 @@ class DetectSite
 
     public const MODE_DOCTORS = 'doctors';
 
-    public function __construct(protected Request $request)
-    {
+    public function __construct(
+        protected Request $request,
+        protected ?array $configOverride = null,
+    ) {
     }
 
-    public static function make(?Request $request = null): self
+    public static function make(?Request $request = null, ?array $configOverride = null): self
     {
-        return new self($request ?? request());
+        return new self($request ?? request(), $configOverride);
+    }
+
+    /**
+     * Host is the doctors site when it equals APP_DOCTORS_HOST
+     * or matches the doc.* pattern (doc.alexallergotest.ru, doc.local.test).
+     */
+    public static function hostIsDoctors(string $host, string $configuredHost): bool
+    {
+        $host = strtolower(trim($host));
+        $configuredHost = strtolower(trim($configuredHost));
+
+        if ($host === '') {
+            return false;
+        }
+
+        if ($configuredHost !== '' && $host === $configuredHost) {
+            return true;
+        }
+
+        return str_starts_with($host, 'doc.');
+    }
+
+    public static function pathIsDoctors(string $path, string $prefix, bool $pathPreview): bool
+    {
+        if (! $pathPreview) {
+            return false;
+        }
+
+        $prefix = trim($prefix, '/');
+        $path = trim($path, '/');
+
+        return $path === $prefix || str_starts_with($path, $prefix.'/');
+    }
+
+    public static function prefixDoctorsUrl(string $path, string $prefix, bool $onDoctorsHost): string
+    {
+        $path = '/'.ltrim($path, '/');
+        if ($path === '//') {
+            $path = '/';
+        }
+
+        if ($onDoctorsHost) {
+            return $path === '//' ? '/' : $path;
+        }
+
+        $prefix = trim($prefix, '/');
+
+        return '/'.$prefix.($path === '/' ? '' : $path);
     }
 
     public function host(): string
@@ -26,24 +76,23 @@ class DetectSite
 
     public function configuredDoctorsHost(): string
     {
-        return strtolower((string) config('doctors.host'));
+        return strtolower((string) $this->doctorsConfig('host', 'doc.alexallergotest.ru'));
     }
 
     public function isDoctorsHost(): bool
     {
-        return $this->host() === $this->configuredDoctorsHost();
+        return self::hostIsDoctors($this->host(), $this->configuredDoctorsHost());
     }
 
     public function isDoctorsPath(): bool
     {
-        if (! config('doctors.path_preview')) {
-            return false;
-        }
+        $prefix = trim((string) $this->doctorsConfig('path_prefix', 'doctors'), '/');
 
-        $prefix = trim((string) config('doctors.path_prefix', 'doctors'), '/');
-
-        return $this->request->is($prefix)
-            || $this->request->is($prefix.'/*');
+        return self::pathIsDoctors(
+            $this->request->path(),
+            $prefix,
+            (bool) $this->doctorsConfig('path_preview', true),
+        );
     }
 
     public function isDoctorsSite(): bool
@@ -64,8 +113,8 @@ class DetectSite
             return '';
         }
 
-        if ($this->isDoctorsPath()) {
-            return '/'.trim((string) config('doctors.path_prefix', 'doctors'), '/');
+        if ($this->isDoctorsPath() || $this->doctorsConfig('path_preview', true)) {
+            return '/'.trim((string) $this->doctorsConfig('path_prefix', 'doctors'), '/');
         }
 
         return '';
@@ -74,7 +123,7 @@ class DetectSite
     public function themeColor(): ?string
     {
         return $this->isDoctorsSite()
-            ? (string) config('doctors.theme_color')
+            ? (string) $this->doctorsConfig('theme_color', '#cba98e')
             : null;
     }
 
@@ -87,14 +136,31 @@ class DetectSite
 
     public function doctorsUrl(string $path = '/'): string
     {
-        $path = '/'.ltrim($path, '/');
+        return self::prefixDoctorsUrl(
+            $path,
+            (string) $this->doctorsConfig('path_prefix', 'doctors'),
+            $this->isDoctorsHost(),
+        );
+    }
 
-        if ($this->isDoctorsHost()) {
-            return $path === '//' ? '/' : $path;
+    public function sharePayload(): array
+    {
+        return [
+            'mode' => $this->mode(),
+            'isDoctorsSite' => $this->isDoctorsSite(),
+            'isDoctorsHost' => $this->isDoctorsHost(),
+            'themeColor' => $this->themeColor(),
+            'routePrefix' => $this->routePrefix(),
+            'audience' => $this->audience(),
+        ];
+    }
+
+    protected function doctorsConfig(string $key, mixed $default = null): mixed
+    {
+        if (is_array($this->configOverride) && array_key_exists($key, $this->configOverride)) {
+            return $this->configOverride[$key];
         }
 
-        $prefix = trim((string) config('doctors.path_prefix', 'doctors'), '/');
-
-        return '/'.$prefix.($path === '/' ? '' : $path);
+        return config('doctors.'.$key, $default);
     }
 }

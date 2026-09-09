@@ -2,12 +2,21 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\DetectSite;
+use App\Http\Middleware\Concerns\SharesDoctorsSite;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
+/**
+ * MERGE ONLY — production already has HandleInertiaRequests.
+ *
+ * Do not copy this file over VPS. Add `use SharesDoctorsSite;` and merge
+ * `$this->doctorsSiteShare($request)` into the existing share() array.
+ * Replacing this class drops Ziggy, flash, and patient auth props.
+ */
 class HandleInertiaRequests extends Middleware
 {
+    use SharesDoctorsSite;
+
     protected $rootView = 'app';
 
     public function version(Request $request): ?string
@@ -17,21 +26,6 @@ class HandleInertiaRequests extends Middleware
 
     public function share(Request $request): array
     {
-        $detect = DetectSite::make($request);
-
-        return array_merge(parent::share($request), [
-            'csrf_token' => csrf_token(),
-            'auth' => [
-                'user' => $request->user(),
-            ],
-            'site' => [
-                'mode' => $detect->mode(),
-                'isDoctorsSite' => $detect->isDoctorsSite(),
-                'isDoctorsHost' => $detect->isDoctorsHost(),
-                'themeColor' => $detect->themeColor(),
-                'routePrefix' => $detect->routePrefix(),
-                'audience' => $detect->audience(),
-            ],
-        ]);
+        return array_merge(parent::share($request), $this->doctorsSiteShare($request));
     }
 }

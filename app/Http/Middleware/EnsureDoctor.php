@@ -19,10 +19,8 @@ class EnsureDoctor
 
         $user = $request->user();
 
-        if (! $user || ! $user->is_doctor) {
-            $loginPath = $detect->doctorsUrl('/login');
-
-            return redirect()->guest($loginPath);
+        if (! $user || ! ($user->is_doctor ?? false)) {
+            return redirect()->guest($detect->doctorsUrl('/login'));
         }
 
         return $next($request);

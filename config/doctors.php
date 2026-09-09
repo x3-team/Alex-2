@@ -8,6 +8,7 @@ return [
     |
     | Primary hostname for the public doctors site. Override locally with
     | APP_DOCTORS_HOST (e.g. doc.local.test) without changing production DNS.
+    | DetectSite also treats any Host that starts with "doc." as doctors.
     |
     */
     'host' => env('APP_DOCTORS_HOST', 'doc.alexallergotest.ru'),

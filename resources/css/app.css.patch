@@ -1,0 +1,3 @@
+/* Merge one line into production resources/css/app.css (do not replace the file): */
+
+@import './doctors-theme.css';

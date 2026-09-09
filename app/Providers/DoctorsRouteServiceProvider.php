@@ -13,14 +13,19 @@ class DoctorsRouteServiceProvider extends ServiceProvider
             /** @var callable(string): void $registerDoctorsRoutes */
             $registerDoctorsRoutes = require base_path('routes/doctors.php');
 
-            $doctorsHost = (string) config('doctors.host');
+            $doctorsHost = strtolower((string) config('doctors.host'));
             $prefix = trim((string) config('doctors.path_prefix', 'doctors'), '/');
+            $apexHost = strtolower((string) parse_url((string) config('app.url'), PHP_URL_HOST));
 
-            Route::middleware(['web', 'detect.site'])
-                ->domain($doctorsHost)
-                ->group(function () use ($registerDoctorsRoutes) {
-                    $registerDoctorsRoutes('doctors.');
-                });
+            // Never bind doctors routes to the patient apex host — that would
+            // steal /login and /register from the patient site.
+            if ($doctorsHost !== '' && $doctorsHost !== $apexHost) {
+                Route::middleware(['web', 'detect.site'])
+                    ->domain($doctorsHost)
+                    ->group(function () use ($registerDoctorsRoutes) {
+                        $registerDoctorsRoutes('doctors.');
+                    });
+            }
 
             if (config('doctors.path_preview')) {
                 Route::middleware(['web', 'detect.site'])

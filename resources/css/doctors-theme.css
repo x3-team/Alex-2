@@ -2,28 +2,17 @@
     --doctor-theme-color: #cba98e;
 }
 
-html:has(.doctor-mode),
-body:has(.doctor-mode) {
-    background-color: var(--doctor-theme-color);
-}
-
-.page-container.doctor-mode,
-.home-page-container.doctor-mode {
-    background: var(--doctor-theme-color);
-}
-
-@media (min-width: 1025px) {
-    .page-container.doctor-mode {
-        background: var(--doctor-theme-color);
-    }
-}
-
 .sidebar-container.doctor-theme .promo-card,
 .site-sidebar.doctor-theme .promo-card {
-    background: linear-gradient(178deg, color-mix(in srgb, var(--doctor-theme-color) 82%, #ffffff 18%), var(--doctor-theme-color));
+    background: var(--doctor-theme-color, #cba98e);
 }
 
 .sidebar-container.doctor-theme,
-.site-sidebar.doctor-theme {
+.site-sidebar.doctor-theme,
+.doctors-sidebar {
+    --doctor-theme-color: #cba98e;
+}
+
+.doctors-shell {
     --doctor-theme-color: #cba98e;
 }

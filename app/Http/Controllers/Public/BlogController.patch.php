@@ -2,10 +2,12 @@
 
 /**
  * Apply to the existing public BlogController (index/show/sitemap).
+ * Do not replace the VPS controller.
  *
  * - Add ->forCurrentSite() (or ->forAudience(DetectSite::make()->audience()))
  *   to every public blog listing/detail query.
  * - Sitemap: emit only posts matching current site audience from Host/path.
+ * - This keeps doctor-only posts off alexallergotest.ru/blog.
  */
 
 namespace App\Http\Controllers\Public;

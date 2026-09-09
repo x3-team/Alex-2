@@ -2,6 +2,7 @@
 
 /**
  * Merge these changes into bootstrap/app.php on the production Laravel app.
+ * Do not replace the file.
  */
 
 // 1) Register middleware aliases inside ->withMiddleware():
@@ -9,6 +10,7 @@
 //     $middleware->alias([
 //         'detect.site' => \App\Http\Middleware\DetectSiteMiddleware::class,
 //         'doctor' => \App\Http\Middleware\EnsureDoctor::class,
+//         'doctor.not-patient' => \App\Http\Middleware\RedirectDoctorFromPatientArea::class,
 //     ]);
 //
 // 2) Prepend DetectSite to the web group (before auth redirects):
@@ -20,3 +22,10 @@
 // 3) Register DoctorsRouteServiceProvider in bootstrap/providers.php:
 //
 //     App\Providers\DoctorsRouteServiceProvider::class,
+//
+// 4) Attach doctor.not-patient ONLY to patient dashboard (not /admin, not /search):
+//
+//     Route::middleware(['auth', 'doctor.not-patient'])->get('/dashboard', ...);
+//
+// 5) Do NOT wrap /doctors/* in auth, guest, or admin.
+//    Laravel `guest` sends authenticated users to patient HOME (/dashboard).

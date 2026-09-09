@@ -22,13 +22,12 @@ class DoctorAuthController extends Controller
     {
         $this->ensureDoctorsContour($detectSite);
 
-        if (Auth::check() && Auth::user()->is_doctor) {
+        if ($this->authenticatedDoctor()) {
             return redirect($detectSite->doctorsUrl('/cabinet'));
         }
 
         return Inertia::render('Doctors/Auth/Login', [
-            'site' => $this->sitePayload($detectSite),
-            'canResetPassword' => true,
+            'canResetPassword' => false,
             'status' => session('status'),
         ]);
     }
@@ -57,13 +56,11 @@ class DoctorAuthController extends Controller
     {
         $this->ensureDoctorsContour($detectSite);
 
-        if (Auth::check() && Auth::user()->is_doctor) {
+        if ($this->authenticatedDoctor()) {
             return redirect($detectSite->doctorsUrl('/cabinet'));
         }
 
-        return Inertia::render('Doctors/Auth/Register', [
-            'site' => $this->sitePayload($detectSite),
-        ]);
+        return Inertia::render('Doctors/Auth/Register');
     }
 
     public function storeRegister(Request $request, DetectSite $detectSite): RedirectResponse
@@ -77,13 +74,14 @@ class DoctorAuthController extends Controller
         ]);
 
         $userClass = config('auth.providers.users.model');
-
-        $user = $userClass::create([
+        $user = new $userClass;
+        $user->forceFill([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'password' => $this->passwordForCreate($user, $validated['password']),
             'is_doctor' => true,
         ]);
+        $user->save();
 
         event(new Registered($user));
 
@@ -102,20 +100,30 @@ class DoctorAuthController extends Controller
         return redirect($detectSite->doctorsUrl('/login'));
     }
 
+    protected function authenticatedDoctor(): bool
+    {
+        $user = Auth::user();
+
+        return $user && ($user->is_doctor ?? false);
+    }
+
+    /**
+     * Laravel 11+ User casts password to `hashed`. Hash::make would double-hash
+     * and make the next login fail.
+     */
+    public static function passwordForCreate(object $user, string $plain): string
+    {
+        if (method_exists($user, 'getCasts') && ($user->getCasts()['password'] ?? null) === 'hashed') {
+            return $plain;
+        }
+
+        return Hash::make($plain);
+    }
+
     protected function ensureDoctorsContour(DetectSite $detectSite): void
     {
         if (! $detectSite->isDoctorsSite()) {
             abort(404);
         }
-    }
-
-    protected function sitePayload(DetectSite $detectSite): array
-    {
-        return [
-            'mode' => $detectSite->mode(),
-            'isDoctorsSite' => true,
-            'themeColor' => $detectSite->themeColor(),
-            'routePrefix' => $detectSite->routePrefix(),
-        ];
     }
 }

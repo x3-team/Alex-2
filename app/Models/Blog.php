@@ -9,7 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Production app may already define Blog — merge HasBlogAudience trait and fillable audience.
+ * MERGE ONLY if production has no Blog model.
+ * On VPS: `use HasBlogAudience;` and add `audience` to $fillable. Do not overwrite.
  */
 class Blog extends Model
 {

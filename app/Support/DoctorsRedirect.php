@@ -8,6 +8,22 @@ use Symfony\Component\HttpFoundation\Response;
 
 class DoctorsRedirect
 {
+    public static function stripPathPrefix(string $path, string $prefix): ?string
+    {
+        $prefix = trim($prefix, '/');
+        $path = trim($path, '/');
+
+        if ($path === $prefix) {
+            return '/';
+        }
+
+        if (str_starts_with($path, $prefix.'/')) {
+            return '/'.substr($path, strlen($prefix) + 1);
+        }
+
+        return null;
+    }
+
     public static function maybeRedirectToSubdomain(Request $request): ?Response
     {
         if (! config('doctors.subdomain_redirect')) {
@@ -22,13 +38,9 @@ class DoctorsRedirect
 
         $doctorsHost = $detect->configuredDoctorsHost();
         $prefix = trim((string) config('doctors.path_prefix', 'doctors'), '/');
-        $path = $request->path();
+        $targetPath = self::stripPathPrefix($request->path(), $prefix);
 
-        if ($path === $prefix) {
-            $targetPath = '/';
-        } elseif (str_starts_with($path, $prefix.'/')) {
-            $targetPath = '/'.substr($path, strlen($prefix) + 1);
-        } else {
+        if ($targetPath === null) {
             return null;
         }
 

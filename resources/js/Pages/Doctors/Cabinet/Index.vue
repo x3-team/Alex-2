@@ -1,14 +1,13 @@
 <template>
     <Head title="Личный кабинет врача — ALEX LAB" />
 
-    <div class="page-container site-sidebar-layout doctor-mode" :style="doctorThemeStyle">
-        <SiteSidebar :doctor-mode="true" />
+    <div class="doctors-shell doctors-cabinet-page" data-audience="doctors">
+        <DoctorsSidebar active="cabinet" />
 
         <main class="doctor-cabinet-main">
             <h1>Личный кабинет врача</h1>
-            <p>Раздел в разработке. Вы вошли как {{ $page.props.auth.user?.name }}.</p>
-            <form method="post" :action="doctorsUrl('/logout')" @submit.prevent="logout">
-                <input type="hidden" name="_token" :value="$page.props.csrf_token" />
+            <p>Раздел в разработке. Вы вошли как {{ $page.props.auth?.user?.name }}.</p>
+            <form @submit.prevent="logout">
                 <button type="submit">Выйти</button>
             </form>
         </main>
@@ -16,20 +15,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import SiteSidebar from '@/Components/SiteSidebar.vue';
+import DoctorsSidebar from '@/Components/DoctorsSidebar.vue';
 import { useDoctorMode } from '@/composables/useDoctorMode';
 
-defineProps({
-    site: { type: Object, default: () => ({}) },
-});
-
-const { doctorsUrl, themeColor } = useDoctorMode();
-
-const doctorThemeStyle = computed(() => ({
-    '--doctor-theme-color': themeColor.value || '#cba98e',
-}));
+const { doctorsUrl } = useDoctorMode();
 
 const logout = () => {
     router.post(doctorsUrl('/logout'));
@@ -37,15 +27,22 @@ const logout = () => {
 </script>
 
 <style scoped>
+.doctors-cabinet-page {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    min-height: 100dvh;
+    background: #fff;
+}
+
 .doctor-cabinet-main {
     min-height: 100dvh;
     padding: 48px;
-    background: #f7f7f7;
+    background: #fff;
 }
 
 h1 {
     font-size: 32px;
-    font-weight: 400;
+    font-weight: 500;
     margin: 0 0 12px;
 }
 
@@ -57,5 +54,11 @@ button {
     color: #fff;
     padding: 12px 18px;
     cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+    .doctors-cabinet-page {
+        grid-template-columns: 1fr;
+    }
 }
 </style>

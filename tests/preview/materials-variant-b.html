@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Вариант B — preview</title>
+  <style>
+    :root { --doctor-theme-color: #cba98e; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, Roboto, system-ui, sans-serif; background: #fff; color: #111; }
+    .doctors-materials-page { display: grid; grid-template-columns: 360px 1fr; min-height: 100vh; }
+    .doctors-sidebar { border-right: 1px solid #dfdfdf; display: flex; flex-direction: column; }
+    .doctors-sidebar-brand { background: #cba98e; color: #fff; padding: 28px 24px; }
+    .doctors-sidebar-wordmark { font-size: 42px; font-weight: 700; letter-spacing: .08em; display: block; }
+    .doctors-sidebar-tagline { font-size: 14px; opacity: .9; }
+    .doctors-sidebar-lead { margin: 16px 0 20px; font-size: 15px; line-height: 1.35; color: rgba(255,255,255,.88); }
+    .doctors-sidebar-search input { width: 100%; border: 0; border-radius: 10px; padding: 12px 14px; font-size: 16px; }
+    .doctors-sidebar-item { display: flex; gap: 12px; padding: 14px 20px; text-decoration: none; color: #111; }
+    .doctors-sidebar-item.is-active { background: #f6f1eb; border-left: 3px solid #cba98e; font-weight: 500; }
+    .materials-topbar { padding: 20px 32px; border-bottom: 1px solid #efefef; color: #999; }
+    .materials-content { max-width: 980px; margin: 0 auto; padding: 48px 32px 80px; }
+    h1 { font-size: 48px; font-weight: 500; margin: 0 0 16px; }
+    .lead { font-size: 18px; color: rgba(0,0,0,.55); max-width: 720px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 32px 0; }
+    .chip { border: 1px solid rgba(0,0,0,.28); border-radius: 999px; padding: 8px 16px; background: #fff; }
+    .chip.active { background: #111; color: #fff; }
+    .feed-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ececec; padding-bottom: 12px; margin-bottom: 28px; }
+    .tabs { display: flex; gap: 24px; }
+    .tab { color: rgba(0,0,0,.4); padding-bottom: 10px; }
+    .tab.active { color: #111; box-shadow: inset 0 -2px 0 #cba98e; }
+    .card-meta { display: flex; gap: 8px; margin-bottom: 12px; }
+    .badge { background: #f4f4f4; border-radius: 8px; padding: 6px 12px; font-size: 14px; }
+    .media { height: 320px; background: #ddd; position: relative; }
+    .play { position: absolute; inset: 0; display: grid; place-items: center; }
+    .play span { width: 72px; height: 72px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+    .author { display: flex; gap: 12px; align-items: center; margin: 16px 0; }
+    .avatar { width: 48px; height: 48px; border-radius: 50%; background: #eee; display: grid; place-items: center; }
+    h3 { font-size: 28px; font-weight: 500; margin: 0 0 8px; }
+    .excerpt { color: rgba(0,0,0,.58); }
+    .docs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+    .plaque { background: #f7f5f2; border: 1px solid #ece7e1; border-radius: 16px; padding: 24px; min-height: 160px; display: flex; flex-direction: column; justify-content: space-between; }
+    .plaque footer { display: flex; justify-content: space-between; color: rgba(0,0,0,.6); }
+    .arrow { width: 32px; height: 32px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+    .docs-head { display: flex; justify-content: space-between; align-items: center; margin-top: 48px; }
+  </style>
+</head>
+<body>
+  <div class="doctors-materials-page">
+    <aside class="doctors-sidebar">
+      <div class="doctors-sidebar-brand">
+        <span class="doctors-sidebar-wordmark">ALEX</span>
+        <span class="doctors-sidebar-tagline">Allergy Explorer</span>
+        <p class="doctors-sidebar-lead">Молекулярная диагностика ALEX2 — материалы, алгоритмы и документы для специалистов.</p>
+        <div class="doctors-sidebar-search"><input value="" placeholder="Поиск" /></div>
+      </div>
+      <a class="doctors-sidebar-item" href="#">Поиск аллергенов</a>
+      <a class="doctors-sidebar-item" href="#">Посмотреть демо-результат</a>
+      <a class="doctors-sidebar-item is-active" href="#">Материалы для врачей</a>
+      <a class="doctors-sidebar-item" href="#">Личный кабинет</a>
+      <a class="doctors-sidebar-item" href="#">Интерпретация ALEX LAB</a>
+    </aside>
+    <main>
+      <div class="materials-topbar">Главная / Материалы для врачей</div>
+      <div class="materials-content">
+        <h1>Материалы для врачей</h1>
+        <p class="lead">Статьи, видеолекции и документы лаборатории о молекулярной диагностике ALEX2 — для специалистов и пациентов.</p>
+        <div class="chips">
+          <span class="chip active">Все</span>
+          <span class="chip">Алгоритмы</span>
+          <span class="chip">Мифы и факты</span>
+          <span class="chip">Диагностика</span>
+          <span class="chip">Новости и события</span>
+          <span class="chip">Анонсы</span>
+          <span class="chip">Ошибки врача</span>
+          <span class="chip">Семинары</span>
+        </div>
+        <div class="feed-header">
+          <div class="tabs"><span class="tab active">Материалы</span><span class="tab">Статьи</span><span class="tab">Видео</span></div>
+          <div>Выводить по <select><option>Сначала новые</option></select></div>
+        </div>
+        <article>
+          <div class="card-meta">
+            <span class="badge">14 августа 2024</span>
+            <span class="badge">14:13</span>
+            <span class="badge">YouTube</span>
+            <span class="badge">Диагностика</span>
+          </div>
+          <div class="media"><div class="play"><span>▶</span></div></div>
+          <div class="author"><div class="avatar">П</div><div><strong>Петров Пётр Петрович</strong><div>Аллерголог</div></div></div>
+          <h3>Молекулярная диагностика при подозрении на анафилаксию: алгоритм действий</h3>
+          <p class="excerpt">Краткий разбор маршрута врача: сбор анамнеза, выбор панели ALEX2 и интерпретация молекулярного профиля.</p>
+        </article>
+        <div class="docs-head"><h2>Документы лаборатории</h2><span>Все документы ↗</span></div>
+        <div class="docs">
+          <div class="plaque"><div><h3>Лицензии и аккредитации</h3><p>Разрешительная документация лаборатории</p></div><footer><span>3 документа</span><span class="arrow">→</span></footer></div>
+          <div class="plaque"><div><h3>Инструкции и методики</h3><p>Методические материалы для специалистов</p></div><footer><span>Документы</span><span class="arrow">→</span></footer></div>
+          <div class="plaque"><div><h3>Бланки и формы</h3><p>Формы и шаблоны для работы с пациентами</p></div><footer><span>Документы</span><span class="arrow">→</span></footer></div>
+          <div class="plaque"><div><h3>Контроль качества</h3><p>Документы системы менеджмента качества</p></div><footer><span>Документы</span><span class="arrow">→</span></footer></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

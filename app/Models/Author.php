@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * MERGE ONLY — do not overwrite the production Author model.
+ */
 class Author extends Model
 {
     protected $table = 'authors';
