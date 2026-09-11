@@ -683,7 +683,7 @@ const doctorStoryHasMobile = (index) => (index >= 3 && index <= 6) || index === 
 
 const doctorForwardPlaybackRate = (src) => {
     const value = String(src || '');
-    return value.includes('s3-chip') || value.includes('/s3.') || /(^|\/)s3\.webm/.test(value) ? 1.2 : 1;
+    return value.includes('s3-chip') || value.includes('/s3.') || /(^|\/)s3\.webm/.test(value) ? 1.44 : 1;
 };
 
 const getSlideVideo = (slide) => {
