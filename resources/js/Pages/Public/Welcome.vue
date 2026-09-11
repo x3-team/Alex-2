@@ -665,8 +665,8 @@ const doctorStoryFile = (index, reverse = false) =>
               : 's4-chipzoom-v82.webm'
           : index === 5
             ? reverse
-                ? 's5r-pan-v2.webm'
-                : 's5-pan-v2.webm'
+                ? 's5r-ige-v84.webm'
+                : 's5-ige-v84.webm'
             : index === 6
               ? reverse
                   ? 's6r-ccd-v3.webm'
@@ -978,7 +978,7 @@ const doctorSlideCopy = Object.freeze({
     },
     'slide-5': {
         title: 'Профиль сенсибилизации',
-        subtitle: 'Структурированный отчёт с результатами определения специфических IgE к 300 экстрактам и молекулярным аллергенам.',
+        subtitle: 'Показывает весь спектр сенсибилизации к каждому компоненту.',
     },
     'slide-6': {
         title: 'CCD-ингибиция',
