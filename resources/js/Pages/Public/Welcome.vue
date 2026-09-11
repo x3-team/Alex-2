@@ -671,11 +671,15 @@ const doctorStoryFile = (index, reverse = false) =>
               ? reverse
                   ? 's6r-ccd-v3.webm'
                   : 's6-ccd-v3.webm'
-              : reverse
-                ? `s${index}r.webm`
-                : `s${index}.webm`;
+              : index === 8
+                ? reverse
+                    ? 's8r-zoomout-v1.webm'
+                    : 's8-zoomout-v1.webm'
+                : reverse
+                  ? `s${index}r.webm`
+                  : `s${index}.webm`;
 
-const doctorStoryHasMobile = (index) => index >= 3 && index <= 6;
+const doctorStoryHasMobile = (index) => (index >= 3 && index <= 6) || index === 8;
 
 const getSlideVideo = (slide) => {
     if (!slide) {
