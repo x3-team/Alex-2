@@ -654,6 +654,29 @@ const isMobile = ref(false);
 const mobileMenuOpen = ref(false);
 const mobileSectionMenuOpen = ref(false);
 
+const doctorStoryFile = (index, reverse = false) =>
+    index === 3
+        ? reverse
+            ? 's3r-chip-v80.webm'
+            : 's3-chip-v80.webm'
+        : index === 4
+          ? reverse
+              ? 's4r-chipzoom-v82.webm'
+              : 's4-chipzoom-v82.webm'
+          : index === 5
+            ? reverse
+                ? 's5r-ige-v84.webm'
+                : 's5-ige-v84.webm'
+            : index === 6
+              ? reverse
+                  ? 's6r-ccd-v2.webm'
+                  : 's6-ccd-v2.webm'
+              : reverse
+                ? `s${index}r.webm`
+                : `s${index}.webm`;
+
+const doctorStoryHasMobile = (index) => index >= 3 && index <= 6;
+
 const getSlideVideo = (slide) => {
     if (!slide) {
         return '';
@@ -661,17 +684,9 @@ const getSlideVideo = (slide) => {
 
     const doctorVideoIndex = doctorVideoIndexBySlide[slide.id];
     if (isDoctorMode.value && doctorVideoIndex) {
-        const file =
-            doctorVideoIndex === 3
-                ? 's3-chip-v80.webm'
-                : doctorVideoIndex === 4
-                  ? 's4-chipzoom-v82.webm'
-                  : doctorVideoIndex === 5
-                    ? 's5-ige-v84.webm'
-                    : doctorVideoIndex === 6
-                      ? 's6-ccd-v1.webm'
-                      : `s${doctorVideoIndex}.webm`;
-        return `${DOCTOR_VIDEO_BASE}/main/${file}?v=${SITE_VERSION}`;
+        const file = doctorStoryFile(doctorVideoIndex, false);
+        const folder = isMobile.value && doctorStoryHasMobile(doctorVideoIndex) ? 'mob/main' : 'main';
+        return `${DOCTOR_VIDEO_BASE}/${folder}/${file}?v=${SITE_VERSION}`;
     }
 
     return isMobile.value && hasOwn(slide, 'mobileVideo') ? slide.mobileVideo : slide.video || '';
@@ -684,17 +699,9 @@ const getSlideReverseVideo = (slide) => {
 
     const doctorVideoIndex = doctorVideoIndexBySlide[slide.id];
     if (isDoctorMode.value && doctorVideoIndex) {
-        const file =
-            doctorVideoIndex === 3
-                ? 's3r-chip-v80.webm'
-                : doctorVideoIndex === 4
-                  ? 's4r-chipzoom-v82.webm'
-                  : doctorVideoIndex === 5
-                    ? 's5r-ige-v84.webm'
-                    : doctorVideoIndex === 6
-                      ? 's6r-ccd-v1.webm'
-                      : `s${doctorVideoIndex}r.webm`;
-        return `${DOCTOR_VIDEO_BASE}/rev/${file}?v=${SITE_VERSION}`;
+        const file = doctorStoryFile(doctorVideoIndex, true);
+        const folder = isMobile.value && doctorStoryHasMobile(doctorVideoIndex) ? 'mob/rev' : 'rev';
+        return `${DOCTOR_VIDEO_BASE}/${folder}/${file}?v=${SITE_VERSION}`;
     }
 
     return isMobile.value && hasOwn(slide, 'mobileReverseVideo') ? slide.mobileReverseVideo : slide.reverseVideo || '';

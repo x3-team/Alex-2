@@ -154,10 +154,14 @@ const siteVersion = readFileSync(join(root, 'resources/js/siteVersion.js'), 'utf
 assert.match(welcome, /shouldIncludePatientSlide7\(isDoctorMode\.value\)/);
 assert.match(welcome, /advantageStepTotal\(isDoctorMode\.value\)/);
 assert.match(welcome, /PATIENT_SLIDE_7_VIDEOS/);
-assert.match(welcome, /s6-ccd-v1\.webm/);
-assert.match(welcome, /s6r-ccd-v1\.webm/);
+assert.match(welcome, /s6-ccd-v2\.webm/);
+assert.match(welcome, /s6r-ccd-v2\.webm/);
+assert.doesNotMatch(welcome, /s6-ccd-v1\.webm/);
+assert.doesNotMatch(welcome, /s6r-ccd-v1\.webm/);
+assert.match(welcome, /const doctorStoryFile = /);
+assert.match(welcome, /const doctorStoryHasMobile = /);
 assert.match(welcome, /DOCTOR_DELAYED_TEXT_SLIDE_IDS = new Set\(\['slide-4', 'slide-5', 'slide-6'\]\)/);
 assert.doesNotMatch(welcome, /totalSteps: '4'/);
-assert.match(siteVersion, /1\.0\.94/);
+assert.match(siteVersion, /1\.0\.95/);
 
 console.log('welcome-slide-deck tests passed');
