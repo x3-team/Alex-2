@@ -675,11 +675,15 @@ const doctorStoryFile = (index, reverse = false) =>
                 ? reverse
                     ? 's8r-zoomout-v1.webm'
                     : 's8-zoomout-v1.webm'
-                : reverse
-                  ? `s${index}r.webm`
-                  : `s${index}.webm`;
+                : index === 9
+                  ? reverse
+                      ? 's9r-pan-v2.webm'
+                      : 's9-pan-v2.webm'
+                  : reverse
+                    ? `s${index}r.webm`
+                    : `s${index}.webm`;
 
-const doctorStoryHasMobile = (index) => (index >= 3 && index <= 6) || index === 8;
+const doctorStoryHasMobile = (index) => (index >= 3 && index <= 6) || index === 8 || index === 9;
 
 const doctorForwardPlaybackRate = (src) => {
     const value = String(src || '');
@@ -976,16 +980,16 @@ const doctorSlideCopy = Object.freeze({
     'slide-2': {
         title: 'ALEX² — лучший тест на аллергию, что есть на рынке.',
     },
-    'slide-5': {
-        title: 'Профиль сенсибилизации',
-        subtitle: 'Показывает весь спектр сенсибилизации к каждому компоненту.',
-    },
     'slide-6': {
         title: 'CCD-ингибиция',
         subtitle: 'Блокирует перекрёстную реакцию на углеводные детерминанты — точнее различает истинную сенсибилизацию.',
     },
     'slide-8': {
         title: 'Как назначать тест пациентам',
+    },
+    'slide-9': {
+        title: 'Профиль сенсибилизации',
+        subtitle: 'Структурированный отчёт с результатами определения специфических IgE к 300 экстрактам и молекулярным аллергенам.',
     },
 });
 
