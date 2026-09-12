@@ -5,7 +5,7 @@ import SiteSidebar from '@/Components/SiteSidebar.vue'
 import DoctorVideoCard from '@/Components/DoctorVideoCard.vue'
 import PublicFooter from '@/Components/PublicFooter.vue'
 import { useDoctorMode } from '@/composables/useDoctorMode'
-import '../../../css/main.css'
+import '../../../../css/main.css'
 
 const props = defineProps({
   video: { type: Object, required: true },

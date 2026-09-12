@@ -4,7 +4,7 @@ import SiteSidebar from '@/Components/SiteSidebar.vue'
 import DoctorTypeChips from '@/Components/DoctorTypeChips.vue'
 import DoctorVideoCard from '@/Components/DoctorVideoCard.vue'
 import PublicFooter from '@/Components/PublicFooter.vue'
-import '../../../css/main.css'
+import '../../../../css/main.css'
 
 defineProps({
   videos: { type: Array, default: () => [] },
