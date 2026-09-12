@@ -692,7 +692,6 @@ const ogImage = computed(() => {
 }
 .feed-toolbar.is-doctor {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 16px 24px;
@@ -703,12 +702,19 @@ const ogImage = computed(() => {
   flex-wrap: wrap;
   align-items: center;
   gap: 24px;
+  min-width: 0;
 }
 .feed-toolbar.is-doctor .feed-toolbar-lead > div {
   margin-bottom: 0;
 }
 .feed-toolbar.is-doctor .feed-toolbar-tags {
+  flex-shrink: 0;
   margin-bottom: 0;
+}
+@media (max-width: 1024px) {
+  .feed-toolbar.is-doctor {
+    flex-wrap: wrap;
+  }
 }
 .doctor-feed-play {
   position: absolute;
