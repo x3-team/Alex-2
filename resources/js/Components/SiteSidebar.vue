@@ -171,9 +171,8 @@ const openAudienceContent = () => {
 
 const openProfile = () => {
   if (isDoctor.value) {
-    const user = page.props.auth?.user
-    goTo(doctorsUrl(user?.is_doctor ? '/cabinet' : '/login'))
     closeMobileMenu()
+    openDevModal()
     return
   }
   goTo('/blog')

@@ -37,10 +37,15 @@
                 <img src="/assets/figma-doctor-materials-icon.svg" alt="" width="24" height="24" decoding="async" />
                 <span>Блог</span>
             </Link>
-            <Link :href="profileHref" class="doctors-sidebar-item" :class="{ 'is-active': isCabinet }">
+            <button
+                type="button"
+                class="doctors-sidebar-item"
+                :class="{ 'is-active': isCabinet }"
+                @click="openCabinetStub"
+            >
                 <img src="/assets/figma-profile-icon.svg" alt="" width="24" height="24" decoding="async" />
                 <span>Личный кабинет</span>
-            </Link>
+            </button>
             <Link href="/alex-lab" class="doctors-sidebar-item">
                 <img src="/assets/figma-about-icon.svg" alt="" width="24" height="24" decoding="async" />
                 <span>Интерпретация ALEX LAB</span>
@@ -49,6 +54,7 @@
 
         <p class="doctors-sidebar-version">v{{ siteVersion }}</p>
     </aside>
+    <CabinetDevModal :open="isDevModalOpen" @close="isDevModalOpen = false" />
 </template>
 
 <script setup>
@@ -56,6 +62,7 @@ import { computed, ref } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { SITE_VERSION } from '@/siteVersion.js';
 import { useDoctorMode } from '@/composables/useDoctorMode';
+import CabinetDevModal from '@/Components/CabinetDevModal.vue';
 
 const props = defineProps({
     active: { type: String, default: 'blog' },
@@ -68,12 +75,11 @@ const query = ref(String(page.props.filters?.q || ''));
 
 const isBlog = computed(() => props.active === 'blog');
 const isCabinet = computed(() => props.active === 'cabinet');
+const isDevModalOpen = ref(false);
 
-const profileHref = computed(() => {
-    const user = page.props.auth?.user;
-
-    return doctorsUrl(user?.is_doctor ? '/cabinet' : '/login');
-});
+const openCabinetStub = () => {
+    isDevModalOpen.value = true;
+};
 
 const submitSearch = () => {
     router.get(
@@ -152,6 +158,17 @@ const submitSearch = () => {
     text-decoration: none;
     font-size: 16px;
     border-left: 3px solid transparent;
+}
+
+button.doctors-sidebar-item {
+    width: 100%;
+    background: none;
+    border-top: 0;
+    border-right: 0;
+    border-bottom: 0;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
 }
 
 .doctors-sidebar-item img {
