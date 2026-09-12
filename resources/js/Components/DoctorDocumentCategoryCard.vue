@@ -16,7 +16,6 @@ const { doctorsUrl } = useDoctorMode()
       <p v-if="category.description">{{ category.description }}</p>
     </div>
     <div class="doctor-doc-cat-meta">
-      <span>{{ category.count_label }}</span>
       <img src="/assets/figma-arrow-right.svg" alt="" width="24" height="24" />
     </div>
   </Link>
@@ -51,12 +50,9 @@ const { doctorsUrl } = useDoctorMode()
 
 .doctor-doc-cat-meta {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-top: 24px;
-  color: rgba(0, 0, 0, 0.45);
-  font-family: Roboto, Arial, sans-serif;
-  font-size: 16px;
 }
 
 .doctor-doc-cat-meta img {

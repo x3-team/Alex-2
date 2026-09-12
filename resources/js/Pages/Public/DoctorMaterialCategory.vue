@@ -45,7 +45,6 @@ const { doctorsUrl } = useDoctorMode()
       <h1 class="font-400 text-[28px] sm:text-[34px] xl:text-[42px]">{{ category.name }}</h1>
       <p class="mt-3 text-[16px] xl:text-[21px] text-black" style="line-height: 1.35">
         {{ category.description || 'Документы категории.' }}
-        <template v-if="category.count_label"> {{ category.count_label }}.</template>
       </p>
     </div>
 

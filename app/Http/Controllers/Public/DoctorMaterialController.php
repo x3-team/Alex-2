@@ -42,7 +42,7 @@ class DoctorMaterialController extends Controller
         return Inertia::render('Public/DoctorMaterials', [
             'view' => 'all',
             'feed' => $feed,
-            'categories' => $store->categoriesWithCounts(),
+            'categories' => $store->publicCategories(),
             'materials' => $store->files(),
             'seoMeta' => $this->seoMeta('Материалы для врачей — ALEX LAB', 'Статьи, видеолекции и документы лаборатории.'),
         ]);
@@ -56,7 +56,7 @@ class DoctorMaterialController extends Controller
         return Inertia::render('Public/DoctorMaterials', [
             'view' => 'documents',
             'feed' => [],
-            'categories' => $store->categoriesWithCounts(),
+            'categories' => $store->publicCategories(),
             'materials' => $store->files(),
             'seoMeta' => $this->seoMeta(),
         ]);
@@ -78,16 +78,12 @@ class DoctorMaterialController extends Controller
 
         $files = $store->filesForCategory($category['id']);
         $others = array_values(array_filter(
-            $store->categoriesWithCounts(),
+            $store->publicCategories(),
             fn ($item) => $item['id'] !== $category['id']
         ));
 
         return Inertia::render('Public/DoctorMaterialCategory', [
-            'category' => [
-                ...$category,
-                'count' => count($files),
-                'count_label' => DoctorMaterialsStore::ruDocuments(count($files)),
-            ],
+            'category' => $category,
             'materials' => $files,
             'otherCategories' => $others,
             'seoMeta' => $this->seoMeta(),

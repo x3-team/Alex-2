@@ -27,7 +27,11 @@ const form = useForm({
 
 const isEditingSeo = ref(false)
 
+const MAX_CATEGORIES = 6
+const canAddCategory = () => form.categories.length < MAX_CATEGORIES
+
 const addCategory = () => {
+  if (!canAddCategory()) return
   form.categories.push({ id: newId(), name: '', slug: '', description: '' })
 }
 
@@ -117,8 +121,16 @@ const submit = () => {
         <form @submit.prevent="submit" class="space-y-6">
           <div class="bg-white p-6 rounded-lg border">
             <div class="flex justify-between mb-4">
-              <h3 class="text-lg font-medium">Категории</h3>
-              <button type="button" class="text-sm bg-blue-50 text-blue-600 px-3 py-1.5 rounded-md" @click="addCategory">
+              <div>
+                <h3 class="text-lg font-medium">Категории</h3>
+                <p class="text-xs text-gray-500">До {{ MAX_CATEGORIES }} плашек. На сайте рисуются только созданные категории.</p>
+              </div>
+              <button
+                type="button"
+                class="text-sm bg-blue-50 text-blue-600 px-3 py-1.5 rounded-md disabled:opacity-40"
+                :disabled="!canAddCategory()"
+                @click="addCategory"
+              >
                 + Категория
               </button>
             </div>

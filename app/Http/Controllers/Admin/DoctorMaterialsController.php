@@ -30,7 +30,7 @@ class DoctorMaterialsController extends Controller
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'categories' => 'present|array',
+            'categories' => 'present|array|max:'.DoctorMaterialsStore::MAX_CATEGORIES,
             'categories.*.id' => 'nullable|string|max:64',
             'categories.*.name' => 'required|string|max:255',
             'categories.*.slug' => 'nullable|string|max:255',
@@ -65,7 +65,7 @@ class DoctorMaterialsController extends Controller
                 'slug' => $slug,
                 'description' => trim((string) ($row['description'] ?? '')),
             ];
-        }, $validated['categories']);
+        }, array_slice($validated['categories'], 0, DoctorMaterialsStore::MAX_CATEGORIES));
 
         $categoryIds = array_column($categories, 'id');
         $files = array_map(function (array $row) use ($categoryIds) {

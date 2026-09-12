@@ -29,6 +29,11 @@ class DoctorEmbedTest extends TestCase
         $this->assertNull(DoctorEmbed::iframeSrc('https://example.com/not-a-video'));
     }
 
+    public function test_public_category_plaques_are_capped_at_six(): void
+    {
+        $this->assertSame(6, DoctorMaterialsStore::MAX_CATEGORIES);
+    }
+
     public function test_document_count_label(): void
     {
         $this->assertSame('1 документ', DoctorMaterialsStore::ruDocuments(1));

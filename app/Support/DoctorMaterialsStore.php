@@ -11,6 +11,8 @@ class DoctorMaterialsStore
 
     public const CATEGORIES_KEY = 'doctor_material_categories';
 
+    public const MAX_CATEGORIES = 6;
+
     public function categories(): array
     {
         return array_values(array_filter(array_map(function ($row) {
@@ -52,6 +54,11 @@ class DoctorMaterialsStore
                 'category_id' => trim((string) ($row['category_id'] ?? '')),
             ];
         }, $this->decode(self::FILES_KEY))));
+    }
+
+    public function publicCategories(): array
+    {
+        return array_slice($this->categories(), 0, self::MAX_CATEGORIES);
     }
 
     public function categoryBySlug(string $slug): ?array
