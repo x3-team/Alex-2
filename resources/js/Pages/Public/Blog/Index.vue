@@ -567,7 +567,11 @@ const ogImage = computed(() => {
             </div>
             <h3 class="text-xl font-medium text-gray-900 mb-2">Ничего не найдено</h3>
             <p class="text-gray-500 mb-4">Попробуйте изменить параметры поиска</p>
-            <button @click="resetFilters" class="px-6 py-2 bg-emerald-700 text-white rounded-xl hover:bg-emerald-800 font-medium transition-colors">
+            <button
+              @click="resetFilters"
+              class="bg-black text-white px-6 py-3 font-medium transition-all but_cust"
+              style="border: 1px solid rgba(0, 0, 0, 0.4); border-radius: 8px"
+            >
               Сбросить фильтры
             </button>
           </div>
