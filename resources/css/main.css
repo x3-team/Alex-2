@@ -5049,6 +5049,7 @@ body:has(.home-page-container.doctor-mode) {
         --mobile-copy-shift: 0px;
         --mobile-pager-shift: 0px;
         --mobile-advantages-lift: clamp(0px, calc(450px - 120vw), 44px);
+        --mobile-advantages-drop: 0px;
         --mobile-results-lift: clamp(0px, calc(375px - 100vw), 20px);
         --mobile-glass-top-alpha: 0;
         --mobile-glass-shoulder-alpha: 0;
@@ -5056,6 +5057,21 @@ body:has(.home-page-container.doctor-mode) {
         --mobile-glass-mid-alpha: 0.62;
         --mobile-glass-mid-stop: 42%;
         --mobile-glass-bottom-alpha: 0.9;
+    }
+
+    /* Lower the 4 advantage steps + copy + bottom scrim together on phones
+       so the video stays open at the top. Desktop is unchanged. 40px = two
+       requested 20px drops from the original mobile position. */
+    .home-page-container .home-content:is(
+        [data-active-slide="slide-3"],
+        [data-active-slide="slide-4"],
+        [data-active-slide="slide-5"],
+        [data-active-slide="slide-6"],
+        [data-active-slide="slide-7"]
+    ) {
+        --mobile-copy-shift: 40px;
+        --mobile-pager-shift: 40px;
+        --mobile-advantages-drop: 40px;
     }
 
     .home-page-container .home-content[data-active-slide="slide-3"] {
@@ -5077,6 +5093,13 @@ body:has(.home-page-container.doctor-mode) {
         --mobile-glass-mid-alpha: 0.68;
         --mobile-glass-mid-stop: 37%;
         --mobile-glass-bottom-alpha: 0.92;
+    }
+
+    /* Doctor step 3: keep copy/pager below the in-video «Allergen specific IgE» plate.
+       Haze stays on the shared 40px drop so the block still moves as one. */
+    .home-page-container.doctor-mode .home-content[data-active-slide="slide-5"] {
+        --mobile-copy-shift: 76px;
+        --mobile-pager-shift: 76px;
     }
 
     .home-page-container .home-content[data-active-slide="slide-6"] {
@@ -5144,7 +5167,7 @@ body:has(.home-page-container.doctor-mode) {
         right: 0 !important;
         bottom: 0 !important;
         width: 100% !important;
-        height: calc(470 * var(--mobile-unit)) !important;
+        height: calc(470 * var(--mobile-unit) - var(--mobile-advantages-drop, 0px)) !important;
         border-radius: 0 !important;
         overflow: visible;
         isolation: isolate;
