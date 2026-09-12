@@ -706,8 +706,9 @@ const ogImage = computed(() => {
 }
 .feed-toolbar.is-doctor .feed-toolbar-lead > div {
   margin-bottom: 0;
-  width: auto;
-  flex: 0 0 auto;
+  width: max-content;
+  max-width: 100%;
+  flex: 0 1 auto;
 }
 .feed-toolbar.is-doctor .feed-toolbar-tags {
   flex-shrink: 0;
