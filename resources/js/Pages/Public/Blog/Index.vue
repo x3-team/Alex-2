@@ -706,7 +706,15 @@ const ogImage = computed(() => {
 }
 @media (max-width: 1024px) {
   .feed-toolbar.is-doctor .feed-toolbar-row {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    gap: 12px;
+  }
+  .feed-toolbar.is-doctor .feed-toolbar-tags {
+    margin-left: 0;
+    width: auto;
+    max-width: 100%;
   }
 }
 .doctor-feed-play {
@@ -756,6 +764,11 @@ const ogImage = computed(() => {
   gap: 33px;
 }
 @media (max-width: 1024px) {
+  .doctor-hub-docs-head {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
   .doctor-hub-docs-head h2 { font-size: 24px; }
   .doctor-doc-grid { grid-template-columns: 1fr; gap: 16px; }
 }

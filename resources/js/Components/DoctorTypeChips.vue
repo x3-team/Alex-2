@@ -37,6 +37,22 @@ const chips = [
   gap: 5px;
 }
 
+@media (max-width: 1024px) {
+  .doctor-type-chips {
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .doctor-type-chips::-webkit-scrollbar {
+    display: none;
+  }
+  .doctor-type-chip {
+    flex-shrink: 0;
+  }
+}
+
 .doctor-type-chip {
   display: inline-flex;
   align-items: center;
