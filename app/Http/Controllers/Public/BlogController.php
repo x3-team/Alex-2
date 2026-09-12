@@ -167,7 +167,7 @@ class BlogController extends Controller
                 'title' => $metaTitle,
                 'description' => $metaDescription,
                 'keywords' => $metaKeywords,
-                'noindex' => $isDoctors && $blogs->total() === 0,
+                'noindex' => $isDoctors,
             ],
         ]);
     }

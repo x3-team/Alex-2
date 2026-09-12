@@ -144,10 +144,12 @@
                 }
             }
             $noindexPaths = ['cart', 'login', 'register', 'up', 'recover', 'patient/login'];
+            $isDoctorsSite = (bool) data_get($seoProps, 'site.isDoctorsSite');
             $blogNoindex = (bool) data_get($seoProps, 'blog.noindex')
                 || (bool) data_get($seoProps, 'blogMeta.noindex')
                 || (bool) data_get($seoProps, 'videosMeta.noindex')
-                || (bool) data_get($seoProps, 'seoMeta.noindex');
+                || (bool) data_get($seoProps, 'seoMeta.noindex')
+                || ($isDoctorsSite && $seoPath !== '/' && $seoPath !== '');
             $robotsMeta = ($blogNoindex || in_array($seoPath, $noindexPaths, true))
                 ? ($blogNoindex ? 'noindex' : 'noindex, nofollow')
                 : null;
@@ -241,6 +243,15 @@
                 )
             ) {
                 $canonicalUrl .= '?page='.$pageNum;
+            }
+
+            // Doctor-only URLs must not canonicalize to apex 404s (/video, /materials).
+            if ($isDoctorsSite && (str_starts_with((string) $seoPath, 'video') || str_starts_with((string) $seoPath, 'materials'))) {
+                $doctorOrigin = rtrim((string) data_get($seoProps, 'site.doctorsOrigin'), '/');
+                if ($doctorOrigin === '') {
+                    $doctorOrigin = rtrim((string) request()->getSchemeAndHttpHost(), '/');
+                }
+                $canonicalUrl = $doctorOrigin.'/'.ltrim((string) $seoPath, '/');
             }
 
             $ogType = $isArticle ? 'article' : 'website';

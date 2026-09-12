@@ -42,4 +42,23 @@ class DoctorEmbedTest extends TestCase
         $this->assertSame('11 документов', DoctorMaterialsStore::ruDocuments(11));
         $this->assertSame('21 документ', DoctorMaterialsStore::ruDocuments(21));
     }
+
+    public function test_patient_sitemap_source_does_not_list_doctor_only_paths(): void
+    {
+        $src = file_get_contents(dirname(__DIR__, 2).'/app/Http/Controllers/SitemapController.php');
+
+        $this->assertIsString($src);
+        $this->assertStringContainsString("'/blog'", $src);
+        $this->assertStringNotContainsString("'/video'", $src);
+        $this->assertStringNotContainsString("'/materials'", $src);
+    }
+
+    public function test_doctor_public_pages_are_forced_noindex_in_layout(): void
+    {
+        $src = file_get_contents(dirname(__DIR__, 2).'/resources/views/app.blade.php');
+
+        $this->assertIsString($src);
+        $this->assertStringContainsString('site.isDoctorsSite', $src);
+        $this->assertStringContainsString('isDoctorsSite && $seoPath !== \'/\'', $src);
+    }
 }
