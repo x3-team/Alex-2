@@ -130,7 +130,7 @@ const removeVideo = (video) => {
           <div v-if="editingId !== video.id" class="flex justify-between gap-4">
             <div>
               <h3 class="font-medium">{{ video.title }}</h3>
-              <p class="text-sm text-gray-500">{{ video.source }} · {{ video.duration || 'без длительности' }} · /videos/{{ video.slug }}</p>
+              <p class="text-sm text-gray-500">{{ video.source }} · {{ video.duration || 'без длительности' }} · /video/{{ video.slug }}</p>
             </div>
             <div class="flex gap-3 text-sm">
               <button type="button" class="text-blue-600" @click="startEdit(video)">Изменить</button>

@@ -37,7 +37,7 @@ const goBack = () => {
     window.history.back()
     return
   }
-  router.visit(doctorsUrl('/videos'))
+  router.visit(doctorsUrl('/video'))
 }
 </script>
 
@@ -62,7 +62,7 @@ const goBack = () => {
         <nav class="crumbs" aria-label="Навигация">
           <Link :href="doctorsUrl('/')">Главная</Link>
           <span>/</span>
-          <Link :href="doctorsUrl('/videos')">Видеолекции</Link>
+          <Link :href="doctorsUrl('/video')">Видеолекции</Link>
           <span>/</span>
           <strong>Видеолекция</strong>
         </nav>

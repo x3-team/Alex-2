@@ -10,7 +10,7 @@ const { doctorsUrl } = useDoctorMode()
 
 const chips = [
   { key: 'articles', label: 'Статьи', path: '/blog' },
-  { key: 'videos', label: 'Видео', path: '/videos' },
+  { key: 'videos', label: 'Видео', path: '/video' },
   { key: 'documents', label: 'Документы', path: '/materials' },
 ]
 </script>

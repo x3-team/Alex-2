@@ -19,7 +19,7 @@ const formatDate = (value) => {
 </script>
 
 <template>
-  <Link :href="doctorsUrl(`/videos/${video.slug}`)" class="doctor-video-card">
+  <Link :href="doctorsUrl(`/video/${video.slug}`)" class="doctor-video-card">
     <div class="doctor-video-card__preview">
       <img
         v-if="video.cover"
