@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
+import DoctorTypeChips from '@/Components/DoctorTypeChips.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
@@ -379,6 +380,10 @@ const ogImage = computed(() => {
         </div>
 
         <div class="mb-6 xl:mb-8 pt-[1rem]" :style="{ borderTop: '1px solid rgba(0, 0, 0, 0.3)' }">
+          <div v-if="isDoctorMode" class="mb-5">
+            <div class="text-[16px] xl:text-[18px] text-[rgba(0, 0, 0, 1)] mb-2 opacity-[0.5] font-400">Тип материала</div>
+            <DoctorTypeChips active="articles" />
+          </div>
           <div class="text-[16px] xl:text-[18px] text-[rgba(0, 0, 0, 1)] mb-2 opacity-[0.5] font-400">Выберите категорию</div>
 
           <div class="flex gap-[5px] overflow-x-auto pb-2 xl:flex-wrap xl:overflow-visible xl:pb-0 scrollbar-hide">

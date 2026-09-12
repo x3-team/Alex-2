@@ -201,6 +201,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::put('/doctor-materials', [\App\Http\Controllers\Admin\DoctorMaterialsController::class, 'update'])->name('doctor-materials.update');
     Route::post('/doctor-materials/upload', [\App\Http\Controllers\Admin\DoctorMaterialsController::class, 'upload'])->name('doctor-materials.upload');
 
+    Route::get('/doctor-videos', [\App\Http\Controllers\Admin\DoctorVideosController::class, 'index'])->name('doctor-videos.index');
+    Route::post('/doctor-videos', [\App\Http\Controllers\Admin\DoctorVideosController::class, 'store'])->name('doctor-videos.store');
+    Route::put('/doctor-videos/{doctorVideo}', [\App\Http\Controllers\Admin\DoctorVideosController::class, 'update'])->name('doctor-videos.update');
+    Route::delete('/doctor-videos/{doctorVideo}', [\App\Http\Controllers\Admin\DoctorVideosController::class, 'destroy'])->name('doctor-videos.destroy');
+    Route::post('/doctor-videos/upload', [\App\Http\Controllers\Admin\DoctorVideosController::class, 'upload'])->name('doctor-videos.upload');
+
 });
 
 

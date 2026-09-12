@@ -145,7 +145,9 @@
             }
             $noindexPaths = ['cart', 'login', 'register', 'up', 'recover', 'patient/login'];
             $blogNoindex = (bool) data_get($seoProps, 'blog.noindex')
-                || (bool) data_get($seoProps, 'blogMeta.noindex');
+                || (bool) data_get($seoProps, 'blogMeta.noindex')
+                || (bool) data_get($seoProps, 'videosMeta.noindex')
+                || (bool) data_get($seoProps, 'seoMeta.noindex');
             $robotsMeta = ($blogNoindex || in_array($seoPath, $noindexPaths, true))
                 ? ($blogNoindex ? 'noindex' : 'noindex, nofollow')
                 : null;
