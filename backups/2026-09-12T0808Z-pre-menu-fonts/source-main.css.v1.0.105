@@ -773,15 +773,14 @@ body:has(.home-page-container.doctor-mode) {
 }
 
 .card-title {
-    font-size: 24px;
+    font-size: 21px;
     font-weight: 400;
     color: var(--text-black);
-    line-height: normal;
-    font-family: var(--font-family);
+    line-height: 20px;
 }
 
 #card-search .card-title {
-    line-height: normal;
+    line-height: 15px;
 }
 
 .card-subtitle {
@@ -838,7 +837,6 @@ body:has(.home-page-container.doctor-mode) {
     font-weight: 400;
     color: var(--text-black);
     line-height: normal;
-    font-family: var(--font-family);
 }
 
 .row-icon-icon {
@@ -2288,15 +2286,8 @@ body:has(.home-page-container.doctor-mode) {
     .site-sidebar #row-quiz .row-text {
         width: 198px;
         font-size: 18px;
-        line-height: 24px;
+        line-height: 17px;
         white-space: normal;
-    }
-
-    .home-page-container .site-sidebar #row-doctor-materials .row-text {
-        font-size: 18px;
-        line-height: 24px;
-        font-weight: 400;
-        font-family: var(--font-family);
     }
 
     .site-sidebar .cards-row {
@@ -2353,7 +2344,6 @@ body:has(.home-page-container.doctor-mode) {
         font-size: 18px;
         font-weight: 400;
         line-height: 24px;
-        font-family: var(--font-family);
         white-space: nowrap;
     }
 
@@ -2376,8 +2366,6 @@ body:has(.home-page-container.doctor-mode) {
     .site-sidebar .row-text {
         font-size: 18px;
         line-height: 24px;
-        font-family: var(--font-family);
-        font-weight: 400;
         white-space: nowrap;
     }
 
@@ -2455,10 +2443,8 @@ body:has(.home-page-container.doctor-mode) {
         gap: clamp(8px, 2.857vw, 12px);
     }
 
-    .site-sidebar #row-profile .row-text,
-    .home-page-container .site-sidebar #row-doctor-materials .row-text {
+    .site-sidebar #row-profile .row-text {
         font-size: clamp(16px, 4.286vw, 18px);
-        line-height: 24px;
     }
 }
 
@@ -4777,14 +4763,12 @@ body:has(.home-page-container.doctor-mode) {
     }
 
     .site-sidebar .card-title {
-        font-size: clamp(18px, 1.9444vh, 24px);
-        line-height: 1.2;
-        font-family: var(--font-family);
-        font-weight: 400;
+        font-size: clamp(18px, 1.9444vh, 21px);
+        line-height: clamp(18px, 1.8519vh, 20px);
     }
 
     .site-sidebar #card-search .card-title {
-        line-height: 1.2;
+        line-height: 15px;
     }
 
     .site-sidebar .card-subtitle {
@@ -4804,9 +4788,7 @@ body:has(.home-page-container.doctor-mode) {
     .site-sidebar .row-text {
         min-width: 0;
         font-size: clamp(18px, 1.9444vh, 21px);
-        line-height: 1.2;
-        font-family: var(--font-family);
-        font-weight: 400;
+        line-height: 1.05;
     }
 
     .site-sidebar .tag-badge {
@@ -6589,13 +6571,13 @@ button {
     width: 100%;
 }
 
-.main-card-inner .card-title {
+.card-title {
     font-size: 32px;
     font-weight: 400;
     line-height: 1.2;
 }
 
-.main-card-inner .card-subtitle {
+.card-subtitle {
     font-size: 18px;
     color: var(--text-muted);
     line-height: 1.4;
@@ -6891,11 +6873,11 @@ button {
         max-width: 100%;
     }
 
-    .main-card-inner .card-title {
+    .card-title {
         font-size: 32px;
     }
 
-    .main-card-inner .card-subtitle {
+    .card-subtitle {
         font-size: 18px;
         color: #000;
         opacity: 0.5;
