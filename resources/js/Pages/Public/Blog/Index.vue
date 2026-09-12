@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
@@ -149,6 +149,23 @@ const selectedCategoryName = computed(() => {
 })
 
 const pageHeading = computed(() => props.currentCategory?.name || 'Блог про аллергию')
+
+const rememberedBlogIntro = ref(
+  props.blogIntroDescription || (!props.currentCategory ? (props.pageDescription || '') : '')
+)
+
+watch(
+  () => [props.blogIntroDescription, props.pageDescription, props.currentCategory],
+  ([intro, description, category]) => {
+    if (intro) {
+      rememberedBlogIntro.value = intro
+    } else if (!category && description) {
+      rememberedBlogIntro.value = description
+    }
+  }
+)
+
+const leadSizerText = computed(() => rememberedBlogIntro.value || props.blogIntroDescription || '')
 
 const selectedTagNames = computed(() => {
   return selectedTags.value
@@ -343,7 +360,7 @@ const ogImage = computed(() => {
           <div class="mb-4 max-w-full xl:max-w-[462px]">
             <h1 class="font-400 text-[28px] sm:text-[34px] xl:text-[42px]">{{ pageHeading }}</h1>
             <div class="blog-lead-slot">
-              <p class="blog-lead-sizer" aria-hidden="true">{{ blogIntroDescription || pageDescription }}</p>
+              <p class="blog-lead-sizer" aria-hidden="true">{{ leadSizerText }}</p>
               <p v-if="pageDescription" class="blog-lead-visible text-black-600">
                 {{ pageDescription }}
               </p>
