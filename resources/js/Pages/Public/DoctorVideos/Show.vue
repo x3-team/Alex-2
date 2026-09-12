@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Head, Link } from '@inertiajs/vue3'
 import DoctorPublicShell from '@/Components/DoctorPublicShell.vue'
 import DoctorVideoCard from '@/Components/DoctorVideoCard.vue'
@@ -24,8 +24,27 @@ const formatDate = (value) => {
   })
 }
 
+const playSrc = computed(() => {
+  const src = props.video.iframe_src
+  if (!src) {
+    return ''
+  }
+
+  try {
+    const url = new URL(src)
+    url.searchParams.set('autoplay', '1')
+    if (url.hostname.includes('youtube')) {
+      url.searchParams.set('playsinline', '1')
+      url.searchParams.set('rel', '0')
+    }
+    return url.toString()
+  } catch {
+    return src.includes('?') ? `${src}&autoplay=1` : `${src}?autoplay=1`
+  }
+})
+
 const startPlayback = () => {
-  if (props.video.iframe_src) {
+  if (playSrc.value) {
     playing.value = true
   }
 }
@@ -37,7 +56,7 @@ const startPlayback = () => {
     <meta name="description" :content="videosMeta.description || video.description || video.title" />
   </Head>
 
-  <DoctorPublicShell :back-href="doctorsUrl('/blog?type=videos')" back-label="К видеолекциям">
+  <DoctorPublicShell :back-href="doctorsUrl('/blog?type=videos')" back-label="К видео">
     <div
       class="breadcrumbs flex items-center gap-3 mb-6"
       style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center; padding: 0px; gap: 12px; min-height: 48px;"
@@ -48,13 +67,13 @@ const startPlayback = () => {
           <path d="M0.75 8.25L4.5 4.5L0.75 0.75" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </span>
-      <Link :href="doctorsUrl('/blog?type=videos')" class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30">Видеолекции</Link>
+      <Link :href="doctorsUrl('/blog?type=videos')" class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30">Видео</Link>
       <span class="text-black opacity-[0.3]">
         <svg width="6" height="9" viewBox="0 0 6 9" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M0.75 8.25L4.5 4.5L0.75 0.75" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </span>
-      <span class="text-[14px] xl:text-[18px] text-black">Видеолекция</span>
+      <span class="text-[14px] xl:text-[18px] text-black">Видео</span>
     </div>
 
     <div class="badges">
@@ -67,8 +86,8 @@ const startPlayback = () => {
 
     <div class="player">
       <iframe
-        v-if="playing && video.iframe_src"
-        :src="video.iframe_src"
+        v-if="playing && playSrc"
+        :src="playSrc"
         title="Видеоплеер"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowfullscreen

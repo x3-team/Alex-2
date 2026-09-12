@@ -54,7 +54,7 @@ class DoctorVideoController extends Controller
             'relatedVideos' => $related,
             'relatedArticle' => $relatedArticle,
             'videosMeta' => [
-                'title' => $video->title.' — видеолекция ALEX LAB',
+                'title' => $video->title.' — видео ALEX LAB',
                 'description' => $video->description ?: $video->title,
                 'noindex' => true,
             ],
