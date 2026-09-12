@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\DoctorVideo;
-use App\Services\DetectSite;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,7 +24,7 @@ class DoctorVideoController extends Controller
             'videosMeta' => [
                 'title' => 'Видеолекции для врачей — ALEX LAB',
                 'description' => 'Видеолекции лаборатории по молекулярной аллергодиагностике ALEX².',
-                'noindex' => DetectSite::make()->audience() !== DetectSite::MODE_DOCTORS || $videos->isEmpty(),
+                'noindex' => true,
             ],
         ]);
     }
@@ -70,7 +69,7 @@ class DoctorVideoController extends Controller
             'videosMeta' => [
                 'title' => $video->title.' — видеолекция ALEX LAB',
                 'description' => $video->description ?: $video->title,
-                'noindex' => DetectSite::make()->audience() !== DetectSite::MODE_DOCTORS,
+                'noindex' => true,
             ],
         ]);
     }

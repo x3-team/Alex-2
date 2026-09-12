@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
-use App\Services\DetectSite;
 use App\Support\DoctorMaterialsStore;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,7 +21,7 @@ class DoctorMaterialController extends Controller
         return Inertia::render('Public/DoctorMaterials', [
             'categories' => $categories,
             'materials' => $files,
-            'seoMeta' => $this->seoMeta($categories === [] && $files === []),
+            'seoMeta' => $this->seoMeta(),
         ]);
     }
 
@@ -50,19 +49,17 @@ class DoctorMaterialController extends Controller
             ],
             'materials' => $files,
             'otherCategories' => $others,
-            'seoMeta' => $this->seoMeta($files === []),
+            'seoMeta' => $this->seoMeta(),
         ]);
     }
 
-    private function seoMeta(bool $empty): array
+    private function seoMeta(): array
     {
-        $onDoctors = DetectSite::make()->audience() === DetectSite::MODE_DOCTORS;
-
         return [
             'title' => Setting::get('doctor_materials_meta_title', 'Документы для врачей — ALEX LAB'),
             'description' => Setting::get('doctor_materials_meta_description', 'Регистрационные документы, инструкции и бланки лаборатории.'),
             'keywords' => Setting::get('doctor_materials_meta_keywords', ''),
-            'noindex' => ! $onDoctors || $empty,
+            'noindex' => true,
         ];
     }
 }
