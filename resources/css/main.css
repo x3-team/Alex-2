@@ -5095,6 +5095,13 @@ body:has(.home-page-container.doctor-mode) {
         --mobile-glass-bottom-alpha: 0.92;
     }
 
+    /* Doctor step 3: keep copy/pager below the in-video «Allergen specific IgE» plate.
+       Haze stays on the shared 40px drop so the block still moves as one. */
+    .home-page-container.doctor-mode .home-content[data-active-slide="slide-5"] {
+        --mobile-copy-shift: 76px;
+        --mobile-pager-shift: 76px;
+    }
+
     .home-page-container .home-content[data-active-slide="slide-6"] {
         --mobile-glass-shoulder-alpha: 0.14;
         --mobile-glass-shoulder-stop: 8%;
