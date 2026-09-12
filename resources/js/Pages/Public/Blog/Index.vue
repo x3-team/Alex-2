@@ -404,7 +404,7 @@ const ogImage = computed(() => {
           </div>
         </div>
 
-        <div class="grid pt-8 xl:pt-[49px]">
+        <div class="grid pt-8 xl:pt-[29px]">
           <div class="text-[21px] mb-[8px] xl:text-[32px] font-[400] text-gray-900 break-words" style="line-height: 1">
             <span class="title-wrapper">
               <span v-if="selectedCategoryName" class="title-category">{{ selectedCategoryName }}</span>
