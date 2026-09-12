@@ -153,6 +153,8 @@ class BlogController extends Controller
                 'title' => $metaTitle,
                 'description' => $metaDescription,
                 'keywords' => $metaKeywords,
+                'noindex' => \App\Services\DetectSite::make()->audience() === \App\Services\DetectSite::MODE_DOCTORS
+                    && $blogs->total() === 0,
             ],
         ]);
     }
