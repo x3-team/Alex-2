@@ -43,7 +43,7 @@ const chips = [
   justify-content: center;
   box-sizing: border-box;
   height: 43px;
-  padding: 0 24px;
+  padding: 0 1.5rem;
   border: 1px solid rgba(0, 0, 0, 0.4);
   border-radius: 8px;
   background: transparent;
@@ -54,6 +54,13 @@ const chips = [
   line-height: 1;
   text-decoration: none;
   white-space: nowrap;
+}
+
+@media (min-width: 1240px) {
+  .doctor-type-chip {
+    height: auto;
+    padding: 0.75rem 1.5rem;
+  }
 }
 
 .doctor-type-chip.is-active {

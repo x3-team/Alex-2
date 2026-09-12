@@ -436,7 +436,6 @@ const ogImage = computed(() => {
 
         <div class="grid pt-8 xl:pt-[9px]">
           <div class="feed-toolbar" :class="{ 'is-doctor': isDoctorMode }">
-          <div class="feed-toolbar-lead">
             <div class="text-[21px] mb-[8px] xl:text-[32px] font-[400] text-gray-900 break-words" style="line-height: 1">
               <span class="title-wrapper">
                 <span v-if="selectedCategoryName" class="title-category">{{ selectedCategoryName }}</span>
@@ -451,10 +450,10 @@ const ogImage = computed(() => {
 
               <span v-if="!selectedCategoryName && !selectedTags.length" class="title-empty">Последние публикации</span>
             </div>
-            <DoctorTypeChips v-if="isDoctorMode" :active="activeMaterialType" />
-          </div>
 
-          <div class="relative feed-toolbar-tags">
+            <div class="feed-toolbar-row">
+              <DoctorTypeChips v-if="isDoctorMode" :active="activeMaterialType" />
+              <div class="relative feed-toolbar-tags">
             <button
                 @click="showTagDropdown = !showTagDropdown"
                 class="filter-btn-tags cust"
@@ -510,7 +509,8 @@ const ogImage = computed(() => {
                 </button>
               </div>
             </div>
-          </div>
+              </div>
+            </div>
           </div>
 
           <article
@@ -691,31 +691,21 @@ const ogImage = computed(() => {
   margin-bottom: 32px;
 }
 .feed-toolbar.is-doctor {
+  margin-bottom: 32px;
+}
+.feed-toolbar.is-doctor .feed-toolbar-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px 24px;
-  margin-bottom: 32px;
-}
-.feed-toolbar.is-doctor .feed-toolbar-lead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 24px;
-  min-width: 0;
-}
-.feed-toolbar.is-doctor .feed-toolbar-lead > div {
-  margin-bottom: 0;
-  width: max-content;
-  max-width: 100%;
-  flex: 0 1 auto;
 }
 .feed-toolbar.is-doctor .feed-toolbar-tags {
   flex-shrink: 0;
   margin-bottom: 0;
+  margin-left: auto;
 }
 @media (max-width: 1024px) {
-  .feed-toolbar.is-doctor {
+  .feed-toolbar.is-doctor .feed-toolbar-row {
     flex-wrap: wrap;
   }
 }
@@ -944,12 +934,6 @@ const ogImage = computed(() => {
   .tag-placeholder{
     font-size: 18px;
   }
-}
-
-.page-container.doctor-mode .but_cust {
-  height: 43px;
-  padding: 0 1.5rem;
-  line-height: 1;
 }
 
 .tag-text {
