@@ -5060,7 +5060,8 @@ body:has(.home-page-container.doctor-mode) {
     }
 
     /* Lower the 4 advantage steps + copy + bottom scrim together on phones
-       so the video stays open at the top. Desktop is unchanged. */
+       so the video stays open at the top. Desktop is unchanged. 40px = two
+       requested 20px drops from the original mobile position. */
     .home-page-container .home-content:is(
         [data-active-slide="slide-3"],
         [data-active-slide="slide-4"],
@@ -5068,9 +5069,9 @@ body:has(.home-page-container.doctor-mode) {
         [data-active-slide="slide-6"],
         [data-active-slide="slide-7"]
     ) {
-        --mobile-copy-shift: 20px;
-        --mobile-pager-shift: 20px;
-        --mobile-advantages-drop: 20px;
+        --mobile-copy-shift: 40px;
+        --mobile-pager-shift: 40px;
+        --mobile-advantages-drop: 40px;
     }
 
     .home-page-container .home-content[data-active-slide="slide-3"] {
