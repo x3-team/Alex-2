@@ -13,7 +13,7 @@ class SitemapController extends Controller
     public function index()
     {
         // Кэшируем на 1 час для производительности
-        $sitemap = Cache::remember('sitemap_categories_v1', 3600, function () {
+        $sitemap = Cache::remember('sitemap_categories_v2', 3600, function () {
             return $this->generateSitemap();
         });
 
@@ -89,6 +89,11 @@ class SitemapController extends Controller
                     $inner->where('noindex', false)->orWhereNull('noindex');
                 });
             })
+            ->when(Schema::hasColumn('blogs', 'audience'), function ($q) {
+                $q->where(function ($inner) {
+                    $inner->where('audience', 'patients')->orWhereNull('audience');
+                });
+            })
             ->select('id', 'slug', 'updated_at', 'published_at')
             ->orderBy('published_at', 'desc')
             ->get();
@@ -107,6 +112,11 @@ class SitemapController extends Controller
             $query->where('is_active', true)
                 ->whereNotNull('published_at')
                 ->where('published_at', '<=', now());
+            if (Schema::hasColumn('blogs', 'audience')) {
+                $query->where(function ($inner) {
+                    $inner->where('audience', 'patients')->orWhereNull('audience');
+                });
+            }
         })
             ->select('id', 'updated_at')
             ->get();

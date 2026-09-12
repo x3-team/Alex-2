@@ -273,7 +273,7 @@ const ogImage = computed(() => {
 
 <template>
   <Head>
-    <script type="application/ld+json">
+    <script v-if="!isDoctorMode" type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",

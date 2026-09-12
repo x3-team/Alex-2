@@ -99,7 +99,7 @@ const goTo = (path) => {
   router.visit(path)
 }
 
-const BLOG_URL = 'https://alexallergotest.ru/blog'
+const blogListingUrl = computed(() => (isDoctorMode.value ? doctorsUrl('/blog') : '/blog'))
 const BLOG_TRANSITION_DURATION = 1100
 
 // Search State
@@ -217,7 +217,7 @@ const handleBlogClick = (event) => {
 
 const finishBlogTransition = () => {
   if (!isBlogTransitionActive.value) return
-  navigateToExternal(BLOG_URL)
+  navigateToExternal(blogListingUrl.value)
 }
 
 const PHONE_VIDEO_ROOT = '/videos/PHONE%20NAREZKA'
@@ -1863,7 +1863,7 @@ onUnmounted(() => {
           <template v-else-if="slide.type === 'contacts'">
             <FigmaContactsSlide
                 v-if="shouldMountHeavySlide(index)"
-                :blog-href="BLOG_URL"
+                :blog-href="blogListingUrl"
                 @register="openSiteRegisterModal"
                 @quiz="showQuizModal = true; goToSlideById('slide-1')"
                 @navigate="goToSlideById"
