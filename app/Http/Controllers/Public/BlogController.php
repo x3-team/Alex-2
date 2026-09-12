@@ -115,6 +115,7 @@ class BlogController extends Controller
 
         $categories = \App\Models\Category::select('id', 'name', 'slug')->orderBy('name')->get();
         $tags = \App\Models\BlogTag::select('id', 'name', 'slug')->orderBy('name')->get();
+        $blogIntroDescription = \App\Models\Setting::get('blog_page_description', '');
 
         if ($category) {
             $pageDescription = $category->name;
@@ -123,7 +124,7 @@ class BlogController extends Controller
             $metaKeywords = \App\Models\Setting::get('blog_page_meta_keywords', '');
             $filterCategory = $category->slug;
         } else {
-            $pageDescription = \App\Models\Setting::get('blog_page_description', '');
+            $pageDescription = $blogIntroDescription;
             $metaTitle = \App\Models\Setting::get('blog_page_meta_title', 'Блог — ALEX LAB');
             $metaDescription = \App\Models\Setting::get('blog_page_meta_description', '');
             $metaKeywords = \App\Models\Setting::get('blog_page_meta_keywords', '');
@@ -136,6 +137,7 @@ class BlogController extends Controller
             'categories' => $categories,
             'tags' => $tags,
             'pageDescription' => $pageDescription,
+            'blogIntroDescription' => $blogIntroDescription,
             'currentCategory' => $category ? [
                 'id' => $category->id,
                 'name' => $category->name,

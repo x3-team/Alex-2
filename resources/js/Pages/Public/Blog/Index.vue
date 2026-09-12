@@ -11,6 +11,7 @@ const props = defineProps({
   categories: Array,
   tags: Array,
   pageDescription: String,
+  blogIntroDescription: { type: String, default: '' },
   filters: Object,
   currentCategory: { type: Object, default: null },
   blogMeta: { type: Object, default: () => ({ title: '', description: '', keywords: '' }) },
@@ -298,7 +299,7 @@ const ogImage = computed(() => {
       </header>
 
       <main class="main-content p-8 xl:p-16 flex-1">
-        <div class="breadcrumbs flex items-center gap-3 mb-6" style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center; padding: 0px; gap: 12px; width: 196px; height: 48px;">
+        <div class="breadcrumbs flex items-center gap-3 mb-6" style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center; padding: 0px; gap: 12px; min-height: 48px;">
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="6" y="6" width="36" height="36" rx="18" stroke="black" stroke-width="2"/>
             <path d="M31.625 18.9583H17.375" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -341,9 +342,12 @@ const ogImage = computed(() => {
         <div class="relative">
           <div class="mb-4 max-w-full xl:max-w-[462px]">
             <h1 class="font-400 text-[28px] sm:text-[34px] xl:text-[42px]">{{ pageHeading }}</h1>
-            <p v-if="pageDescription" class="text-black-600 text-[21px] leading-[1.25] opacity-[0.5] ">
-              {{ pageDescription }}
-            </p>
+            <div class="blog-lead-slot">
+              <p class="blog-lead-sizer" aria-hidden="true">{{ blogIntroDescription || pageDescription }}</p>
+              <p v-if="pageDescription" class="blog-lead-visible text-black-600">
+                {{ pageDescription }}
+              </p>
+            </div>
           </div>
 
           <div class="m_cust xl:absolute xl:bottom-0 xl:right-0 xl:mt-6 mt-4">
@@ -826,6 +830,29 @@ const ogImage = computed(() => {
 
 .title-empty {
   color: #000;
+}
+
+.blog-lead-slot {
+  position: relative;
+}
+
+.blog-lead-sizer,
+.blog-lead-visible {
+  font-size: 21px;
+  line-height: 1.25;
+  opacity: 0.5;
+  margin: 0;
+}
+
+.blog-lead-sizer {
+  visibility: hidden;
+}
+
+.blog-lead-visible {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
 }
 
 .mobile-menu-button {
