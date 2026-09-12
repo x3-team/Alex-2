@@ -40,7 +40,10 @@ const chips = [
 .doctor-type-chip {
   display: inline-flex;
   align-items: center;
-  padding: 12px 24px;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 43px;
+  padding: 0 24px;
   border: 1px solid rgba(0, 0, 0, 0.4);
   border-radius: 8px;
   background: transparent;

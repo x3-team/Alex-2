@@ -946,6 +946,12 @@ const ogImage = computed(() => {
   }
 }
 
+.page-container.doctor-mode .but_cust {
+  height: 43px;
+  padding: 0 1.5rem;
+  line-height: 1;
+}
+
 .tag-text {
   white-space: nowrap;
   flex: 1;
