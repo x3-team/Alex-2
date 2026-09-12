@@ -3,7 +3,6 @@ import { Head, Link } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import DoctorPublicShell from '@/Components/DoctorPublicShell.vue'
 import DoctorTypeChips from '@/Components/DoctorTypeChips.vue'
-import DoctorFeedCard from '@/Components/DoctorFeedCard.vue'
 import DoctorDocumentCategoryCard from '@/Components/DoctorDocumentCategoryCard.vue'
 import { useDoctorMode } from '@/composables/useDoctorMode'
 
@@ -65,45 +64,18 @@ const pageDescription = computed(() => (
       </p>
     </div>
 
-    <div class="mb-6 xl:mb-8 pt-[1rem]" :style="{ borderTop: '1px solid rgba(0, 0, 0, 0.3)' }">
-      <div class="text-[16px] xl:text-[18px] text-[rgba(0, 0, 0, 1)] mb-2 opacity-[0.5] font-400">Тип материала</div>
+    <div class="documents-toolbar">
       <DoctorTypeChips :active="isHub ? 'all' : 'documents'" />
     </div>
 
-    <template v-if="isHub">
-      <div v-if="feed.length" class="pt-2">
-        <DoctorFeedCard v-for="item in feed" :key="`${item.type}-${item.id}`" :item="item" />
-      </div>
-      <p v-else class="doctor-empty">Пока нет опубликованных статей и видео.</p>
-
-      <section v-if="categories.length" class="doctor-hub-docs">
-        <div class="doctor-hub-docs-head">
-          <h2>Документы лаборатории</h2>
-          <Link :href="doctorsUrl('/materials/documents')" class="doctor-hub-docs-all">
-            Все документы
-            <img src="/assets/figma-arrow-right.svg" alt="" width="24" height="24" />
-          </Link>
-        </div>
-        <div class="doctor-doc-grid">
-          <DoctorDocumentCategoryCard
-            v-for="category in categories"
-            :key="category.id"
-            :category="category"
-          />
-        </div>
-      </section>
-    </template>
-
-    <template v-else>
-      <div v-if="categories.length" class="doctor-doc-grid">
-        <DoctorDocumentCategoryCard
-          v-for="category in categories"
-          :key="category.id"
-          :category="category"
-        />
-      </div>
-      <p v-else class="doctor-empty">Документы скоро появятся.</p>
-    </template>
+    <div v-if="categories.length" class="doctor-doc-grid">
+      <DoctorDocumentCategoryCard
+        v-for="category in categories"
+        :key="category.id"
+        :category="category"
+      />
+    </div>
+    <p v-else class="doctor-empty">Документы скоро появятся.</p>
   </DoctorPublicShell>
 </template>
 
@@ -115,39 +87,11 @@ const pageDescription = computed(() => (
   color: rgba(0, 0, 0, 0.5);
 }
 
-.doctor-hub-docs {
-  margin-top: 24px;
-}
-
-.doctor-hub-docs-head {
+.documents-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 40px;
-}
-
-.doctor-hub-docs-head h2 {
-  margin: 0;
-  font-family: Roboto, Arial, sans-serif;
-  font-size: 32px;
-  font-weight: 400;
-  color: #000;
-}
-
-.doctor-hub-docs-all {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  color: #000;
-  font-family: Roboto, Arial, sans-serif;
-  font-size: 18px;
-  text-decoration: none;
-}
-
-.doctor-hub-docs-all img {
-  width: 24px;
-  height: 24px;
+  margin: 8px 0 32px;
 }
 
 .doctor-doc-grid {
@@ -157,16 +101,6 @@ const pageDescription = computed(() => (
 }
 
 @media (max-width: 1024px) {
-  .doctor-hub-docs-head {
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 24px;
-  }
-
-  .doctor-hub-docs-head h2 {
-    font-size: 24px;
-  }
-
   .doctor-doc-grid {
     grid-template-columns: 1fr;
     gap: 16px;

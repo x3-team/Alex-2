@@ -9,24 +9,11 @@ use Inertia\Response;
 
 class DoctorVideoController extends Controller
 {
-    public function index(): Response
+    public function index()
     {
-        $videos = DoctorVideo::query()
-            ->published()
-            ->orderByDesc('published_at')
-            ->orderBy('sort_order')
-            ->get()
-            ->map(fn (DoctorVideo $video) => $video->toCardArray())
-            ->values();
+        request()->merge(['type' => 'videos']);
 
-        return Inertia::render('Public/DoctorVideos/Index', [
-            'videos' => $videos,
-            'videosMeta' => [
-                'title' => 'Видеолекции для врачей — ALEX LAB',
-                'description' => 'Видеолекции лаборатории по молекулярной аллергодиагностике ALEX².',
-                'noindex' => true,
-            ],
-        ]);
+        return app(BlogController::class)->index(request());
     }
 
     public function show(string $slug): Response

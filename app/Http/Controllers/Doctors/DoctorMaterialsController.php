@@ -8,7 +8,7 @@ use Inertia\Response;
 
 class DoctorMaterialsController extends Controller
 {
-    public function index(): Response
+    public function index()
     {
         return app(DoctorMaterialController::class)->index();
     }

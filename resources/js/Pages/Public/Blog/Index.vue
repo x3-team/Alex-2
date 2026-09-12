@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import DoctorTypeChips from '@/Components/DoctorTypeChips.vue'
+import DoctorDocumentCategoryCard from '@/Components/DoctorDocumentCategoryCard.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
@@ -16,6 +17,8 @@ const props = defineProps({
   filters: Object,
   currentCategory: { type: Object, default: null },
   blogMeta: { type: Object, default: () => ({ title: '', description: '', keywords: '' }) },
+  materialType: { type: String, default: null },
+  documentCategories: { type: Array, default: () => [] },
 })
 
 const { isDoctorMode } = useDoctorMode()
@@ -39,6 +42,22 @@ const formatDate = (dateString) => {
     year: 'numeric'
   })
 }
+
+const isVideoItem = (item) => item?.kind === 'video'
+
+const itemHref = (item) => (isVideoItem(item) ? `/video/${item.slug}` : `/blog/${item.slug}`)
+
+const itemCover = (item) => {
+  if (isVideoItem(item)) return item.cover || null
+  return item.preview_image ? `/storage/${item.preview_image}` : null
+}
+
+const itemDuration = (item) => {
+  if (!item?.duration) return ''
+  return isVideoItem(item) ? item.duration : `~${item.duration}`
+}
+
+const activeMaterialType = computed(() => props.materialType || props.filters?.type || 'all')
 
 const excerpt = (html, words = 30) => {
   const raw = String(html || '')
@@ -81,8 +100,15 @@ const listingPath = () => {
   return '/blog'
 }
 
+const typeQuery = () => {
+  if (!isDoctorMode.value) return {}
+  const type = props.materialType || props.filters?.type
+  if (type && type !== 'all') return { type }
+  return {}
+}
+
 const applySelectedTags = () => {
-  const params = {}
+  const params = { ...typeQuery() }
   if (selectedCategories.value.length > 1) {
     params.category = selectedCategories.value.join(',')
   }
@@ -96,7 +122,7 @@ const resetFilters = () => {
   selectedAuthor.value = ''
   selectedCategories.value = []
   selectedTags.value = []
-  router.get('/blog', {}, { preserveState: true, preserveScroll: true })
+  router.get('/blog', { ...typeQuery() }, { preserveState: true, preserveScroll: true })
 }
 
 const buildPageUrl = (page) => {
@@ -105,6 +131,9 @@ const buildPageUrl = (page) => {
   if (page > 1) {
     params.set('page', page)
   }
+
+  const type = typeQuery().type
+  if (type) params.set('type', type)
 
   if (selectedCategories.value.length > 1) {
     params.set('category', selectedCategories.value.join(','))
@@ -380,10 +409,6 @@ const ogImage = computed(() => {
         </div>
 
         <div class="mb-6 xl:mb-8 pt-[1rem]" :style="{ borderTop: '1px solid rgba(0, 0, 0, 0.3)' }">
-          <div v-if="isDoctorMode" class="mb-5">
-            <div class="text-[16px] xl:text-[18px] text-[rgba(0, 0, 0, 1)] mb-2 opacity-[0.5] font-400">Тип материала</div>
-            <DoctorTypeChips active="articles" />
-          </div>
           <div class="text-[16px] xl:text-[18px] text-[rgba(0, 0, 0, 1)] mb-2 opacity-[0.5] font-400">Выберите категорию</div>
 
           <div class="flex gap-[5px] overflow-x-auto pb-2 xl:flex-wrap xl:overflow-visible xl:pb-0 scrollbar-hide">
@@ -410,22 +435,26 @@ const ogImage = computed(() => {
         </div>
 
         <div class="grid pt-8 xl:pt-[9px]">
-          <div class="text-[21px] mb-[8px] xl:text-[32px] font-[400] text-gray-900 break-words" style="line-height: 1">
-            <span class="title-wrapper">
-              <span v-if="selectedCategoryName" class="title-category">{{ selectedCategoryName }}</span>
-              <span v-if="selectedCategoryName && selectedTags.length" class="title-separator">: </span>
+          <div class="feed-toolbar" :class="{ 'is-doctor': isDoctorMode }">
+          <div class="feed-toolbar-lead">
+            <div class="text-[21px] mb-[8px] xl:text-[32px] font-[400] text-gray-900 break-words" style="line-height: 1">
+              <span class="title-wrapper">
+                <span v-if="selectedCategoryName" class="title-category">{{ selectedCategoryName }}</span>
+                <span v-if="selectedCategoryName && selectedTags.length" class="title-separator">: </span>
 
-              <span v-if="selectedTags.length" class="title-tags">
-                <span v-for="(name, idx) in allTagNames" :key="idx" class="text-[#ACACAC]">
-                  {{ name }}<span v-if="idx < allTagNames.length - 1" class="text-[#ACACAC]">, </span>
+                <span v-if="selectedTags.length" class="title-tags">
+                  <span v-for="(name, idx) in allTagNames" :key="idx" class="text-[#ACACAC]">
+                    {{ name }}<span v-if="idx < allTagNames.length - 1" class="text-[#ACACAC]">, </span>
+                  </span>
                 </span>
               </span>
-            </span>
 
-            <span v-if="!selectedCategoryName && !selectedTags.length" class="title-empty">Последние публикации</span>
+              <span v-if="!selectedCategoryName && !selectedTags.length" class="title-empty">Последние публикации</span>
+            </div>
+            <DoctorTypeChips v-if="isDoctorMode" :active="activeMaterialType" />
           </div>
 
-          <div class="relative mb-[32px]">
+          <div class="relative feed-toolbar-tags">
             <button
                 @click="showTagDropdown = !showTagDropdown"
                 class="filter-btn-tags cust"
@@ -482,6 +511,7 @@ const ogImage = computed(() => {
               </div>
             </div>
           </div>
+          </div>
 
           <article
               v-for="(blog, blogIdx) in blogs.data"
@@ -490,11 +520,11 @@ const ogImage = computed(() => {
               style="height: auto;"
           >
             <Link
-                :href="`/blog/${blog.slug}`"
+                :href="itemHref(blog)"
                 class="block h-[250px] sm:h-[350px] xl:h-[494px] overflow-hidden relative"
             >
-              <img v-if="blog.preview_image"
-                   :src="`/storage/${blog.preview_image}`"
+              <img v-if="itemCover(blog)"
+                   :src="itemCover(blog)"
                    :alt="blog.title"
                    class="w-full h-full object-cover" style="background-color: rgb(247, 247, 247);"
                    :loading="blogIdx === 0 ? 'eager' : 'lazy'"
@@ -507,8 +537,11 @@ const ogImage = computed(() => {
                     {{ formatDate(blog.published_at) }}
                   </span>
                 </div>
-                <div v-if="blog.duration" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-                  <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">~{{ blog.duration }}</span>
+                <div v-if="itemDuration(blog)" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
+                  <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ itemDuration(blog) }}</span>
+                </div>
+                <div v-if="isVideoItem(blog) && blog.source_label" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
+                  <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ blog.source_label }}</span>
                 </div>
                 <div v-if="blog.category" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
                   <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ blog.category.name }}</span>
@@ -517,6 +550,9 @@ const ogImage = computed(() => {
                   <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ blog.tags[0].name }}</span>
                 </div>
               </div>
+              <span v-if="isVideoItem(blog)" class="doctor-feed-play" aria-hidden="true">
+                <img src="/assets/figma-play-20.svg" alt="" width="20" height="20" />
+              </span>
             </Link>
 
             <div
@@ -550,7 +586,7 @@ const ogImage = computed(() => {
                 </div>
               </component>
 
-              <Link :href="`/blog/${blog.slug}`" class="block">
+              <Link :href="itemHref(blog)" class="block">
               <h2 class="text-[22px] sm:text-[26px] xl:text-[32px] font-[400] text-gray-900 transition-colors line-clamp-2" style="line-height: 1">
                 {{ blog.title }}
               </h2>
@@ -625,6 +661,23 @@ const ogImage = computed(() => {
             </svg>
           </span>
         </div>
+
+        <section v-if="isDoctorMode && documentCategories.length" class="doctor-hub-docs">
+          <div class="doctor-hub-docs-head">
+            <h2>Документы лаборатории</h2>
+            <Link href="/materials/documents" class="doctor-hub-docs-all">
+              Все документы
+              <img src="/assets/figma-arrow-right.svg" alt="" width="24" height="24" />
+            </Link>
+          </div>
+          <div class="doctor-doc-grid">
+            <DoctorDocumentCategoryCard
+              v-for="category in documentCategories"
+              :key="category.id"
+              :category="category"
+            />
+          </div>
+        </section>
       </main>
       <PublicFooter />
     </div>
@@ -634,6 +687,80 @@ const ogImage = computed(() => {
 
 
 <style scoped>
+.feed-toolbar-tags {
+  margin-bottom: 32px;
+}
+.feed-toolbar.is-doctor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 32px;
+}
+.feed-toolbar.is-doctor .feed-toolbar-lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+}
+.feed-toolbar.is-doctor .feed-toolbar-lead > div {
+  margin-bottom: 0;
+}
+.feed-toolbar.is-doctor .feed-toolbar-tags {
+  margin-bottom: 0;
+}
+.doctor-feed-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  border-radius: 28px;
+  background: #fff;
+}
+.doctor-feed-play img {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+.doctor-hub-docs {
+  margin-top: 56px;
+}
+.doctor-hub-docs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+.doctor-hub-docs-head h2 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 400;
+}
+.doctor-hub-docs-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #000;
+  font-size: 18px;
+  text-decoration: none;
+}
+.doctor-doc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 33px;
+}
+@media (max-width: 1024px) {
+  .doctor-hub-docs-head h2 { font-size: 24px; }
+  .doctor-doc-grid { grid-template-columns: 1fr; gap: 16px; }
+}
+
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;

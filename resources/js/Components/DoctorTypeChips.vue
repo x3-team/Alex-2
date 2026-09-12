@@ -9,9 +9,9 @@ defineProps({
 const { doctorsUrl } = useDoctorMode()
 
 const chips = [
-  { key: 'all', label: 'Все', path: '/materials' },
-  { key: 'articles', label: 'Статьи', path: '/blog' },
-  { key: 'videos', label: 'Видео', path: '/video' },
+  { key: 'all', label: 'Все', path: '/blog' },
+  { key: 'articles', label: 'Статьи', path: '/blog?type=articles' },
+  { key: 'videos', label: 'Видео', path: '/blog?type=videos' },
   { key: 'documents', label: 'Документы', path: '/materials/documents' },
 ]
 </script>

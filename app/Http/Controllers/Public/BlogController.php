@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Blog;
+use App\Models\DoctorVideo;
 use App\Models\User;
+use App\Services\DetectSite;
+use App\Support\DoctorMaterialsStore;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 
@@ -107,7 +111,12 @@ class BlogController extends Controller
             }
         }
 
-        $blogs = $query->orderBy('sort_order', 'asc')->latest('published_at')->paginate(3)->withQueryString();
+        $isDoctors = DetectSite::make()->audience() === DetectSite::MODE_DOCTORS;
+        $materialType = $isDoctors ? $this->materialType($request) : null;
+
+        $blogs = $isDoctors
+            ? $this->paginateDoctorFeed($request, $query, $category, $materialType)
+            : $query->orderBy('sort_order', 'asc')->latest('published_at')->paginate(3)->withQueryString();
 
         $authors = User::whereHas('blogs', function($q) {
             $q->where('is_active', true)->whereNotNull('published_at')->where('published_at', '<=', now());
@@ -148,17 +157,111 @@ class BlogController extends Controller
                 'author' => $request->author,
                 'category' => $filterCategory,
                 'tags' => $request->tags,
+                'type' => $materialType,
             ],
+            'materialType' => $materialType,
+            'documentCategories' => ($isDoctors && $materialType === 'all')
+                ? (new DoctorMaterialsStore())->publicCategories()
+                : [],
             'blogMeta' => [
                 'title' => $metaTitle,
                 'description' => $metaDescription,
                 'keywords' => $metaKeywords,
-                'noindex' => \App\Services\DetectSite::make()->audience() === \App\Services\DetectSite::MODE_DOCTORS
-                    && $blogs->total() === 0,
+                'noindex' => $isDoctors && $blogs->total() === 0,
             ],
         ]);
     }
 
+    private function materialType(Request $request): string
+    {
+        $type = (string) $request->query('type', 'all');
+
+        return in_array($type, ['all', 'articles', 'videos'], true) ? $type : 'all';
+    }
+
+    private function paginateDoctorFeed(Request $request, $articleQuery, ?\App\Models\Category $category, string $type): LengthAwarePaginator
+    {
+        $items = collect();
+
+        if ($type !== 'videos') {
+            $items = $items->concat(
+                $articleQuery->orderBy('sort_order')->latest('published_at')->get()
+                    ->map(fn (Blog $blog) => $this->articleFeedItem($blog))
+            );
+        }
+
+        if ($type !== 'articles' && ! $request->filled('tags')) {
+            $videos = DoctorVideo::query()
+                ->published()
+                ->with(['relatedBlog.author', 'relatedBlog.category']);
+
+            if ($category) {
+                $videos->whereHas('relatedBlog', fn ($q) => $q->where('category_id', $category->id));
+            } elseif ($request->filled('category')) {
+                $slugs = array_filter(explode(',', (string) $request->category));
+                if ($slugs) {
+                    $videos->whereHas('relatedBlog.category', fn ($q) => $q->whereIn('slug', $slugs));
+                }
+            }
+
+            $items = $items->concat(
+                $videos->get()->map(fn (DoctorVideo $video) => $this->videoFeedItem($video))
+            );
+        }
+
+        $sorted = $items->sortByDesc(fn (array $item) => $item['published_at'] ?? '')->values();
+        $page = max(1, (int) $request->query('page', 1));
+        $perPage = 3;
+
+        return new LengthAwarePaginator(
+            $sorted->forPage($page, $perPage)->values(),
+            $sorted->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+    }
+
+    private function articleFeedItem(Blog $blog): array
+    {
+        return [
+            'id' => $blog->id,
+            'kind' => 'article',
+            'slug' => $blog->slug,
+            'title' => $blog->title,
+            'excerpt' => $blog->excerpt,
+            'content' => $blog->content,
+            'preview_image' => $blog->preview_image,
+            'published_at' => optional($blog->published_at)->toIso8601String(),
+            'duration' => $blog->duration,
+            'category' => $blog->category,
+            'tags' => $blog->tags,
+            'author' => $blog->author,
+        ];
+    }
+
+    private function videoFeedItem(DoctorVideo $video): array
+    {
+        $related = $video->relatedBlog;
+        $author = $related?->author;
+
+        return [
+            'id' => 'video-'.$video->id,
+            'kind' => 'video',
+            'slug' => $video->slug,
+            'title' => $video->title,
+            'excerpt' => $video->description,
+            'content' => '',
+            'preview_image' => null,
+            'cover' => $video->coverUrl(),
+            'published_at' => optional($video->published_at)->toIso8601String(),
+            'duration' => $video->duration,
+            'source_label' => $video->sourceLabel(),
+            'category' => $related?->category,
+            'tags' => [],
+            'author' => $author,
+        ];
+    }
 
     public function authors(Request $request)
     {

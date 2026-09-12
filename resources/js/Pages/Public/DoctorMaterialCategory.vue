@@ -48,8 +48,7 @@ const { doctorsUrl } = useDoctorMode()
       </p>
     </div>
 
-    <div class="mb-6 xl:mb-8 pt-[1rem]" :style="{ borderTop: '1px solid rgba(0, 0, 0, 0.3)' }">
-      <div class="text-[16px] xl:text-[18px] text-[rgba(0, 0, 0, 1)] mb-2 opacity-[0.5] font-400">Тип материала</div>
+    <div class="documents-toolbar">
       <DoctorTypeChips active="documents" />
     </div>
 
@@ -88,6 +87,12 @@ const { doctorsUrl } = useDoctorMode()
 </template>
 
 <style scoped>
+.documents-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 8px 0 32px;
+}
 .materials-list { display: flex; flex-direction: column; gap: 6px; }
 .material-card {
   display: flex; align-items: center; justify-content: space-between; padding: 24px;

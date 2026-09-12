@@ -8,7 +8,7 @@ use Inertia\Response;
 
 class DoctorVideosController extends Controller
 {
-    public function index(): Response
+    public function index()
     {
         return app(DoctorVideoController::class)->index();
     }

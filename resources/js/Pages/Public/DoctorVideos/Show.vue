@@ -37,7 +37,7 @@ const startPlayback = () => {
     <meta name="description" :content="videosMeta.description || video.description || video.title" />
   </Head>
 
-  <DoctorPublicShell :back-href="doctorsUrl('/video')" back-label="К видеолекциям">
+  <DoctorPublicShell :back-href="doctorsUrl('/blog?type=videos')" back-label="К видеолекциям">
     <div
       class="breadcrumbs flex items-center gap-3 mb-6"
       style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center; padding: 0px; gap: 12px; min-height: 48px;"
@@ -48,7 +48,7 @@ const startPlayback = () => {
           <path d="M0.75 8.25L4.5 4.5L0.75 0.75" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </span>
-      <Link :href="doctorsUrl('/video')" class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30">Видеолекции</Link>
+      <Link :href="doctorsUrl('/blog?type=videos')" class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30">Видеолекции</Link>
       <span class="text-black opacity-[0.3]">
         <svg width="6" height="9" viewBox="0 0 6 9" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M0.75 8.25L4.5 4.5L0.75 0.75" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
