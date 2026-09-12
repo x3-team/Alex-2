@@ -13,6 +13,11 @@ class DoctorMaterialsController extends Controller
         return app(DoctorMaterialController::class)->index();
     }
 
+    public function documents(): Response
+    {
+        return app(DoctorMaterialController::class)->documents();
+    }
+
     public function category(string $category): Response
     {
         return app(DoctorMaterialController::class)->category($category);

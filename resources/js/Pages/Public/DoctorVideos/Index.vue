@@ -1,23 +1,16 @@
 <script setup>
-import { Head, router } from '@inertiajs/vue3'
-import SiteSidebar from '@/Components/SiteSidebar.vue'
+import { Head, Link } from '@inertiajs/vue3'
+import DoctorPublicShell from '@/Components/DoctorPublicShell.vue'
 import DoctorTypeChips from '@/Components/DoctorTypeChips.vue'
 import DoctorVideoCard from '@/Components/DoctorVideoCard.vue'
-import PublicFooter from '@/Components/PublicFooter.vue'
-import '../../../../css/main.css'
+import { useDoctorMode } from '@/composables/useDoctorMode'
 
 defineProps({
   videos: { type: Array, default: () => [] },
   videosMeta: { type: Object, default: () => ({}) },
 })
 
-const goBack = () => {
-  if (window.history.length > 1) {
-    window.history.back()
-    return
-  }
-  router.visit('/')
-}
+const { doctorsUrl } = useDoctorMode()
 </script>
 
 <template>
@@ -26,57 +19,44 @@ const goBack = () => {
     <meta name="description" :content="videosMeta.description || 'Видеолекции лаборатории ALEX²'" />
   </Head>
 
-  <main class="page-container site-sidebar-layout doctor-mode doctor-materials-page">
-    <SiteSidebar class="doctor-materials-sidebar" :doctor-mode="true" />
+  <DoctorPublicShell :back-href="doctorsUrl('/')" back-label="На главную">
+    <div
+      class="breadcrumbs flex items-center gap-3 mb-6"
+      style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center; padding: 0px; gap: 12px; min-height: 48px;"
+    >
+      <Link :href="doctorsUrl('/')" class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30">Главная</Link>
+      <span class="text-black opacity-[0.3]">
+        <svg width="6" height="9" viewBox="0 0 6 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0.75 8.25L4.5 4.5L0.75 0.75" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="text-[14px] xl:text-[18px] text-black">Видеолекции</span>
+    </div>
 
-    <section class="materials-shell">
-      <header class="materials-back-bar">
-        <button class="materials-back-button" type="button" aria-label="Назад" @click="goBack">
-          <img src="/assets/figma-demo-back.svg" alt="" width="24" height="24" />
-          <span>Назад</span>
-        </button>
-      </header>
+    <div class="mb-4 max-w-full xl:max-w-[700px]">
+      <h1 class="font-400 text-[28px] sm:text-[34px] xl:text-[42px]">Видеолекции</h1>
+      <p class="mt-3 text-[16px] xl:text-[21px] text-black" style="line-height: 1.35">
+        Разборы профилей ALEX² и клинических случаев. До клика — своя обложка, плеер подключается только после нажатия.
+      </p>
+    </div>
 
-      <div class="materials-content">
-        <p class="materials-kicker">Материалы для врачей</p>
-        <h1>Видеолекции</h1>
-        <p class="materials-lead">
-          Разборы профилей ALEX² и клинических случаев. До клика — своя обложка, плеер подключается только после нажатия.
-        </p>
+    <div class="mb-6 xl:mb-8 pt-[1rem]" :style="{ borderTop: '1px solid rgba(0, 0, 0, 0.3)' }">
+      <div class="text-[16px] xl:text-[18px] text-[rgba(0, 0, 0, 1)] mb-2 opacity-[0.5] font-400">Тип материала</div>
+      <DoctorTypeChips active="videos" />
+    </div>
 
-        <DoctorTypeChips active="videos" />
-
-        <div v-if="videos.length" class="videos-grid">
-          <DoctorVideoCard v-for="video in videos" :key="video.id" :video="video" />
-        </div>
-        <p v-else class="materials-empty">Пока нет опубликованных видеолекций.</p>
-      </div>
-      <PublicFooter />
-    </section>
-  </main>
+    <div v-if="videos.length" class="videos-grid">
+      <DoctorVideoCard v-for="video in videos" :key="video.id" :video="video" />
+    </div>
+    <p v-else class="materials-empty">Пока нет опубликованных видеолекций.</p>
+  </DoctorPublicShell>
 </template>
 
 <style scoped>
-.doctor-materials-page { background: #f5f5f5; }
-.materials-shell { min-width: 0; height: 100dvh; overflow-x: hidden; overflow-y: auto; background: #f5f5f5; }
-.materials-back-bar { width: 100%; height: 72px; padding: 24px 32px; background: #fff; border: 1px solid #dfdfdf; }
-.materials-back-button {
-  display: flex; align-items: center; gap: 8px; padding: 0; border: 0; background: transparent;
-  color: #000; cursor: pointer; font-family: Helvetica, Arial, sans-serif; font-size: 17px; line-height: 24px;
-}
-.materials-back-button img { display: block; width: 24px; height: 24px; }
-.materials-content { width: min(1115px, 100%); padding: 64px; display: flex; flex-direction: column; gap: 32px; }
-.materials-kicker { margin: 0; font-family: Roboto, Arial, sans-serif; font-size: 16px; color: rgba(0,0,0,0.4); }
-.materials-content h1 { margin: 0; font-family: Roboto, Arial, sans-serif; font-size: 42px; font-weight: 400; line-height: 1.15; color: #000; }
-.materials-lead { margin: 0; max-width: 700px; font-family: Roboto, Arial, sans-serif; font-size: 21px; line-height: 1.35; color: #000; }
 .videos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 33px; }
-.materials-empty { padding: 24px 0; font-size: 18px; color: rgba(0,0,0,0.5); }
+.materials-empty { padding: 24px 0; font-size: 18px; color: rgba(0, 0, 0, 0.5); }
 
 @media (max-width: 1024px) {
-  .doctor-materials-sidebar { display: none !important; }
-  .materials-content { width: 100%; padding: 32px 16px 48px; gap: 24px; }
-  .materials-content h1 { font-size: 32px; }
   .videos-grid { grid-template-columns: 1fr; gap: 24px; }
-  .materials-back-button span { display: none; }
 }
 </style>

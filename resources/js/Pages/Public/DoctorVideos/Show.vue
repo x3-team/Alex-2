@@ -1,11 +1,9 @@
 <script setup>
 import { ref } from 'vue'
-import { Head, Link, router } from '@inertiajs/vue3'
-import SiteSidebar from '@/Components/SiteSidebar.vue'
+import { Head, Link } from '@inertiajs/vue3'
+import DoctorPublicShell from '@/Components/DoctorPublicShell.vue'
 import DoctorVideoCard from '@/Components/DoctorVideoCard.vue'
-import PublicFooter from '@/Components/PublicFooter.vue'
 import { useDoctorMode } from '@/composables/useDoctorMode'
-import '../../../../css/main.css'
 
 const props = defineProps({
   video: { type: Object, required: true },
@@ -31,14 +29,6 @@ const startPlayback = () => {
     playing.value = true
   }
 }
-
-const goBack = () => {
-  if (window.history.length > 1) {
-    window.history.back()
-    return
-  }
-  router.visit(doctorsUrl('/video'))
-}
 </script>
 
 <template>
@@ -47,97 +37,81 @@ const goBack = () => {
     <meta name="description" :content="videosMeta.description || video.description || video.title" />
   </Head>
 
-  <main class="page-container site-sidebar-layout doctor-mode doctor-materials-page">
-    <SiteSidebar class="doctor-materials-sidebar" :doctor-mode="true" />
+  <DoctorPublicShell :back-href="doctorsUrl('/video')" back-label="К видеолекциям">
+    <div
+      class="breadcrumbs flex items-center gap-3 mb-6"
+      style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center; padding: 0px; gap: 12px; min-height: 48px;"
+    >
+      <Link :href="doctorsUrl('/')" class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30">Главная</Link>
+      <span class="text-black opacity-[0.3]">
+        <svg width="6" height="9" viewBox="0 0 6 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0.75 8.25L4.5 4.5L0.75 0.75" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <Link :href="doctorsUrl('/video')" class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30">Видеолекции</Link>
+      <span class="text-black opacity-[0.3]">
+        <svg width="6" height="9" viewBox="0 0 6 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0.75 8.25L4.5 4.5L0.75 0.75" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="text-[14px] xl:text-[18px] text-black">Видеолекция</span>
+    </div>
 
-    <section class="materials-shell">
-      <header class="materials-back-bar">
-        <button class="materials-back-button" type="button" aria-label="Назад" @click="goBack">
-          <img src="/assets/figma-demo-back.svg" alt="" width="24" height="24" />
-          <span>Назад</span>
-        </button>
-      </header>
+    <div class="badges">
+      <span v-if="video.published_at">{{ formatDate(video.published_at) }}</span>
+      <span v-if="video.duration">{{ video.duration }}</span>
+      <span>{{ video.source_label }}</span>
+    </div>
 
-      <div class="materials-content">
-        <nav class="crumbs" aria-label="Навигация">
-          <Link :href="doctorsUrl('/')">Главная</Link>
-          <span>/</span>
-          <Link :href="doctorsUrl('/video')">Видеолекции</Link>
-          <span>/</span>
-          <strong>Видеолекция</strong>
-        </nav>
+    <h1 class="font-400 text-[28px] sm:text-[34px] xl:text-[42px] mt-6 mb-8">{{ video.title }}</h1>
 
-        <div class="badges">
-          <span v-if="video.published_at">{{ formatDate(video.published_at) }}</span>
-          <span v-if="video.duration">{{ video.duration }}</span>
-          <span>{{ video.source_label }}</span>
-        </div>
+    <div class="player">
+      <iframe
+        v-if="playing && video.iframe_src"
+        :src="video.iframe_src"
+        title="Видеоплеер"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+      />
+      <button v-else type="button" class="player-cover" @click="startPlayback">
+        <img v-if="video.cover" :src="video.cover" :alt="video.title" width="1115" height="627" />
+        <span class="player-source">{{ video.source_label }}</span>
+        <span v-if="video.duration" class="player-duration">{{ video.duration }}</span>
+        <span class="player-play" aria-hidden="true">
+          <img src="/assets/figma-play-32.svg" alt="" width="32" height="32" />
+        </span>
+      </button>
+    </div>
 
-        <h1>{{ video.title }}</h1>
+    <p v-if="video.description" class="anons">{{ video.description }}</p>
 
-        <div class="player">
-          <iframe
-            v-if="playing && video.iframe_src"
-            :src="video.iframe_src"
-            title="Видеоплеер"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowfullscreen
-          />
-          <button v-else type="button" class="player-cover" @click="startPlayback">
-            <img v-if="video.cover" :src="video.cover" :alt="video.title" width="1115" height="627" />
-            <span class="player-source">{{ video.source_label }}</span>
-            <span v-if="video.duration" class="player-duration">{{ video.duration }}</span>
-            <span class="player-play" aria-hidden="true">
-              <img src="/assets/figma-play-32.svg" alt="" width="32" height="32" />
-            </span>
-          </button>
-        </div>
-
-        <p v-if="video.description" class="anons">{{ video.description }}</p>
-
-        <Link
-          v-if="relatedArticle"
-          :href="doctorsUrl(`/blog/${relatedArticle.slug}`)"
-          class="related-article"
-        >
-          <img v-if="relatedArticle.cover" :src="relatedArticle.cover" alt="" width="140" height="88" />
-          <div>
-            <p>Статья{{ relatedArticle.duration ? ` · ${relatedArticle.duration}` : '' }}</p>
-            <strong>{{ relatedArticle.title }}</strong>
-          </div>
-        </Link>
-
-        <section v-if="relatedVideos.length" class="related">
-          <h2>Материалы по теме</h2>
-          <div class="related-grid">
-            <DoctorVideoCard v-for="item in relatedVideos" :key="item.id" :video="item" />
-          </div>
-        </section>
+    <Link
+      v-if="relatedArticle"
+      :href="doctorsUrl(`/blog/${relatedArticle.slug}`)"
+      class="related-article"
+    >
+      <img v-if="relatedArticle.cover" :src="relatedArticle.cover.startsWith('/') ? relatedArticle.cover : `/storage/${relatedArticle.cover}`" alt="" width="140" height="88" />
+      <div>
+        <p>Статья{{ relatedArticle.duration ? ` · ${relatedArticle.duration}` : '' }}</p>
+        <strong>{{ relatedArticle.title }}</strong>
       </div>
-      <PublicFooter />
+    </Link>
+
+    <section v-if="relatedVideos.length" class="related">
+      <h2>Материалы по теме</h2>
+      <div class="related-grid">
+        <DoctorVideoCard v-for="item in relatedVideos" :key="item.id" :video="item" />
+      </div>
     </section>
-  </main>
+  </DoctorPublicShell>
 </template>
 
 <style scoped>
-.doctor-materials-page { background: #f5f5f5; }
-.materials-shell { min-width: 0; height: 100dvh; overflow-x: hidden; overflow-y: auto; background: #f5f5f5; }
-.materials-back-bar { width: 100%; height: 72px; padding: 24px 32px; background: #fff; border: 1px solid #dfdfdf; }
-.materials-back-button {
-  display: flex; align-items: center; gap: 8px; padding: 0; border: 0; background: transparent;
-  color: #000; cursor: pointer; font-family: Helvetica, Arial, sans-serif; font-size: 17px;
-}
-.materials-back-button img { display: block; width: 24px; height: 24px; }
-.materials-content { width: min(1115px, 100%); padding: 64px; display: flex; flex-direction: column; gap: 32px; }
-.crumbs { display: flex; flex-wrap: wrap; gap: 8px; font-family: Roboto, Arial, sans-serif; font-size: 16px; color: rgba(0,0,0,0.4); }
-.crumbs a { color: rgba(0,0,0,0.4); text-decoration: none; }
-.crumbs strong { color: #000; font-weight: 400; }
 .badges { display: flex; flex-wrap: wrap; gap: 8px; }
 .badges span {
   display: inline-flex; align-items: center; height: 45px; padding: 0 16px; border-radius: 8px;
   background: rgba(0,0,0,0.07); font-family: Roboto, Arial, sans-serif; font-size: 18px;
 }
-.materials-content h1 { margin: 0; font-family: Roboto, Arial, sans-serif; font-size: 42px; font-weight: 400; line-height: 1.15; }
 .player { position: relative; width: 100%; aspect-ratio: 1115 / 627; background: #111; overflow: hidden; }
 .player iframe, .player-cover, .player-cover img { width: 100%; height: 100%; border: 0; display: block; object-fit: cover; }
 .player-cover { position: relative; padding: 0; border: 0; cursor: pointer; background: #111; }
@@ -153,21 +127,19 @@ const goBack = () => {
   display: flex; align-items: center; justify-content: center; border-radius: 44px; background: #fff;
 }
 .player-play img { width: 32px; height: 32px; }
-.anons { margin: 0; max-width: 916px; font-family: Roboto, Arial, sans-serif; font-size: 21px; line-height: 1.4; }
+.anons { margin: 24px 0 0; max-width: 916px; font-family: Roboto, Arial, sans-serif; font-size: 21px; line-height: 1.4; }
 .related-article {
-  display: flex; align-items: center; gap: 24px; padding: 24px; background: #fff; border: 1px solid #dfdfdf;
+  display: flex; align-items: center; gap: 24px; padding: 24px; margin-top: 32px; background: #fff; border: 1px solid #dfdfdf;
   color: inherit; text-decoration: none;
 }
 .related-article img { width: 140px; height: 88px; object-fit: cover; }
 .related-article p { margin: 0 0 8px; color: rgba(0,0,0,0.6); font-size: 16px; }
 .related-article strong { font-size: 21px; font-weight: 400; }
+.related { margin-top: 48px; }
 .related h2 { margin: 0 0 32px; font-family: Roboto, Arial, sans-serif; font-size: 32px; font-weight: 400; }
 .related-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 33px; }
 
 @media (max-width: 1024px) {
-  .doctor-materials-sidebar { display: none !important; }
-  .materials-content { width: 100%; padding: 32px 16px 48px; gap: 24px; }
-  .materials-content h1 { font-size: 32px; }
   .related-grid { grid-template-columns: 1fr; }
   .player-play { width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 32px; }
   .player-play img { width: 24px; height: 24px; }
