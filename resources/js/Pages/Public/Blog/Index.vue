@@ -414,9 +414,8 @@ const ogImage = computed(() => {
           <div class="flex gap-[5px] overflow-x-auto pb-2 xl:flex-wrap xl:overflow-visible xl:pb-0 scrollbar-hide">
             <button
                 @click="toggleCategory(null)"
-                :class="!selectedCategories.length ? 'bg-black text-white' : 'bg-[transparent] text-black '"
-                class="px-6 py-3 font-medium transition-all but_cust flex-shrink-0 whitespace-nowrap"
-                style="border:1px solid rgba(0, 0, 0, 0.4); border-radius: 8px"
+                :class="!selectedCategories.length ? 'is-active' : ''"
+                class="blog-filter-chip"
             >
               Все
             </button>
@@ -425,9 +424,8 @@ const ogImage = computed(() => {
                 v-for="category in categories"
                 :key="category.id"
                 @click="toggleCategory(category.slug)"
-                :class="selectedCategories.includes(category.slug) ? 'bg-black text-white' : 'bg-[transparent] text-black'"
-                class="px-6 py-3 font-medium transition-all but_cust flex-shrink-0 whitespace-nowrap"
-                style="border: 1px solid rgba(0, 0, 0, 0.4); border-radius: 8px"
+                :class="selectedCategories.includes(category.slug) ? 'is-active' : ''"
+                class="blog-filter-chip"
             >
               {{ category.name }}
             </button>
@@ -687,6 +685,32 @@ const ogImage = computed(() => {
 
 
 <style scoped>
+.blog-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  background: transparent;
+  color: #000;
+  font-family: Roboto, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.blog-filter-chip.is-active {
+  background: #000;
+  color: #f5f5f5;
+}
+
 .feed-toolbar-tags {
   margin-bottom: 32px;
 }
@@ -872,15 +896,15 @@ const ogImage = computed(() => {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
-  padding: 0 20px;
-  height: 45px;
-  min-width: 195px;
+  gap: 6px;
+  padding: 0 12px;
+  height: 32px;
+  min-width: 0;
   max-width: 100%;
   border: 1px solid rgba(0, 0, 0, 0.4);
-  border-radius: 10px;
+  border-radius: 8px;
   background: transparent;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 400;
   color: #000;
   opacity: 0.5;
@@ -898,7 +922,7 @@ const ogImage = computed(() => {
 .tag-placeholder {
   flex-shrink: 0;
   white-space: nowrap;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
 }
 
@@ -945,7 +969,7 @@ const ogImage = computed(() => {
     padding: .75rem 1.5rem;
   }
   .tag-placeholder{
-    font-size: 18px;
+    font-size: 14px;
   }
 }
 
