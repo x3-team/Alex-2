@@ -3437,45 +3437,24 @@ body:has(.home-page-container.doctor-mode) {
     content: '';
     position: absolute;
     z-index: 0;
-    left: -48px;
-    right: -72px;
-    top: -28px;
-    bottom: -36px;
+    left: -80px;
+    right: -100px;
+    top: -64px;
+    bottom: -72px;
     pointer-events: none;
-    transform: translateZ(0);
     opacity: 0;
     transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-    /* Fallback haze + backdrop blur over the video layer below the slide. */
+    /* Soft haze only — no backdrop-filter (that draws a hard rectangle). */
     background: radial-gradient(
-        ellipse 92% 88% at 40% 50%,
-        rgba(0, 0, 0, 0.58) 0%,
-        rgba(0, 0, 0, 0.38) 38%,
-        rgba(0, 0, 0, 0.16) 58%,
-        rgba(0, 0, 0, 0.04) 72%,
-        transparent 100%
+        ellipse 52% 48% at 38% 48%,
+        rgba(0, 0, 0, 0.72) 0%,
+        rgba(0, 0, 0, 0.46) 28%,
+        rgba(0, 0, 0, 0.18) 52%,
+        rgba(0, 0, 0, 0.05) 70%,
+        transparent 86%
     );
-    backdrop-filter: blur(32px) brightness(0.58) saturate(1.05);
-    -webkit-backdrop-filter: blur(32px) brightness(0.58) saturate(1.05);
-    mask-image: radial-gradient(
-        ellipse 90% 92% at 40% 48%,
-        #000 0%,
-        #000 32%,
-        rgba(0, 0, 0, 0.78) 50%,
-        rgba(0, 0, 0, 0.42) 66%,
-        rgba(0, 0, 0, 0.16) 80%,
-        rgba(0, 0, 0, 0.04) 90%,
-        transparent 100%
-    );
-    -webkit-mask-image: radial-gradient(
-        ellipse 90% 92% at 40% 48%,
-        #000 0%,
-        #000 32%,
-        rgba(0, 0, 0, 0.78) 50%,
-        rgba(0, 0, 0, 0.42) 66%,
-        rgba(0, 0, 0, 0.16) 80%,
-        rgba(0, 0, 0, 0.04) 90%,
-        transparent 100%
-    );
+    filter: blur(28px);
+    -webkit-filter: blur(28px);
 }
 
 .home-page-container.doctor-mode .slide-layer.active[data-content-ready="true"] .figma-step-block.advantages-pos .figma-step-text-stack::before {
