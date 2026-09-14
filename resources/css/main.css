@@ -3011,14 +3011,15 @@ body:has(.home-page-container.doctor-mode) {
    enabled only by the alex-audience cookie through the root doctor-mode class.
    ========================================================================== */
 
-.home-page-container.doctor-mode .site-sidebar .promo-card {
-    /* Doctor promo substrate: lightened toward hero video beige (#cba98e / #dfbe9d). */
-    background: linear-gradient(141.59deg, rgba(170, 130, 95, 0.78) 0%, rgba(203, 169, 142, 0.88) 100%);
-    -webkit-backdrop-filter: blur(250px);
-    backdrop-filter: blur(250px);
+.doctor-mode .site-sidebar .promo-card,
+.site-sidebar.doctor-theme .promo-card {
+    background: var(--doctor-theme-color, #cba98e);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
 }
 
-.home-page-container.doctor-mode .site-sidebar .promo-card::before {
+.doctor-mode .site-sidebar .promo-card::before,
+.site-sidebar.doctor-theme .promo-card::before {
     background: none;
 }
 
@@ -3234,19 +3235,16 @@ body:has(.home-page-container.doctor-mode) {
 }
 
 @media (max-width: 1024px) {
+    .doctor-mode .site-sidebar .promo-card,
+    .site-sidebar.doctor-theme .promo-card,
     .home-page-container.doctor-mode .site-sidebar .promo-card {
-        background:
-                linear-gradient(141.59deg, rgba(170, 130, 95, 0.78) 0%, rgba(203, 169, 142, 0.88) 100%),
-                #ffffff;
+        background: var(--doctor-theme-color, #cba98e);
     }
 
-    /* The patient mobile hero image is green and sits above the card background
-     through a pseudo-element. Replace it in doctors mode so the open menu
-     uses the same brown palette as its desktop counterpart. */
+    .doctor-mode .site-sidebar .promo-card::before,
+    .site-sidebar.doctor-theme .promo-card::before,
     .home-page-container.doctor-mode .site-sidebar .promo-card::before {
-        background:
-                linear-gradient(141.59deg, rgba(170, 130, 95, 0.78) 0%, rgba(203, 169, 142, 0.88) 100%),
-                #ffffff;
+        background: none;
     }
 
 }
@@ -3418,8 +3416,9 @@ body:has(.home-page-container.doctor-mode) {
     text-shadow: 0 0 1px #fff, 0 0 45px #00000045;
 }
 
-/* Doctor advantages: soft halo under copy (blurs video through slide layer, edges fade out). */
-.home-page-container.doctor-mode .figma-step-block.advantages-pos .figma-step-text-stack {
+/* Doctor advantages + results: same soft halo under copy. */
+.home-page-container.doctor-mode .figma-step-block.advantages-pos .figma-step-text-stack,
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-text-stack {
     position: relative;
     z-index: 1;
     padding: 0;
@@ -3433,7 +3432,8 @@ body:has(.home-page-container.doctor-mode) {
     box-sizing: border-box;
 }
 
-.home-page-container.doctor-mode .figma-step-block.advantages-pos .figma-step-text-stack::before {
+.home-page-container.doctor-mode .figma-step-block.advantages-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-text-stack::before {
     content: '';
     position: absolute;
     z-index: 0;
@@ -3465,22 +3465,29 @@ body:has(.home-page-container.doctor-mode) {
     -webkit-filter: blur(22px);
 }
 
-.home-page-container.doctor-mode .slide-layer.active[data-content-ready="true"] .figma-step-block.advantages-pos .figma-step-text-stack::before {
+.home-page-container.doctor-mode .slide-layer.active[data-content-ready="true"] .figma-step-block.advantages-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.active[data-content-ready="true"] .figma-step-block.results-pos .figma-step-text-stack::before {
     opacity: 1;
     transition-delay: 0.05s;
 }
 
 .home-page-container.doctor-mode .slide-layer:not(.active) .figma-step-block.advantages-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer:not(.active) .figma-step-block.results-pos .figma-step-text-stack::before,
 .home-page-container.doctor-mode .slide-layer.active[data-content-ready="false"] .figma-step-block.advantages-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.active[data-content-ready="false"] .figma-step-block.results-pos .figma-step-text-stack::before,
 .home-page-container.doctor-mode .slide-layer.content-exiting .figma-step-block.advantages-pos .figma-step-text-stack::before,
-.home-page-container.doctor-mode .slide-layer.content-exiting-back .figma-step-block.advantages-pos .figma-step-text-stack::before {
+.home-page-container.doctor-mode .slide-layer.content-exiting .figma-step-block.results-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.content-exiting-back .figma-step-block.advantages-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.content-exiting-back .figma-step-block.results-pos .figma-step-text-stack::before {
     opacity: 0 !important;
     transition-duration: 0.55s;
     transition-delay: 0s !important;
 }
 
 .home-page-container.doctor-mode .figma-step-block.advantages-pos .figma-step-text-stack > .figma-slide-title-inline,
-.home-page-container.doctor-mode .figma-step-block.advantages-pos .figma-step-text-stack > .figma-slide-desc-inline {
+.home-page-container.doctor-mode .figma-step-block.advantages-pos .figma-step-text-stack > .figma-slide-desc-inline,
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-text-stack > .figma-slide-desc-inline,
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-text-stack > .figma-result-title-row {
     position: relative;
     z-index: 1;
 }
