@@ -3437,24 +3437,26 @@ body:has(.home-page-container.doctor-mode) {
     content: '';
     position: absolute;
     z-index: 0;
-    left: -80px;
-    right: -100px;
-    top: -64px;
-    bottom: -72px;
+    left: -56px;
+    right: -72px;
+    top: -36px;
+    bottom: -48px;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-    /* Soft haze only — no backdrop-filter (that draws a hard rectangle). */
+    /* Larger than the copy; long fade so no hard rim. No backdrop-filter. */
     background: radial-gradient(
-        ellipse 52% 48% at 38% 48%,
-        rgba(0, 0, 0, 0.72) 0%,
-        rgba(0, 0, 0, 0.46) 28%,
-        rgba(0, 0, 0, 0.18) 52%,
-        rgba(0, 0, 0, 0.05) 70%,
-        transparent 86%
+        ellipse 78% 72% at 40% 46%,
+        rgba(0, 0, 0, 0.88) 0%,
+        rgba(0, 0, 0, 0.72) 22%,
+        rgba(0, 0, 0, 0.48) 40%,
+        rgba(0, 0, 0, 0.24) 56%,
+        rgba(0, 0, 0, 0.10) 70%,
+        rgba(0, 0, 0, 0.03) 84%,
+        transparent 100%
     );
-    filter: blur(28px);
-    -webkit-filter: blur(28px);
+    filter: blur(18px);
+    -webkit-filter: blur(18px);
 }
 
 .home-page-container.doctor-mode .slide-layer.active[data-content-ready="true"] .figma-step-block.advantages-pos .figma-step-text-stack::before {
