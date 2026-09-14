@@ -5,6 +5,8 @@ import SiteSidebar from '@/Components/SiteSidebar.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
+
+const { blogBreadcrumbLabel } = useDoctorMode()
 // 🔹 Принимаем готовые JSON-LD строки с бэкенда (это самый надежный способ для SEO)
 const props = defineProps({
   blog: Object,
@@ -301,7 +303,7 @@ const toggleFaq = (index) => {
   </svg></span>
 
             <Link href="/blog" class="flex-shrink-0 text-[14px] lg:text-[18px] text-black opacity-30 whitespace-nowrap">
-              Блог
+              {{ blogBreadcrumbLabel }}
             </Link>
 
             <template v-if="blog?.category?.slug">

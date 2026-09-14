@@ -30,7 +30,7 @@ const { doctorsUrl } = useDoctorMode()
           <path d="M0.75 8.25L4.5 4.5L0.75 0.75" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </span>
-      <Link :href="doctorsUrl('/blog')" class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30">Блог</Link>
+      <Link :href="doctorsUrl('/blog')" class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30">Материалы для врачей</Link>
       <span class="text-black opacity-[0.3]">
         <svg width="6" height="9" viewBox="0 0 6 9" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M0.75 8.25L4.5 4.5L0.75 0.75" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
