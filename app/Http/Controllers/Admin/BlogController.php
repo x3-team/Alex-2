@@ -417,7 +417,8 @@ class BlogController extends Controller
         // Автор
         $validated['user_id'] = $request->author_id ?: Auth::id();
 
-        $validated['published_at'] = !empty($validated['is_active']) ? now() : null;
+        // Дата публикации на сайте — только в момент первого выхода (не дата создания черновика).
+        $validated['published_at'] = null;
         // Загрузка картинки
 
         // Генерация содержания
@@ -434,6 +435,11 @@ class BlogController extends Controller
 
         // Создаем пост
         $blog = Blog::create($validated);
+
+        if ($blog->is_active) {
+            $blog->published_at = now();
+            $blog->saveQuietly();
+        }
 
         // Связанные посты
         if (isset($validated['related_posts']) && !empty($validated['related_posts'])) {
@@ -517,6 +523,7 @@ class BlogController extends Controller
             'noindex' => 'boolean',
             'og_title' => 'nullable|string|max:255',
             'og_description' => 'nullable|string|max:500',
+            'published_at' => 'nullable|date',
         ]);
 
 
@@ -574,11 +581,13 @@ class BlogController extends Controller
         // Заполняем модель новыми данными
         $blog->fill($validated);
 
-        // Логика даты публикации:
-        // Если пост стал активным (раньше был inactive, а стал active)
-        // ИЛИ если он активен, но дата публикации по какой-то причине пуста
-        if ($blog->is_active && empty($blog->published_at)) {
-            $blog->published_at = now();
+        // Дата на сайте = момент публикации (вкл. «Активен»), не дата создания в админке.
+        if ($blog->is_active) {
+            if ($request->filled('published_at')) {
+                $blog->published_at = $request->date('published_at');
+            } elseif (! $wasActive || empty($blog->published_at)) {
+                $blog->published_at = now();
+            }
         }
 
         // Сохраняем изменения
