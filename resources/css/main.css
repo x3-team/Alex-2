@@ -3492,6 +3492,36 @@ body:has(.home-page-container.doctor-mode) {
     z-index: 1;
 }
 
+/* Results copy is taller (3 lines + badge). Stretch the core down so the last line stays readable. */
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-text-stack::before {
+    left: -90px;
+    right: -140px;
+    top: -56px;
+    bottom: -140px;
+    background:
+        radial-gradient(
+            ellipse 72% 70% at 38% 42%,
+            rgba(0, 0, 0, 0.86) 0%,
+            rgba(0, 0, 0, 0.58) 36%,
+            rgba(0, 0, 0, 0.22) 58%,
+            transparent 74%
+        ),
+        radial-gradient(
+            ellipse 96% 98% at 38% 48%,
+            rgba(0, 0, 0, 0.34) 0%,
+            rgba(0, 0, 0, 0.16) 46%,
+            rgba(0, 0, 0, 0.06) 68%,
+            rgba(0, 0, 0, 0.016) 84%,
+            transparent 100%
+        );
+    filter: blur(20px);
+    -webkit-filter: blur(20px);
+}
+
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-text-stack {
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.55), 0 1px 18px rgba(0, 0, 0, 0.45);
+}
+
 .figma-slide-title-inline {
     font-size: 32px;
     font-weight: 400;
