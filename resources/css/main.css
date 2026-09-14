@@ -3418,17 +3418,47 @@ body:has(.home-page-container.doctor-mode) {
     text-shadow: 0 0 1px #fff, 0 0 45px #00000045;
 }
 
-/* Doctor advantages: frosted panel under title + body (readability on dark video). */
+/* Doctor advantages: soft blur halo under copy — no visible card, edges fade out. */
 .home-page-container.doctor-mode .figma-step-block.advantages-pos .figma-step-text-stack {
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(14px) saturate(1.05);
-    -webkit-backdrop-filter: blur(14px) saturate(1.05);
-    padding: 16px 20px;
-    border-radius: 14px;
-    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.22);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    position: relative;
+    isolation: isolate;
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    border-radius: 0;
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.9), 0 2px 24px rgba(0, 0, 0, 0.45);
     max-width: 100%;
     box-sizing: border-box;
+}
+
+.home-page-container.doctor-mode .figma-step-block.advantages-pos .figma-step-text-stack::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    left: -22%;
+    right: -20%;
+    top: -40%;
+    bottom: -36%;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    mask-image: radial-gradient(
+        ellipse 70% 64% at 38% 50%,
+        #000 0%,
+        rgba(0, 0, 0, 0.72) 38%,
+        rgba(0, 0, 0, 0.28) 58%,
+        transparent 78%
+    );
+    -webkit-mask-image: radial-gradient(
+        ellipse 70% 64% at 38% 50%,
+        #000 0%,
+        rgba(0, 0, 0, 0.72) 38%,
+        rgba(0, 0, 0, 0.28) 58%,
+        transparent 78%
+    );
 }
 
 .figma-slide-title-inline {
