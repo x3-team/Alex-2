@@ -144,6 +144,15 @@ const errorLabels = {
   category_id: 'Категория',
   author_id: 'Автор',
   tag_ids: 'Теги',
+  audience: 'Аудитория',
+}
+
+const humanizeValidationMessage = (message) => {
+  const text = Array.isArray(message) ? message.join(' ') : String(message || '')
+  if (text === 'validation.required' || text.endsWith('.required')) {
+    return 'обязательное поле'
+  }
+  return text
 }
 
 const formatSaveErrors = (errors) => {
@@ -155,7 +164,7 @@ const formatSaveErrors = (errors) => {
     let label = errorLabels[key]
     if (!label && String(key).startsWith('faqs')) label = 'FAQ'
     if (!label && String(key).startsWith('sources')) label = 'Источник'
-    const text = Array.isArray(msg) ? msg.join(' ') : String(msg)
+    const text = humanizeValidationMessage(msg)
     return label ? `${label}: ${text}` : text
   })
 }
@@ -256,6 +265,7 @@ const submit = () => {
   // Передаем форму через Inertia Router с spoofing метода PUT
   router.post(route('admin.blog.update', props.blog.id), {
     _method: 'PUT',
+    audience: form.audience || 'patients',
     title: form.title,
     content: form.content,
     slug: form.slug || '',
