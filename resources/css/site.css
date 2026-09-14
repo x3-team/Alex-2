@@ -1,0 +1,3 @@
+/* Single CSS entry — avoids dual app-*.css on critical path */
+@import './app.css';
+@import './main.css';
