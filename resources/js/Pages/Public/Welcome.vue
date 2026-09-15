@@ -425,8 +425,13 @@ const goToPersistentStep = (step) => {
   const group = persistentStepGroup.value
   if (!group) return
 
-  const firstSlideIndex = group.type === 'advantages' ? 2 : 7
-  navigateToSlideIndex(firstSlideIndex + step - 1, 'direct')
+  const ranges = slideDeckRanges.value
+  const firstSlideIndex =
+    group.type === 'advantages' ? ranges.firstAdvantage : ranges.firstResult
+  const stepNumber = Number(step)
+  if (!Number.isFinite(stepNumber) || stepNumber < 1) return
+
+  navigateToSlideIndex(firstSlideIndex + stepNumber - 1, 'direct')
 }
 
 const menuItems = computed(() => [
