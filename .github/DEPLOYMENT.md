@@ -4,7 +4,7 @@
 
 Runs on every pull request and on pushes to `main` and `cursor/unify-menu-fonts-425e`:
 
-1. `composer install` + `composer test` (PHPUnit, SQLite in memory)
+1. `composer install` + `php artisan test --testsuite=Unit` (PHPUnit, SQLite in memory)
 2. `npm ci --legacy-peer-deps` + `npm run build` (Vite client + SSR)
 
 ## CD (`deploy.yml`)

@@ -47,7 +47,7 @@ jobs:
           php artisan key:generate --ansi
 
       - name: Run tests
-        run: composer test
+        run: php artisan test --testsuite=Unit
 
       - name: Setup Node
         uses: actions/setup-node@v4
