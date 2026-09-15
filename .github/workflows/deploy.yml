@@ -1,0 +1,98 @@
+name: Deploy to VPS
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref (branch, tag, or SHA) to deploy
+        required: true
+        default: cursor/unify-menu-fonts-425e
+      run_migrations:
+        description: Run php artisan migrate --force on the server
+        type: boolean
+        default: true
+
+concurrency:
+  group: deploy-vps-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Rsync and build on VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          port="${SSH_PORT:-22}"
+          ssh-keyscan -p "$port" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Rsync application sources
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          port="${SSH_PORT:-22}"
+          rsync -az \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'node_modules/' \
+            --exclude 'vendor/' \
+            --exclude '.env' \
+            --exclude '.env.*' \
+            --exclude 'storage/' \
+            --exclude 'bootstrap/cache/' \
+            --exclude 'public/build/' \
+            --exclude 'public/hot/' \
+            --exclude 'public/storage/' \
+            --exclude 'tests/' \
+            --exclude 'phpunit.xml' \
+            --exclude '.phpunit.cache/' \
+            -e "ssh -i ~/.ssh/deploy_key -p ${port} -o StrictHostKeyChecking=accept-new" \
+            ./ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/"
+
+      - name: Remote install, build, and warm caches
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          RUN_MIGRATIONS: ${{ inputs.run_migrations }}
+        run: |
+          port="${SSH_PORT:-22}"
+          ssh -i ~/.ssh/deploy_key -p "$port" "${SSH_USER}@${SSH_HOST}" \
+            "cd '${DEPLOY_PATH}' && RUN_MIGRATIONS='${RUN_MIGRATIONS}' bash scripts/deploy-vps.sh"
+
+      - name: Health check
+        env:
+          HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
+        run: |
+          if [ -z "${HEALTHCHECK_URL:-}" ]; then
+            echo "HEALTHCHECK_URL secret not set — skipping health check"
+            exit 0
+          fi
+          for i in 1 2 3 4 5; do
+            if curl -fsS "$HEALTHCHECK_URL" >/dev/null; then
+              echo "Health check OK: $HEALTHCHECK_URL"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Health check failed: $HEALTHCHECK_URL"
+          exit 1
