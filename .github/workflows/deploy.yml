@@ -1,0 +1,130 @@
+# DRAFT-SAFE CD. Not wired to push/merge.
+# Manual only. Refuses to run unless confirm == I_CONFIRM_PRODUCTION_DEPLOY.
+# Do not enable on: push. Do not merge this as auto-deploy to main.
+name: Deploy to VPS (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref already merged into the prod baseline (branch/tag/SHA)
+        required: true
+        default: cursor/prod-baseline-20260916-2397
+      confirm:
+        description: Type exactly I_CONFIRM_PRODUCTION_DEPLOY
+        required: true
+        default: ""
+      run_migrations:
+        description: Run php artisan migrate --force (leave false unless you intend schema changes)
+        type: boolean
+        default: false
+      restart_services:
+        description: Restart php-fpm / Inertia SSR after build (leave false unless you intend downtime)
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-vps-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Backup, rsync sources, build on VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+
+    steps:
+      - name: Require explicit confirm
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ "$CONFIRM" != "I_CONFIRM_PRODUCTION_DEPLOY" ]; then
+            echo "Refusing deploy: confirm input must be exactly I_CONFIRM_PRODUCTION_DEPLOY"
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.ALEXADMIN_SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.ALEX_SSH_HOST }}
+        run: |
+          test -n "$SSH_PRIVATE_KEY"
+          test -n "$SSH_HOST"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Pre-deploy backup on VPS
+        env:
+          SSH_HOST: ${{ secrets.ALEX_SSH_HOST }}
+          SSH_USER: ${{ secrets.ALEX_SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.ALEX_APP_ROOT }}
+        run: |
+          test -n "$SSH_USER"
+          test -n "$DEPLOY_PATH"
+          ssh -i ~/.ssh/deploy_key "${SSH_USER}@${SSH_HOST}" \
+            "cd '${DEPLOY_PATH}' && bash scripts/deploy-vps.sh backup"
+
+      - name: Rsync application sources (excludes live-only paths)
+        env:
+          SSH_HOST: ${{ secrets.ALEX_SSH_HOST }}
+          SSH_USER: ${{ secrets.ALEX_SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.ALEX_APP_ROOT }}
+        run: |
+          rsync -az \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'node_modules/' \
+            --exclude 'vendor/' \
+            --exclude '.env' \
+            --exclude '.env.*' \
+            --exclude 'storage/' \
+            --exclude 'bootstrap/cache/' \
+            --exclude 'public/build/' \
+            --exclude 'public/hot/' \
+            --exclude 'public/storage/' \
+            --exclude 'public/videos/' \
+            --exclude 'tests/' \
+            --exclude 'phpunit.xml' \
+            --exclude '.phpunit.cache/' \
+            --exclude 'docs/' \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new" \
+            ./ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/"
+
+      - name: Build on VPS
+        env:
+          SSH_HOST: ${{ secrets.ALEX_SSH_HOST }}
+          SSH_USER: ${{ secrets.ALEX_SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.ALEX_APP_ROOT }}
+          RUN_MIGRATIONS: ${{ inputs.run_migrations }}
+          RESTART_SERVICES: ${{ inputs.restart_services }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "${SSH_USER}@${SSH_HOST}" \
+            "cd '${DEPLOY_PATH}' && RUN_MIGRATIONS='${RUN_MIGRATIONS}' RESTART_SERVICES='${RESTART_SERVICES}' bash scripts/deploy-vps.sh apply"
+
+      - name: Smoke check (patient + doctor)
+        env:
+          PATIENT_URL: ${{ secrets.HEALTHCHECK_URL_PATIENT }}
+          DOCTOR_URL: ${{ secrets.HEALTHCHECK_URL_DOCTOR }}
+        run: |
+          fail=0
+          for url in "$PATIENT_URL" "$DOCTOR_URL"; do
+            if [ -z "$url" ]; then
+              echo "Skipping empty healthcheck URL"
+              continue
+            fi
+            if curl -fsS -o /dev/null -w "%{http_code}" "$url" | grep -Eq '^(200|204)$'; then
+              echo "OK $url"
+            else
+              echo "FAIL $url"
+              fail=1
+            fi
+          done
+          exit "$fail"
