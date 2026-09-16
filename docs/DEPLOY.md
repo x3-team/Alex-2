@@ -1,6 +1,8 @@
 # Deploy (Alex-2 / Immunotech VPS)
 
-Live site is the source of truth until `main` matches it. **Git production branch today:** `cursor/prod-baseline-20260916-2397` (PR that records 1.0.118 + post-snapshot sources). `main` is still an empty skeleton — **do not merge there to “enable deploy”.**
+**Предпочитать имя ветки `production`** (сейчас тот же SHA, что `cursor/prod-baseline-20260916-2397`). Правила для агентов: [AGENT_WORKFLOW.md](./AGENT_WORKFLOW.md).
+
+Live site is the source of truth until `main` matches it. Default git branch: `cursor/prod-baseline-20260916-2397` (live **1.0.118** + post-14.09 UI). `main` is still an empty skeleton — **do not merge there to “enable deploy”.**
 
 There is **no git checkout on the VPS**. Do not `git pull` or `git reset` on the server.
 
@@ -8,7 +10,7 @@ There is **no git checkout on the VPS**. Do not `git pull` or `git reset` on the
 
 Use this until someone manually runs the GitHub `Deploy to VPS (manual)` workflow **and** types `I_CONFIRM_PRODUCTION_DEPLOY`.
 
-1. Merge the feature into the **prod baseline** branch (not `main`).
+1. Merge the feature into **`production`** / prod baseline (not `main`).
 2. Bump `resources/js/siteVersion.js` in that same release (next value after live **1.0.118**).
 3. On the VPS, copy only the files you changed (scp). **Never** full-tree rsync from a laptop without the checklist below.
 4. Backup first:
@@ -27,14 +29,14 @@ Use this until someone manually runs the GitHub `Deploy to VPS (manual)` workflo
 
 | Workflow | When | Effect on VPS |
 |----------|------|----------------|
-| `CI` | pull requests; pushes to prod-baseline / sync-prod | **None** — tests + `npm run build` on GitHub runners |
+| `CI` | pull requests; pushes to `production`, prod-baseline, sync-prod | **None** — tests + `npm run build` on GitHub runners |
 | `Deploy to VPS (manual)` | **only** Actions → Run workflow | None unless confirm string is exact; still **no** `on: push` |
 
 Feature PHPUnit (`tests/Feature`, stock Breeze) is **not** in CI (routes differ from this app). CI runs `--testsuite=Unit` only.
 
 ## Secrets (names only — values stay in GitHub / Cloud UI)
 
-Cloud Agent environment already has some of these. GitHub Actions **does not** read Cloud env; create **repository or `production` environment secrets**:
+GitHub repository / environment **`production` secrets already exist** (same names as Cloud `ALEX_*` + healthchecks). GitHub Actions does not read Cloud Agent env; keep names in sync:
 
 | GitHub secret | Same idea as Cloud env | Purpose |
 |---------------|------------------------|---------|
