@@ -289,7 +289,7 @@ const openAbout = () => {
           <span class="row-icon-icon" aria-hidden="true">
             <img :src="sidebarAssets.materials" alt="" width="24" height="24" decoding="async" />
           </span>
-          <span class="row-text">Блог</span>
+          <span class="row-text">Материалы для врачей</span>
         </template>
         <template v-else>
           <span class="tag-badge">~1 минуту</span>

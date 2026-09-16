@@ -85,6 +85,10 @@ export function useDoctorMode() {
         // No-op: mode is Host/path, not a sticky cookie.
     };
 
+    const blogBreadcrumbLabel = computed(() =>
+        isDoctorMode.value ? 'Материалы для врачей' : 'Блог',
+    );
+
     watch(
         isDoctorMode,
         (value) => {
@@ -100,6 +104,7 @@ export function useDoctorMode() {
         themeColor,
         routePrefix,
         doctorsUrl,
+        blogBreadcrumbLabel,
         toggleAudienceMode,
     };
 }

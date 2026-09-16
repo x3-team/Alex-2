@@ -21,7 +21,7 @@ const props = defineProps({
   documentCategories: { type: Array, default: () => [] },
 })
 
-const { isDoctorMode } = useDoctorMode()
+const { isDoctorMode, blogBreadcrumbLabel } = useDoctorMode()
 
 const hasSelectedTags = computed(() => selectedTags.value.length > 0)
 
@@ -369,10 +369,10 @@ const ogImage = computed(() => {
             href="/blog"
             class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30"
           >
-            Блог
+            {{ blogBreadcrumbLabel }}
           </Link>
           <span v-else class="text-[14px] xl:text-[18px] text-black">
-            Блог
+            {{ blogBreadcrumbLabel }}
           </span>
           <template v-if="currentCategory">
             <span class="text-black opacity-[0.3]">

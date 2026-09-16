@@ -58,7 +58,6 @@ class Blog extends Model
     protected static function booted(): void
     {
         static::saving(function (Blog $blog) {
-            // АУ46: не сбрасывать published_at при повторной публикации
             if ($blog->is_active && empty($blog->published_at)) {
                 $blog->published_at = now();
             }
