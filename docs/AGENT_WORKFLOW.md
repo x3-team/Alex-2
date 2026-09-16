@@ -6,11 +6,11 @@
 
 | Ветка | Роль |
 |-------|------|
-| **`production`** | Предпочитаемое имя. Сейчас тот же SHA, что и baseline. От неё ветвиться и в неё слать PR. |
-| `cursor/prod-baseline-20260916-2397` | Default branch репозитория: снимок live **1.0.118** + UI после 14.09. Синоним `production`, пока tip совпадает. |
-| `main` | Пустой исторический скелет. **Не мержить сюда. Не считать продом.** |
+| **`production`** | **Default branch** репозитория и цель всех рабочих PR. Снимок live **1.0.118** + UI после 14.09. Branch protection: required check `test-and-build`. |
+| `cursor/prod-baseline-20260916-2397` | Старое длинное имя того же tip (после merge #27). Не использовать как base новых PR. |
+| `main` | Пустой исторический скелет. **Не мержить сюда. Не считать продом. Не открывать PR в `main`.** |
 
-Новые правки: ветка `cursor/<имя>-2397` **от `production`** (или от baseline, если alias ещё не подтянут) → PR **в `production` / baseline**, не в `main`.
+Новые правки: ветка `cursor/<имя>-2397` **от `production`** → PR с base **`production`**. Старый `main` не использовать.
 
 ## Деплой
 
@@ -38,7 +38,8 @@
 
 ## CI
 
-- Required check на baseline: `test-and-build` (Unit + `npm run build` на GitHub).
+- Required check на **`production`**: `test-and-build` (Unit + `npm run build` на GitHub).
+- `ci.yml` `on.push.branches`: `production`, плюс baseline и `sync-prod` (наследие).
 - Feature-тесты Breeze в CI не гоняются.
 - Secrets и environment `production` уже заведены (имена `ALEX_*`, healthchecks). Значения в git не писать.
 

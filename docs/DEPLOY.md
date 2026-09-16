@@ -1,8 +1,8 @@
 # Deploy (Alex-2 / Immunotech VPS)
 
-**Предпочитать имя ветки `production`** (сейчас тот же SHA, что `cursor/prod-baseline-20260916-2397`). Правила для агентов: [AGENT_WORKFLOW.md](./AGENT_WORKFLOW.md).
+Рабочие PR → base **`production`** (это default branch). Правила: [AGENT_WORKFLOW.md](./AGENT_WORKFLOW.md).
 
-Live site is the source of truth until `main` matches it. Default git branch: `cursor/prod-baseline-20260916-2397` (live **1.0.118** + post-14.09 UI). `main` is still an empty skeleton — **do not merge there to “enable deploy”.**
+`cursor/prod-baseline-20260916-2397` — то же содержимое после #27, не цель новых PR. `main` — пустой скелет, **не использовать**.
 
 There is **no git checkout on the VPS**. Do not `git pull` or `git reset` on the server.
 
@@ -10,7 +10,7 @@ There is **no git checkout on the VPS**. Do not `git pull` or `git reset` on the
 
 Use this until someone manually runs the GitHub `Deploy to VPS (manual)` workflow **and** types `I_CONFIRM_PRODUCTION_DEPLOY`.
 
-1. Merge the feature into **`production`** / prod baseline (not `main`).
+1. Merge the feature into **`production`** (not `main`, not the old baseline name).
 2. Bump `resources/js/siteVersion.js` in that same release (next value after live **1.0.118**).
 3. On the VPS, copy only the files you changed (scp). **Never** full-tree rsync from a laptop without the checklist below.
 4. Backup first:
