@@ -328,9 +328,8 @@ const toggleFaq = (index) => {
           </div>
 
 
-          <div class="flex items-center gap-3 xl:gap-4 mb-6">
+          <div v-if="blog?.author?.id" class="flex items-center gap-3 xl:gap-4 mb-6">
             <Link
-                v-if="blog?.author?.id"
                 :href="`/blog/author/${blog.author.id}`"
                 class="flex items-center gap-3 xl:gap-4"
             >
@@ -346,21 +345,13 @@ const toggleFaq = (index) => {
               </div>
               <div :style="{ display: 'flex', flexFlow: 'column' }">
          <span class="font-[400] text-[18px] xl:text-[24px] text-gray-900 block" style="line-height: 1.2;">
-          {{ blog.author?.name || 'Аноним' }}<template v-if="blog.author?.credentials">, {{ blog.author.credentials }}</template>
+          {{ blog.author.name }}<template v-if="blog.author?.credentials">, {{ blog.author.credentials }}</template>
         </span>
                 <span v-if="blog.author?.author_categories?.length" class="font-[400] text-[16px] xl:text-[18px] text-black opacity-50 block">
  {{ blog.author.author_categories.map(cat => cat.name).join(', ') }}
 </span>
               </div>
             </Link>
-
-
-            <div v-else class="flex items-center gap-3 xl:gap-4">
-              <div class="w-[45px] h-[45px] xl:w-[60px] xl:h-[60px] rounded-[8px] xl:rounded-[10px] overflow-hidden bg-white flex-shrink-0">
-                <div class="w-full h-full bg-emerald-100 flex items-center justify-center text-xl font-semibold text-emerald-700">?</div>
-              </div>
-              <span class="font-[400] text-[18px] xl:text-[24px] text-gray-900">Аноним</span>
-            </div>
           </div>
 
 
@@ -579,7 +570,11 @@ const toggleFaq = (index) => {
 
                 <div class="py-5 space-y-3">
 
-                  <div class="flex items-center gap-3 cursor-pointer" @click.stop="$inertia.visit(`/blog/author/${related.author?.id}`)">
+                  <div
+                    v-if="related.author?.id"
+                    class="flex items-center gap-3 cursor-pointer"
+                    @click.stop="$inertia.visit(`/blog/author/${related.author.id}`)"
+                  >
                     <div class="w-[40px] h-[40px] rounded-[8px] overflow-hidden bg-white flex-shrink-0">
                       <img v-if="related.author?.avatar"
                            :src="`/storage/${related.author.avatar}`"
@@ -593,7 +588,7 @@ const toggleFaq = (index) => {
                     </div>
                     <div style="display: flex; flex-flow: column;">
                       <div class="text-[24px] font-[400] text-black" style="line-height: 1;">
-                        {{ related.author?.name || 'Аноним' }}
+                        {{ related.author.name }}
                       </div>
                       <span v-if="related.author?.author_categories?.length"  style="line-height: 1" class="font-[400] text-[16px] xl:text-[18px] text-black opacity-50 block">
           {{ related.author.author_categories[0].name }}

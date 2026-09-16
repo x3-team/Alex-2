@@ -118,7 +118,11 @@ class BlogController extends Controller
             ? $this->paginateDoctorFeed($request, $query, $category, $materialType)
             : $query->orderBy('sort_order', 'asc')->latest('published_at')->paginate(3)->withQueryString();
 
-        $authors = User::whereHas('blogs', function($q) {
+        if (! $isDoctors) {
+            $blogs->getCollection()->each->hideNonPublicAuthor();
+        }
+
+        $authors = User::where('is_admin', false)->whereHas('blogs', function($q) {
             $q->where('is_active', true)->whereNotNull('published_at')->where('published_at', '<=', now());
         })->select('id', 'name', 'avatar')->get();
 
@@ -236,14 +240,14 @@ class BlogController extends Controller
             'duration' => $blog->duration,
             'category' => $blog->category,
             'tags' => $blog->tags,
-            'author' => $blog->author,
+            'author' => $blog->publicAuthor(),
         ];
     }
 
     private function videoFeedItem(DoctorVideo $video): array
     {
         $related = $video->relatedBlog;
-        $author = $related?->author;
+        $author = $related?->publicAuthor();
 
         return [
             'id' => 'video-'.$video->id,
@@ -474,8 +478,12 @@ class BlogController extends Controller
                 ->limit(3)
                 ->get();
 
+        $blog->hideNonPublicAuthor();
+        $relatedPosts->each->hideNonPublicAuthor();
+
         // 🔹 ГЕНЕРАЦИЯ JSON-LD
         $currentUrl = url()->current();
+        $publicAuthor = $blog->publicAuthor();
 
         $articleSchema = [
             '@context' => 'https://schema.org',
@@ -484,11 +492,16 @@ class BlogController extends Controller
             'description' => $blog->seo_description ?: $blog->excerpt,
             'datePublished' => $blog->published_at ? $blog->published_at->toIso8601String() : $blog->created_at->toIso8601String(),
             'dateModified' => $blog->updated_at->toIso8601String(),
-            'author' => [
-                '@type' => 'Person',
-                'name' => $blog->author->name ?? 'Аноним',
-                'url' => !empty($blog->author) ? url('/blog/author/' . $blog->author->id) : url('/blog/authors'),
-            ],
+            'author' => $publicAuthor
+                ? [
+                    '@type' => 'Person',
+                    'name' => $publicAuthor->name,
+                    'url' => url('/blog/author/' . $publicAuthor->id),
+                ]
+                : [
+                    '@type' => 'Organization',
+                    'name' => 'ALEX LAB',
+                ],
             'publisher' => [
                 '@type' => 'Organization',
                 'name' => 'ALEX LAB',
@@ -509,11 +522,11 @@ class BlogController extends Controller
             $articleSchema['image'] = asset('storage/' . $blog->preview_image);
         }
 
-        if (!empty($blog->author) && !empty($blog->author->name)) {
+        if ($publicAuthor && $publicAuthor->name) {
             $articleSchema['reviewedBy'] = [
                 '@type' => 'Person',
-                'name' => $blog->author->name,
-                'url' => url('/blog/author/' . $blog->author->id),
+                'name' => $publicAuthor->name,
+                'url' => url('/blog/author/' . $publicAuthor->id),
             ];
         }
 

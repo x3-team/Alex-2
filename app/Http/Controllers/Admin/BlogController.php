@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
@@ -414,8 +413,7 @@ class BlogController extends Controller
             );
         }
 
-        // Автор
-        $validated['user_id'] = $request->author_id ?: Auth::id();
+        $validated['user_id'] = $request->filled('author_id') ? $request->author_id : null;
 
         // Дата публикации на сайте — только в момент первого выхода (не дата создания черновика).
         $validated['published_at'] = null;
@@ -568,9 +566,7 @@ class BlogController extends Controller
         }
 
         $validated['duration'] = $this->resolveDuration($request, $validated['content']);
-        if ($request->filled('author_id')) {
-            $validated['user_id'] = $request->author_id;
-        }
+        $validated['user_id'] = $request->filled('author_id') ? $request->author_id : null;
 
         $result = $this->generateTableOfContents($validated['content']);
         $validated['content'] = $result['content'];

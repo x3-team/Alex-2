@@ -69,6 +69,26 @@ class Blog extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function publicAuthor(): ?User
+    {
+        $author = \App\Support\PublicBlogAuthor::visible($this->author);
+
+        return $author instanceof User ? $author : null;
+    }
+
+    public function hideNonPublicAuthor(): static
+    {
+        if ($this->relationLoaded('author')) {
+            $this->setRelation('author', $this->publicAuthor());
+        }
+
+        if ($this->relationLoaded('relatedPosts')) {
+            $this->relatedPosts->each->hideNonPublicAuthor();
+        }
+
+        return $this;
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);

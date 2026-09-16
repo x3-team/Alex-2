@@ -78,7 +78,7 @@ const durationLabel = computed(() => {
     <div class="py-[2rem] space-y-3 xl:space-y-4" style="padding-bottom: 64px">
       <component
         :is="item.author?.id ? Link : 'div'"
-        v-if="item.author"
+        v-if="item.author?.id"
         v-bind="item.author?.id ? { href: `/blog/author/${item.author.id}` } : {}"
         class="flex items-center gap-3 xl:gap-4 text-sm text-gray-600"
       >

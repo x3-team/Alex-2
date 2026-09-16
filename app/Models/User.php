@@ -83,4 +83,9 @@ class User extends Authenticatable
     {
         return $this->authorCategories()->get();
     }
+
+    public function isPublicAuthor(): bool
+    {
+        return \App\Support\PublicBlogAuthor::visible($this) === $this;
+    }
 }

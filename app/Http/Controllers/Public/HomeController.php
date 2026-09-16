@@ -33,7 +33,7 @@ class HomeController extends Controller
         if (!empty($blogIds)) {
             $idsString = implode(',', array_map('intval', $blogIds));
             $featuredBlogs = Blog::with(['author' => function($q) {
-                $q->select('id', 'name', 'avatar', 'description', 'bio');
+                $q->select('id', 'name', 'avatar', 'description', 'bio', 'is_admin');
             }, 'category'])
                 ->where('is_active', true)
                 ->whereIn('id', $blogIds)
@@ -46,6 +46,7 @@ class HomeController extends Controller
                 })
                 ->orderByRaw("FIELD(id, {$idsString})")
                 ->get();
+            $featuredBlogs->each->hideNonPublicAuthor();
         } else {
             $featuredBlogs = [];
         }
