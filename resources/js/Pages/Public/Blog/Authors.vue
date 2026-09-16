@@ -5,6 +5,9 @@ import SiteSidebar from '@/Components/SiteSidebar.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
+
+const { blogBreadcrumbLabel } = useDoctorMode()
+
 const props = defineProps({
   authors: Array,
   categories: Array,
@@ -151,7 +154,7 @@ const ogImage = computed(() => {
               </svg>
             </span>
             <Link href="/blog" class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30">
-              Блог
+              {{ blogBreadcrumbLabel }}
             </Link>
             <span class="text-black opacity-[0.3]">
               <svg width="6" height="9" viewBox="0 0 6 9" fill="none" xmlns="http://www.w3.org/2000/svg">

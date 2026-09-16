@@ -3011,14 +3011,15 @@ body:has(.home-page-container.doctor-mode) {
    enabled only by the alex-audience cookie through the root doctor-mode class.
    ========================================================================== */
 
-.home-page-container.doctor-mode .site-sidebar .promo-card {
-    /* Doctor promo substrate: lightened toward hero video beige (#cba98e / #dfbe9d). */
-    background: linear-gradient(141.59deg, rgba(170, 130, 95, 0.78) 0%, rgba(203, 169, 142, 0.88) 100%);
-    -webkit-backdrop-filter: blur(250px);
-    backdrop-filter: blur(250px);
+.doctor-mode .site-sidebar .promo-card,
+.site-sidebar.doctor-theme .promo-card {
+    background: var(--doctor-theme-color, #cba98e);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
 }
 
-.home-page-container.doctor-mode .site-sidebar .promo-card::before {
+.doctor-mode .site-sidebar .promo-card::before,
+.site-sidebar.doctor-theme .promo-card::before {
     background: none;
 }
 
@@ -3234,19 +3235,16 @@ body:has(.home-page-container.doctor-mode) {
 }
 
 @media (max-width: 1024px) {
+    .doctor-mode .site-sidebar .promo-card,
+    .site-sidebar.doctor-theme .promo-card,
     .home-page-container.doctor-mode .site-sidebar .promo-card {
-        background:
-                linear-gradient(141.59deg, rgba(170, 130, 95, 0.78) 0%, rgba(203, 169, 142, 0.88) 100%),
-                #ffffff;
+        background: var(--doctor-theme-color, #cba98e);
     }
 
-    /* The patient mobile hero image is green and sits above the card background
-     through a pseudo-element. Replace it in doctors mode so the open menu
-     uses the same brown palette as its desktop counterpart. */
+    .doctor-mode .site-sidebar .promo-card::before,
+    .site-sidebar.doctor-theme .promo-card::before,
     .home-page-container.doctor-mode .site-sidebar .promo-card::before {
-        background:
-                linear-gradient(141.59deg, rgba(170, 130, 95, 0.78) 0%, rgba(203, 169, 142, 0.88) 100%),
-                #ffffff;
+        background: none;
     }
 
 }
@@ -3416,6 +3414,112 @@ body:has(.home-page-container.doctor-mode) {
    contrast on its advantage and result text. */
 .home-page-container.doctor-mode .figma-step-text-stack {
     text-shadow: 0 0 1px #fff, 0 0 45px #00000045;
+}
+
+/* Doctor advantages + results: same soft halo under copy. */
+.home-page-container.doctor-mode .figma-step-block.advantages-pos .figma-step-text-stack,
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-text-stack {
+    position: relative;
+    z-index: 1;
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    border-radius: 0;
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.85), 0 2px 20px rgba(0, 0, 0, 0.5);
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.home-page-container.doctor-mode .figma-step-block.advantages-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-text-stack::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    left: -110px;
+    right: -130px;
+    top: -80px;
+    bottom: -96px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    /* Core stays readable; extra stops + light blur dissolve the rim. */
+    background:
+        radial-gradient(
+            ellipse 58% 52% at 40% 46%,
+            rgba(0, 0, 0, 0.78) 0%,
+            rgba(0, 0, 0, 0.42) 38%,
+            transparent 68%
+        ),
+        radial-gradient(
+            ellipse 92% 86% at 40% 48%,
+            rgba(0, 0, 0, 0.28) 0%,
+            rgba(0, 0, 0, 0.14) 42%,
+            rgba(0, 0, 0, 0.055) 62%,
+            rgba(0, 0, 0, 0.018) 78%,
+            rgba(0, 0, 0, 0.004) 90%,
+            transparent 100%
+        );
+    filter: blur(22px);
+    -webkit-filter: blur(22px);
+}
+
+.home-page-container.doctor-mode .slide-layer.active[data-content-ready="true"] .figma-step-block.advantages-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.active[data-content-ready="true"] .figma-step-block.results-pos .figma-step-text-stack::before {
+    opacity: 1;
+    transition-delay: 0.05s;
+}
+
+.home-page-container.doctor-mode .slide-layer:not(.active) .figma-step-block.advantages-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer:not(.active) .figma-step-block.results-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.active[data-content-ready="false"] .figma-step-block.advantages-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.active[data-content-ready="false"] .figma-step-block.results-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.content-exiting .figma-step-block.advantages-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.content-exiting .figma-step-block.results-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.content-exiting-back .figma-step-block.advantages-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.content-exiting-back .figma-step-block.results-pos .figma-step-text-stack::before {
+    opacity: 0 !important;
+    transition-duration: 0.55s;
+    transition-delay: 0s !important;
+}
+
+.home-page-container.doctor-mode .figma-step-block.advantages-pos .figma-step-text-stack > .figma-slide-title-inline,
+.home-page-container.doctor-mode .figma-step-block.advantages-pos .figma-step-text-stack > .figma-slide-desc-inline,
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-text-stack > .figma-slide-desc-inline,
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-text-stack > .figma-result-title-row {
+    position: relative;
+    z-index: 1;
+}
+
+/* Results copy is taller (3 lines + badge). Stretch the core down so the last line stays readable. */
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-text-stack::before {
+    left: -90px;
+    right: -140px;
+    top: -56px;
+    bottom: -140px;
+    background:
+        radial-gradient(
+            ellipse 72% 70% at 38% 42%,
+            rgba(0, 0, 0, 0.86) 0%,
+            rgba(0, 0, 0, 0.58) 36%,
+            rgba(0, 0, 0, 0.22) 58%,
+            transparent 74%
+        ),
+        radial-gradient(
+            ellipse 96% 98% at 38% 48%,
+            rgba(0, 0, 0, 0.34) 0%,
+            rgba(0, 0, 0, 0.16) 46%,
+            rgba(0, 0, 0, 0.06) 68%,
+            rgba(0, 0, 0, 0.016) 84%,
+            transparent 100%
+        );
+    filter: blur(20px);
+    -webkit-filter: blur(20px);
+}
+
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-text-stack {
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.55), 0 1px 18px rgba(0, 0, 0, 0.45);
 }
 
 .figma-slide-title-inline {

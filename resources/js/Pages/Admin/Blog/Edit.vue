@@ -27,6 +27,14 @@ onMounted(() => {
   })
 })
 
+const toDatetimeLocalValue = (iso) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 const parseSources = (sourcesData) => {
   if (!sourcesData) return []
   if (Array.isArray(sourcesData)) {
@@ -78,6 +86,13 @@ const form = useForm({
   og_description: props.blog.og_description ?? '',
   faqs: props.blog.faqs || [],
   audience: props.blog.audience || 'patients',
+  published_at: toDatetimeLocalValue(props.blog.published_at),
+})
+
+watch(() => form.is_active, (active, prev) => {
+  if (active && !prev && !form.published_at) {
+    form.published_at = toDatetimeLocalValue(new Date().toISOString())
+  }
 })
 
 // 🔹 Исправлено: работаем строго с form.faqs
@@ -144,6 +159,15 @@ const errorLabels = {
   category_id: 'Категория',
   author_id: 'Автор',
   tag_ids: 'Теги',
+  audience: 'Аудитория',
+}
+
+const humanizeValidationMessage = (message) => {
+  const text = Array.isArray(message) ? message.join(' ') : String(message || '')
+  if (text === 'validation.required' || text.endsWith('.required')) {
+    return 'обязательное поле'
+  }
+  return text
 }
 
 const formatSaveErrors = (errors) => {
@@ -155,7 +179,7 @@ const formatSaveErrors = (errors) => {
     let label = errorLabels[key]
     if (!label && String(key).startsWith('faqs')) label = 'FAQ'
     if (!label && String(key).startsWith('sources')) label = 'Источник'
-    const text = Array.isArray(msg) ? msg.join(' ') : String(msg)
+    const text = humanizeValidationMessage(msg)
     return label ? `${label}: ${text}` : text
   })
 }
@@ -256,6 +280,7 @@ const submit = () => {
   // Передаем форму через Inertia Router с spoofing метода PUT
   router.post(route('admin.blog.update', props.blog.id), {
     _method: 'PUT',
+    audience: form.audience || 'patients',
     title: form.title,
     content: form.content,
     slug: form.slug || '',
@@ -276,6 +301,7 @@ const submit = () => {
     seo_description: form.seo_description || '',
     seo_keywords: form.seo_keywords || '',
     is_active: form.is_active ? 1 : 0,
+    published_at: form.is_active && form.published_at ? form.published_at : '',
     noindex: form.noindex ? 1 : 0,
     og_title: form.og_title || '',
     og_description: form.og_description || '',
@@ -429,6 +455,24 @@ const removeSource = (index) => {
                     Активен (опубликован на сайте)
                   </label>
                 </div>
+                <p class="text-xs text-gray-500">
+                  Черновик: снимите галочку. При первой публикации дата на сайте ставится автоматически (сегодня).
+                </p>
+              </div>
+
+              <div v-if="form.is_active" class="space-y-1">
+                <label for="published_at" class="block text-sm font-medium text-gray-700">
+                  Дата публикации на сайте
+                </label>
+                <input
+                    id="published_at"
+                    v-model="form.published_at"
+                    type="datetime-local"
+                    class="w-full max-w-xs border-gray-300 rounded-md shadow-sm px-3 py-2 border text-sm"
+                />
+                <p class="text-xs text-gray-500">
+                  Можно поправить вручную. При включении «Активен» после черновика подставится текущее время.
+                </p>
               </div>
 
               <div class="flex items-center gap-2">
@@ -441,14 +485,6 @@ const removeSource = (index) => {
                 <label for="noindex" class="text-sm font-medium text-gray-700">
                   Не индексировать (страница на сайте, но noindex)
                 </label>
-
-                <div class="text-xs text-gray-500">
-                  <span class="font-medium">Дата публикации: </span>
-                  <span v-if="props.blog.published_at" class="text-gray-800 font-semibold">
-                    {{ new Date(props.blog.published_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }}
-                  </span>
-                  <span v-else class="text-amber-600 italic">Еще не публиковался</span>
-                </div>
               </div>
 
               <div>
