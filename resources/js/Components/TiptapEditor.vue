@@ -162,38 +162,100 @@ const insertCtaBlock = (data) => {
 }
 
 
+const normalizePastedLinks = (root) => {
+  root.querySelectorAll('a[href]').forEach((anchor) => {
+    anchor.removeAttribute('contenteditable')
+    anchor.removeAttribute('onclick')
+    anchor.removeAttribute('onmousedown')
+
+    while (anchor.childElementCount === 1 && anchor.firstElementChild?.tagName === 'SPAN') {
+      const span = anchor.firstElementChild
+      if (span.querySelector('a, img, br, table')) break
+      while (span.firstChild) {
+        anchor.insertBefore(span.firstChild, span)
+      }
+      anchor.removeChild(span)
+    }
+  })
+}
+
 const insertLink = () => {
   if (!editor.value) return
 
-  const text = prompt('Введите текст ссылки:')
-  if (!text || !text.trim()) return
+  if (editor.value.isActive('link')) {
+    editor.value.chain().focus().extendMarkRange('link').run()
+  }
+
+  const previousUrl = editor.value.getAttributes('link').href
+  const { from, to, empty } = editor.value.state.selection
+  const selectedText = empty ? '' : editor.value.state.doc.textBetween(from, to, ' ')
+
+  if (previousUrl) {
+    const url = prompt(
+      'URL ссылки (пусто — убрать ссылку, текст останется):',
+      previousUrl,
+    )
+    if (url === null) return
+
+    if (!url.trim()) {
+      editor.value.chain().focus().extendMarkRange('link').unsetLink().run()
+      return
+    }
+
+    editor.value
+      .chain()
+      .focus()
+      .extendMarkRange('link')
+      .setLink({
+        href: url.trim(),
+        target: '_blank',
+        rel: 'noopener noreferrer',
+      })
+      .run()
+    return
+  }
+
+  const text = prompt('Введите текст ссылки:', selectedText.trim() || '')
+  if (text === null || !text.trim()) return
 
   const url = prompt('Введите URL ссылки (например, https://example.com):')
-  if (!url || !url.trim()) return
+  if (url === null || !url.trim()) return
 
-  editor.value
+  if (empty) {
+    editor.value
       .chain()
       .focus()
       .insertContent({
         type: 'text',
-        text: text,
+        text: text.trim(),
         marks: [
           {
             type: 'link',
             attrs: {
-              href: url,
+              href: url.trim(),
               target: '_blank',
-              rel: 'noopener noreferrer'
-            }
-          }
-        ]
+              rel: 'noopener noreferrer',
+            },
+          },
+        ],
       })
       .command(({ tr }) => {
-        // Очищаем stored marks, чтобы следующий ввод был БЕЗ ссылки
         tr.setStoredMarks([])
         return true
       })
       .run()
+    return
+  }
+
+  editor.value
+    .chain()
+    .focus()
+    .setLink({
+      href: url.trim(),
+      target: '_blank',
+      rel: 'noopener noreferrer',
+    })
+    .run()
 }
 
 const props = defineProps({
@@ -641,9 +703,22 @@ onMounted(() => {
   editor.value = new Editor({
     content: props.modelValue,
     editorProps: {
+      handleDOMEvents: {
+        click: (view, event) => {
+          const target = event.target
+          if (!(target instanceof Element)) return false
+          const anchor = target.closest('a')
+          if (anchor && view.dom.contains(anchor)) {
+            event.preventDefault()
+          }
+          return false
+        },
+      },
       transformPastedHTML: (html) => {
         const div = document.createElement('div')
         div.innerHTML = html
+
+        normalizePastedLinks(div)
 
         // Удаляем цвет со всех элементов
         div.querySelectorAll('*').forEach(el => {
@@ -670,6 +745,7 @@ onMounted(() => {
       StarterKit.configure({
         heading: { levels: [2, 3, 4, 5] },
         codeBlock: false,
+        link: false,
       }),
 
       Underline,
@@ -696,6 +772,7 @@ onMounted(() => {
       HorizontalRule,
       Link.configure({
         openOnClick: false,
+        enableClickSelection: true,
         HTMLAttributes: {
           rel: 'noopener noreferrer',
           target: '_blank',
@@ -901,7 +978,13 @@ const setHeading = (level) => {
                   :class="{ 'bg-blue-100 text-blue-700': editor.isActive('tableHeader') }"
                   class="px-2 py-1 text-sm rounded hover:bg-gray-200" title="Заголовочный столбец">Загл. столбец</button>
           <button type="button" @click="showCtaModal = true" class="px-2 py-1 text-sm rounded hover:bg-blue-100 text-blue-700" title="CTA-блок">⭐ CTA</button>
-          <button type="button" @click="insertLink()" class="px-2 py-1 text-sm rounded hover:bg-gray-200" title="Вставить ссылку">🔗 Ссылка</button>
+          <button
+              type="button"
+              @click="insertLink()"
+              :class="{ 'bg-blue-100 text-blue-700': editor.isActive('link') }"
+              class="px-2 py-1 text-sm rounded hover:bg-gray-200"
+              :title="editor.isActive('link') ? 'Изменить или убрать ссылку' : 'Вставить ссылку'"
+          >🔗 Ссылка</button>
           <button type="button" @click="insertIndent()" class="px-2 py-1 text-sm rounded hover:bg-gray-200" title="Отступ">Отступ</button>
         </div>
     </div>
@@ -1121,10 +1204,16 @@ const setHeading = (level) => {
   color: #000000;
 }
 
-.blog-content a,
+.blog-content a {
+  color: #0073FF;
+  text-decoration: none;
+}
+
 .ProseMirror a {
   color: #0073FF;
   text-decoration: none;
+  pointer-events: none;
+  cursor: text;
 }
 .blog-content a:hover,
 .ProseMirror a:hover {
