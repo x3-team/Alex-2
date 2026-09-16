@@ -1,41 +1,39 @@
 <?php
 
-namespace App\Mail;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use App\Models\Order;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
-
-class DoctorAppointmentMail extends Mailable
+return new class extends Migration
 {
-    use Queueable, SerializesModels;
-
-    public Order $order;
-
-    public function __construct(Order $order)
+    public function up(): void
     {
-        $this->order = $order;
+        if (! Schema::hasTable('settings') || ! Schema::hasColumn('settings', 'value')) {
+            return;
+        }
+
+        // SQLite (CI tests) stores arbitrary text length in TEXT columns.
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
+        Schema::table('settings', function (Blueprint $table) {
+            $table->longText('value')->nullable()->change();
+        });
     }
 
-    public function envelope(): Envelope
+    public function down(): void
     {
-        return new Envelope(
-            subject: 'Запись к врачу',
-        );
-    }
+        if (! Schema::hasTable('settings') || ! Schema::hasColumn('settings', 'value')) {
+            return;
+        }
 
-    public function content(): Content
-    {
-        return new Content(
-            view: 'emails.doctor_appointment',
-        );
-    }
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
 
-    public function attachments(): array
-    {
-        return [];
+        Schema::table('settings', function (Blueprint $table) {
+            $table->text('value')->nullable()->change();
+        });
     }
-}
+};
