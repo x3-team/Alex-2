@@ -17,6 +17,12 @@ const sections = [
     ]
   },
   {
+    title: 'Материалы для врачей',
+    children: [
+      { title: 'Управление материалами', route: 'admin.doctor-materials.index', desc: 'Загрузка и редактирование документов' }
+    ]
+  },
+  {
     title: 'Авторы',
     children: [
       { title: 'Список авторов', route: 'admin.authors.index', desc: 'Редактирование профилей авторов' },
@@ -52,12 +58,6 @@ const sections = [
     title: 'Демо-результат',
     children: [
       { title: 'Загрузка PDF', route: 'admin.demo-result.index', desc: 'Управление демонстрационными файлами' }
-    ]
-  },
-  {
-    title: 'Материалы для врачей',
-    children: [
-      { title: 'Управление материалами', route: 'admin.doctor-materials.index', desc: 'Загрузка и редактирование документов' }
     ]
   },
   {
