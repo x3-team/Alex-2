@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches:
+      - production
       - cursor/prod-baseline-20260916-2397
       - cursor/sync-prod-118-2397
 

@@ -9,7 +9,7 @@ on:
       ref:
         description: Git ref already merged into the prod baseline (branch/tag/SHA)
         required: true
-        default: cursor/prod-baseline-20260916-2397
+        default: production
       confirm:
         description: Type exactly I_CONFIRM_PRODUCTION_DEPLOY
         required: true
