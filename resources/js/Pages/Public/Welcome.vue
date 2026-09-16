@@ -1426,15 +1426,16 @@ const formattedBlogs = computed(() => {
             : `/storage/${post.preview_image}`)
         : ''
 
-    const hasAvatar = post.author?.avatar && post.author.avatar !== '0' && post.author.avatar !== 0
+    const hasPublicAuthor = Boolean(post.author?.id)
+    const hasAvatar = hasPublicAuthor && post.author?.avatar && post.author.avatar !== '0' && post.author.avatar !== 0
     const avatarPath = hasAvatar
         ? (post.author.avatar.startsWith('http') || post.author.avatar.startsWith('/')
             ? post.author.avatar
             : `/storage/${post.author.avatar}`)
         : ''
 
-    const rawRole = post.author?.description || post.author?.bio
-    const firstRole = getFirstRole(rawRole) || 'Профессор МГУ'
+    const rawRole = hasPublicAuthor ? (post.author?.description || post.author?.bio) : ''
+    const firstRole = hasPublicAuthor ? (getFirstRole(rawRole) || 'Профессор МГУ') : ''
 
     const sizedVariant = (path, width) => {
       if (!path || path.startsWith('http')) return ''
@@ -1476,7 +1477,7 @@ const formattedBlogs = computed(() => {
         return `~${raw} мин`
       })(),
       category: post.category?.name || 'Наука',
-      author_name: post.author?.name || 'Александра Ковальчук',
+      author_name: hasPublicAuthor ? post.author.name : '',
       author_role: firstRole,
       author_avatar: avatarPath,
       authorAvatarDisplay,
@@ -1820,20 +1821,20 @@ onUnmounted(() => {
                   </div>
                 </div>
 
-                <div class="exact-blog-author">
+                <div v-if="post.author_name" class="exact-blog-author">
                   <img
                       :src="post.authorAvatarDisplay || post.author_avatar || ''"
                       :srcset="post.authorAvatarSrcset || undefined"
                       sizes="48px"
-                      :alt="post.author_name || 'Александра Ковальчук'"
+                      :alt="post.author_name"
                       width="48"
                       height="48"
                       loading="lazy"
                       decoding="async"
                   />
                   <div>
-                    <p class="exact-blog-author-name">{{ post.author_name || 'Александра Ковальчук' }}</p>
-                    <p class="exact-blog-author-role">{{ post.author_role || 'Профессор МГУ' }}</p>
+                    <p class="exact-blog-author-name">{{ post.author_name }}</p>
+                    <p v-if="post.author_role" class="exact-blog-author-role">{{ post.author_role }}</p>
                   </div>
                 </div>
 

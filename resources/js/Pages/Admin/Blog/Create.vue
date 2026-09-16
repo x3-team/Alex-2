@@ -12,7 +12,7 @@ const form = useForm({
   content: '',
   excerpt: '',
   preview_image: null,
-  author_id: '',
+  author_id: null,
   category_id: '',
   duration: '',
   sort_order: 0,
@@ -517,12 +517,12 @@ const removeSource = (index) => {
                   v-model="form.author_id"
                   class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm px-3 py-2 border"
               >
-                <option :value="null">Я ({{ $page.props.auth.user?.name }})</option>
+                <option :value="null">— Без автора —</option>
                 <option v-for="author in $page.props.authors" :key="author.id" :value="author.id">
                   {{ author.name }}
                 </option>
               </select>
-              <p class="text-xs text-gray-500 mt-1">Если не выбран — пост будет за вами</p>
+              <p class="text-xs text-gray-500 mt-1">Если не выбран — на сайте автор не показывается</p>
             </div>
 
 

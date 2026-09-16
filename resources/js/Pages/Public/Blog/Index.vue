@@ -557,8 +557,9 @@ const ogImage = computed(() => {
                 class="py-[2rem] space-y-3 xl:space-y-4" style="padding-bottom: 64px"
             >
               <component
-                  :is="blog.author?.id ? Link : 'div'"
-                  v-bind="blog.author?.id ? { href: `/blog/author/${blog.author.id}` } : {}"
+                  v-if="blog.author?.id"
+                  :is="Link"
+                  :href="`/blog/author/${blog.author.id}`"
                   class="flex items-center gap-3 xl:gap-4 text-sm text-gray-600"
               >
                 <div class="flex items-center gap-2 xl:gap-3">
@@ -575,7 +576,7 @@ const ogImage = computed(() => {
                   </div>
                   <div class="gap-[5px]" :style="{ display: 'flex', flexFlow: 'column' }">
                     <span class="font-[400] text-[18px] xl:text-[24px] text-gray-900 block">
-                      {{ blog.author?.name || 'Аноним' }}
+                      {{ blog.author.name }}
                     </span>
                     <span v-if="blog.author?.author_categories?.length" class="font-[400] text-[16px] xl:text-[18px] text-black opacity-50 block">
                       {{ blog.author.author_categories[0].name }}

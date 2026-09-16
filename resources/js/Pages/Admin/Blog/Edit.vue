@@ -537,11 +537,12 @@ const removeSource = (index) => {
                   v-model="form.author_id"
                   class="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 border"
               >
-                <option :value="null">— Выбрать автора —</option>
+                <option :value="null">— Без автора —</option>
                 <option v-for="author in authors" :key="author.id" :value="Number(author.id)">
                   {{ author.name }}
                 </option>
               </select>
+              <p class="text-xs text-gray-500 mt-1">Если не выбран — на сайте автор не показывается</p>
             </div>
 
             <!-- Категория -->
