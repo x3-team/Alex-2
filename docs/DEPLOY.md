@@ -14,13 +14,33 @@ There is **no git checkout on the VPS**. Do not `git pull` or `git reset` on the
 - `bootstrap/ssr/*` и sqlite на сервере могут отличаться (сборка/runtime) — ок.
 - Вне скоупа: `.env`, `storage/`, `public/videos`, `public/build`.
 
+## Жёсткий порядок релиза
+
+После #30/#31 агент задеплоил на VPS, а bump `SITE_VERSION` довёл в git отдельным PR (#31) — потому что прямой push в `production` заблокирован. **Так больше нельзя.**
+
+1. Правки **и** bump `SITE_VERSION` — **в одном PR** в `production` (сейчас live **1.0.120** → следующий релиз **1.0.121+**).
+2. Дождаться зелёного CI.
+3. Merge в `production`.
+4. **Только потом** деплой на VPS (по явной команде Виталия «залей»): scp/rsync + build + optimize:clear.
+5. **Запрещено:** деплоить, а потом отдельным PR догонять `siteVersion.js`.
+6. **Запрещено:** пытаться `git push` напрямую в `production` (branch protection) — версию всегда класть в feature-PR.
+7. После деплоя smoke: live `siteVersion-*.js` == значение из смерженного PR.
+
+Checklist:
+
+- [ ] SITE_VERSION bumped in same PR as code
+- [ ] CI green
+- [ ] merged to production
+- [ ] then deploy
+- [ ] live chunk matches
+
 ## SITE_VERSION (жёстко)
 
-**Каждый** деплой на прод (Actions Deploy или ручной scp+build) обязан поднять `resources/js/siteVersion.js` в том же релизе. Сейчас live **1.0.118** → следующий **1.0.119+**, даже для одной строки CSS или видео.
+**Каждый** деплой на прод (Actions Deploy или ручной scp+build) обязан поднять `resources/js/siteVersion.js` **в том же PR, что и код**. Сейчас live **1.0.120** → следующий **1.0.121+**, даже для одной строки CSS или видео.
 
 - Rebuild без bump **запрещён** как завершённый релиз.
-- Скрипт на сервере **не** бампит версию сам (operator must bump in the release commit).
-- Checklist перед merge/deploy: **SITE_VERSION bumped**.
+- Скрипт на сервере **не** бампит версию сам (operator must bump in the feature PR before merge).
+- Нельзя «сначала выложить, потом догнать версию» отдельным PR.
 
 ## Current process (CD is off)
 
@@ -29,13 +49,17 @@ Use this until someone manually runs the GitHub `Deploy to VPS (manual)` workflo
 Checklist перед merge/deploy:
 
 - [ ] PR в base **`production`**
-- [ ] **SITE_VERSION bumped** в том же релизе (`1.0.118` → `1.0.119+`)
+- [ ] SITE_VERSION bumped in same PR as code (live **1.0.120** → **1.0.121+**)
+- [ ] CI green
+- [ ] merged to production
+- [ ] then deploy (только по «залей»)
+- [ ] live chunk matches
 - [ ] Нет правок `.env` / `storage/` / `public/videos`
 - [ ] `migrate --force` только если явно просили
 
-1. Merge the feature into **`production`** (not `main`, not the old baseline name).
-2. **Обязательно** bump `resources/js/siteVersion.js` в том же релизе (следующий после live **1.0.118**). Без bump релиз не завершён.
-3. On the VPS, copy only the files you changed (scp). **Never** full-tree rsync from a laptop without the checklist below.
+1. Открыть feature-PR в **`production`** (not `main`, not the old baseline name) с кодом **и** bump `resources/js/siteVersion.js` (следующий после live **1.0.120**). Без bump релиз не завершён. **Не** `git push` в `production`.
+2. Дождаться зелёного CI, затем merge.
+3. **Только после merge** и только по «залей»: on the VPS, copy only the files you changed (scp). **Never** full-tree rsync from a laptop without the checklist below.
 4. Backup first:
    - `public/build` (whole directory)
    - `resources/js/siteVersion.js`
@@ -44,7 +68,7 @@ Checklist перед merge/deploy:
 5. On the VPS: `npm run build` (client + SSR), then `php artisan optimize:clear`.
 6. Migrations only when the release contains schema changes (`php artisan migrate --force`). Default: skip.
 7. Restart php-fpm / `php artisan inertia:start-ssr` (port 13714) only if the new SSR bundle must replace a running process.
-8. Smoke: `https://alexallergotest.ru/up`, `https://doc.alexallergotest.ru/up`, patient home, doctor home, `/blog`. Check that the built `siteVersion-*.js` matches the bumped value.
+8. Smoke: patient home, doctor home, `/blog`. Live `siteVersion-*.js` must equal the value from the merged PR.
 
 **Forbidden without a written checklist:** full `rsync` of the repo, overwrite of `.env*`, `storage/`, `public/storage`, `public/videos`, blind `vendor/` or `node_modules/` replace, `git reset --hard` on the server.
 

@@ -20,6 +20,26 @@
 - `bootstrap/ssr/*` и sqlite на сервере могут отличаться (сборка/runtime) — ок.
 - Вне скоупа: `.env`, `storage/`, `public/videos`, `public/build`.
 
+## Жёсткий порядок релиза
+
+После #30/#31 агент задеплоил на VPS, а bump `SITE_VERSION` довёл в git отдельным PR — потому что прямой push в `production` заблокирован. **Так больше нельзя.**
+
+1. Правки **и** bump `SITE_VERSION` — **в одном PR** в `production` (сейчас live **1.0.120** → следующий релиз **1.0.121+**).
+2. Дождаться зелёного CI.
+3. Merge в `production`.
+4. **Только потом** деплой на VPS (по явной команде Виталия «залей»): scp/rsync + build + optimize:clear.
+5. **Запрещено:** деплоить, а потом отдельным PR догонять `siteVersion.js`.
+6. **Запрещено:** пытаться `git push` напрямую в `production` (branch protection) — версию всегда класть в feature-PR.
+7. После деплоя smoke: live `siteVersion-*.js` == значение из смерженного PR.
+
+Checklist:
+
+- [ ] SITE_VERSION bumped in same PR as code
+- [ ] CI green
+- [ ] merged to production
+- [ ] then deploy
+- [ ] live chunk matches
+
 ## Деплой
 
 - На VPS **нет git**. Не `git pull` / `git reset` на сервере.
@@ -27,11 +47,10 @@
 - **Не запускать** workflow `Deploy to VPS (manual)` «на всякий случай».
 - Не делать scp / rsync / `npm run build` на сервере без этой команды.
 - CD: только `workflow_dispatch`. **Запрещено** включать `on: push` для Deploy.
-- **Каждый** деплой на прод (Actions Deploy или ручной scp+build) → в том же релизе поднять `SITE_VERSION` в `resources/js/siteVersion.js` (live сейчас **1.0.118** → следующий **1.0.119+**), даже для одной строки CSS/видео. Скрипт **не** бампит сам.
+- **Каждый** деплой на прод (Actions Deploy или ручной scp+build) → bump `SITE_VERSION` уже должен быть **в том же смерженном PR**, что и код (`resources/js/siteVersion.js`; live сейчас **1.0.120** → следующий **1.0.121+**), даже для одной строки CSS/видео. Скрипт **не** бампит сам.
 - Rebuild без bump **запрещён** как завершённый релиз. Не считать `SITE_VERSION` правдой, если сборка была без bump.
-- Checklist перед merge/deploy: **SITE_VERSION bumped**.
 - После OK Виталия: либо Actions Deploy + строка `I_CONFIRM_PRODUCTION_DEPLOY`, либо точечный scp + бэкап `public/build` + сборка **на VPS**.
-- Перед выкладкой smoke: patient + `doc.*` + `/blog` (`/up` на обоих хостах).
+- Перед выкладкой smoke: patient + `doc.*` + `/blog`; live `siteVersion-*.js` == значение из смерженного PR.
 
 Подробности ручного процесса и секретов: [DEPLOY.md](./DEPLOY.md).
 
