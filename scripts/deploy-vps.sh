@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Runs on the production VPS. Modes: backup | apply
 # Never overwrite .env, storage/, or public/videos (those are excluded by rsync).
+# operator must bump SITE_VERSION in the release commit; script does not auto-bump
 set -euo pipefail
 
 APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -32,6 +33,12 @@ backup() {
 }
 
 apply() {
+  echo "==> operator must bump SITE_VERSION in the release commit; script does not auto-bump"
+  if [[ -f resources/js/siteVersion.js ]]; then
+    echo "==> SITE_VERSION on disk:"
+    grep -E "SITE_VERSION" resources/js/siteVersion.js || true
+  fi
+
   if [[ ! -f .env ]]; then
     echo "ERROR: .env is missing on the server. CI/CD never creates or overwrites .env." >&2
     exit 1

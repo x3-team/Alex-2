@@ -1,6 +1,7 @@
 # DRAFT-SAFE CD. Not wired to push/merge.
 # Manual only. Refuses to run unless confirm == I_CONFIRM_PRODUCTION_DEPLOY.
 # Do not enable on: push. Do not merge this as auto-deploy to main.
+# operator must bump SITE_VERSION in the release commit; script does not auto-bump
 name: Deploy to VPS (manual)
 
 on:
@@ -43,6 +44,7 @@ jobs:
             echo "Refusing deploy: confirm input must be exactly I_CONFIRM_PRODUCTION_DEPLOY"
             exit 1
           fi
+          echo "operator must bump SITE_VERSION in the release commit; script does not auto-bump"
 
       - name: Checkout
         uses: actions/checkout@v4
