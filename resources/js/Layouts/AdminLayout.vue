@@ -29,6 +29,22 @@ const menuItems = [
     ]
   },
   {
+    title: 'Материалы для врачей',
+    icon: '',
+    children: [
+      {
+        title: 'Документы',
+        route: 'admin.doctor-materials.index',
+        urlPrefix: '/admin/doctor-materials'
+      },
+      {
+        title: 'Видеолекции',
+        route: 'admin.doctor-videos.index',
+        urlPrefix: '/admin/doctor-videos'
+      }
+    ]
+  },
+  {
     title: 'Авторы',
     icon: '',
     children: [
@@ -112,22 +128,6 @@ const menuItems = [
         title: 'Загрузка PDF',
         route: 'admin.demo-result.index',
         urlPrefix: '/admin/demo-result'
-      }
-    ]
-  },
-  {
-    title: 'Материалы для врачей',
-    icon: '', // Можно добавить иконку, например: '👨‍⚕️' или SVG
-    children: [
-      {
-        title: 'Документы',
-        route: 'admin.doctor-materials.index',
-        urlPrefix: '/admin/doctor-materials'
-      },
-      {
-        title: 'Видеолекции',
-        route: 'admin.doctor-videos.index',
-        urlPrefix: '/admin/doctor-videos'
       }
     ]
   },
