@@ -6,12 +6,35 @@
 
 There is **no git checkout on the VPS**. Do not `git pull` or `git reset` on the server.
 
+## Iron-аудит VPS ↔ git (2026-09-16)
+
+- Полная сверка исходников VPS ↔ git `production` (нормализация CRLF): **403 файла совпали**.
+- Единственный реальный path-diff: на VPS файл `database/migrations/2026_08_17_134746_change_value_column_in_settings_table.php` **испорчен** (лежит копия `DoctorAppointmentMail` — старая коллизия scp). Правильный Mail на месте: `app/Mail/DoctorAppointmentMail.php` (= git). В git по пути миграции — **правильная миграция**.
+- Вывод: деплой из `production` **исправит** этот битый файл, не затрёт живой код. Не считать это «расхождением фич».
+- `bootstrap/ssr/*` и sqlite на сервере могут отличаться (сборка/runtime) — ок.
+- Вне скоупа: `.env`, `storage/`, `public/videos`, `public/build`.
+
+## SITE_VERSION (жёстко)
+
+**Каждый** деплой на прод (Actions Deploy или ручной scp+build) обязан поднять `resources/js/siteVersion.js` в том же релизе. Сейчас live **1.0.118** → следующий **1.0.119+**, даже для одной строки CSS или видео.
+
+- Rebuild без bump **запрещён** как завершённый релиз.
+- Скрипт на сервере **не** бампит версию сам (operator must bump in the release commit).
+- Checklist перед merge/deploy: **SITE_VERSION bumped**.
+
 ## Current process (CD is off)
 
 Use this until someone manually runs the GitHub `Deploy to VPS (manual)` workflow **and** types `I_CONFIRM_PRODUCTION_DEPLOY`.
 
+Checklist перед merge/deploy:
+
+- [ ] PR в base **`production`**
+- [ ] **SITE_VERSION bumped** в том же релизе (`1.0.118` → `1.0.119+`)
+- [ ] Нет правок `.env` / `storage/` / `public/videos`
+- [ ] `migrate --force` только если явно просили
+
 1. Merge the feature into **`production`** (not `main`, not the old baseline name).
-2. Bump `resources/js/siteVersion.js` in that same release (next value after live **1.0.118**).
+2. **Обязательно** bump `resources/js/siteVersion.js` в том же релизе (следующий после live **1.0.118**). Без bump релиз не завершён.
 3. On the VPS, copy only the files you changed (scp). **Never** full-tree rsync from a laptop without the checklist below.
 4. Backup first:
    - `public/build` (whole directory)
