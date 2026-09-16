@@ -548,7 +548,7 @@ const ogImage = computed(() => {
                   <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ blog.tags[0].name }}</span>
                 </div>
               </div>
-              <span v-if="isVideoItem(blog)" class="doctor-feed-play" aria-hidden="true">
+              <span v-if="isVideoItem(blog)" class="doctor-feed-play doctor-video-glass-play" aria-hidden="true">
                 <img src="/assets/figma-play-20.svg" alt="" width="20" height="20" />
               </span>
             </Link>
@@ -752,7 +752,6 @@ const ogImage = computed(() => {
   height: 56px;
   margin: -28px 0 0 -28px;
   border-radius: 28px;
-  background: #fff;
 }
 .doctor-feed-play img {
   display: block;

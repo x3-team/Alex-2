@@ -102,7 +102,7 @@ const startPlayback = () => {
         <img v-if="video.cover" :src="video.cover" :alt="video.title" width="1115" height="627" />
         <span class="player-source">{{ video.source_label }}</span>
         <span v-if="video.duration" class="player-duration">{{ video.duration }}</span>
-        <span class="player-play" aria-hidden="true">
+        <span class="player-play doctor-video-glass-play" aria-hidden="true">
           <img src="/assets/figma-play-32.svg" alt="" width="32" height="32" />
         </span>
       </button>
@@ -149,7 +149,7 @@ const startPlayback = () => {
 .player-duration { right: 24px; bottom: 24px; }
 .player-play {
   position: absolute; top: 50%; left: 50%; width: 88px; height: 88px; margin: -44px 0 0 -44px;
-  display: flex; align-items: center; justify-content: center; border-radius: 44px; background: #fff;
+  display: flex; align-items: center; justify-content: center; border-radius: 44px;
 }
 .player-play img { width: 32px; height: 32px; }
 .anons { margin: 24px 0 0; max-width: 916px; font-family: Roboto, Arial, sans-serif; font-size: 21px; line-height: 1.4; }

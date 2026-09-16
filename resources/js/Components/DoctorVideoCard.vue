@@ -35,7 +35,7 @@ const formatDate = (value) => {
         <span v-if="video.duration">{{ video.duration }}</span>
         <span>{{ video.source_label || 'Видео' }}</span>
       </div>
-      <span class="doctor-video-card__play" aria-hidden="true">
+      <span class="doctor-video-card__play doctor-video-glass-play" aria-hidden="true">
         <img src="/assets/figma-play-20.svg" alt="" width="20" height="20" />
       </span>
     </div>
@@ -111,7 +111,6 @@ const formatDate = (value) => {
   height: 48px;
   margin: -24px 0 0 -24px;
   border-radius: 28px;
-  background: #fff;
 }
 
 .doctor-video-card__play img {

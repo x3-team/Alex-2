@@ -16,3 +16,20 @@
 .doctors-shell {
     --doctor-theme-color: #cba98e;
 }
+
+/* Прозрачная кнопка play на превью видео (blur превью под кругом) */
+.doctor-video-glass-play {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow:
+        0 8px 28px rgba(0, 0, 0, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .doctor-video-glass-play {
+        background: rgba(255, 255, 255, 0.88);
+    }
+}
