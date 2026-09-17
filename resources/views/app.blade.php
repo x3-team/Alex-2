@@ -44,7 +44,8 @@
                 }
                 .page-container > .site-sidebar { grid-column: 1; grid-row: 1; }
                 .page-container > .home-content,
-                .page-container > .content-container { grid-column: 2; grid-row: 1; min-width: 0; }
+                .page-container > .content-container,
+                .page-container.site-sidebar-layout > .flex-1 { grid-column: 2; grid-row: 1; min-width: 0; }
             }
             /* LCP: paint hero H1 from SSR HTML before app CSS/JS finishes */
             .figma-hero-title {
