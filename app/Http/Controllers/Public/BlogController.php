@@ -164,8 +164,8 @@ class BlogController extends Controller
                 'type' => $materialType,
             ],
             'materialType' => $materialType,
-            'documentCategories' => ($isDoctors && $materialType === 'all')
-                ? (new DoctorMaterialsStore())->publicCategories()
+            'documentCategories' => ($isDoctors && in_array($materialType, ['all', 'documents'], true))
+                ? tap(new DoctorMaterialsStore(), fn ($store) => $store->ensureDefaultCategory())->publicCategories()
                 : [],
             'blogMeta' => [
                 'title' => $metaTitle,
@@ -180,11 +180,21 @@ class BlogController extends Controller
     {
         $type = (string) $request->query('type', 'all');
 
-        return in_array($type, ['all', 'articles', 'videos'], true) ? $type : 'all';
+        return in_array($type, ['all', 'articles', 'videos', 'documents'], true) ? $type : 'all';
     }
 
     private function paginateDoctorFeed(Request $request, $articleQuery, ?\App\Models\Category $category, string $type): LengthAwarePaginator
     {
+        if ($type === 'documents') {
+            return new LengthAwarePaginator(
+                [],
+                0,
+                3,
+                1,
+                ['path' => $request->url(), 'query' => $request->query()]
+            );
+        }
+
         $items = collect();
 
         if ($type !== 'videos') {

@@ -52,9 +52,11 @@ const { isDoctorMode } = useDoctorMode()
   box-sizing: border-box;
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1240px) {
   .main-content {
     padding: 64px 64px 80px;
+    max-width: 1115px;
+    margin: 0 auto;
   }
 }
 </style>
