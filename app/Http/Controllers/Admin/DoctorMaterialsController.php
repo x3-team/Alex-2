@@ -103,7 +103,7 @@ class DoctorMaterialsController extends Controller
     public function upload(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:20480',
         ]);
 
         $file = $request->file('file');
