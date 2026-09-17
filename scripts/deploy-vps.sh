@@ -10,7 +10,7 @@ cd "$APP_ROOT"
 MODE="${1:-apply}"
 RUN_MIGRATIONS="${RUN_MIGRATIONS:-false}"
 RESTART_SERVICES="${RESTART_SERVICES:-false}"
-BACKUP_ROOT="${BACKUP_ROOT:-/var/backups/alexallergotest.ru}"
+BACKUP_ROOT="${BACKUP_ROOT:-$HOME/backups/alexallergotest.ru}"
 
 backup() {
   local stamp
