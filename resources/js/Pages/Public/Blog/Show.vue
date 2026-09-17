@@ -6,7 +6,8 @@ import { useDoctorMode } from '@/Composables/useDoctorMode'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 
-const { blogBreadcrumbLabel } = useDoctorMode()
+const { isDoctorMode, blogBreadcrumbLabel } = useDoctorMode()
+const listingHref = computed(() => (isDoctorMode.value ? '/materials' : '/blog'))
 // 🔹 Принимаем готовые JSON-LD строки с бэкенда (это самый надежный способ для SEO)
 const props = defineProps({
   blog: Object,
@@ -270,7 +271,7 @@ const toggleFaq = (index) => {
 
         <header class="hidden xl:block bg-white border-b border-gray-200 sticky top-0 z-10">
           <div class="px-9 py-4 flex align-center height-[72px]">
-            <Link href="/blog" class="inline-flex items-center gap-2 text-gray-700 font-medium transition-colors w-full">
+            <Link :href="listingHref" class="inline-flex items-center gap-2 text-gray-700 font-medium transition-colors w-full">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
               </svg>
@@ -302,7 +303,7 @@ const toggleFaq = (index) => {
     <path d="M0.75 8.25L4.5 4.5L0.75 0.75" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
   </svg></span>
 
-            <Link href="/blog" class="flex-shrink-0 text-[14px] lg:text-[18px] text-black opacity-30 whitespace-nowrap">
+            <Link :href="listingHref" class="flex-shrink-0 text-[14px] lg:text-[18px] text-black opacity-30 whitespace-nowrap">
               {{ blogBreadcrumbLabel }}
             </Link>
 
@@ -311,7 +312,7 @@ const toggleFaq = (index) => {
     <path d="M0.75 8.25L4.5 4.5L0.75 0.75" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
   </svg></span>
               <Link
-                :href="`/blog/${blog.category.slug}`"
+                :href="isDoctorMode ? listingHref : `/blog/${blog.category.slug}`"
                 class="flex-shrink-0 text-[14px] lg:text-[18px] text-black opacity-30 whitespace-nowrap"
               >
                 {{ blog.category.name }}
@@ -366,7 +367,7 @@ const toggleFaq = (index) => {
             </div>
             <Link
               v-if="blog?.category?.slug"
-              :href="`/blog/${blog.category.slug}`"
+              :href="isDoctorMode ? listingHref : `/blog/${blog.category.slug}`"
               class="h-[36px] xl:h-[45px] px-3 xl:px-4 flex items-center "
               style="border-radius:8px;background-color: rgba(237, 237, 237, 1);"
             >

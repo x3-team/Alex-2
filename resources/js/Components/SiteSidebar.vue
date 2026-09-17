@@ -162,7 +162,7 @@ const goTo = (path) => {
 
 const openAudienceContent = () => {
   if (isDoctor.value) {
-    goTo(doctorsUrl('/blog'))
+    goTo(doctorsUrl('/materials'))
     closeMobileMenu()
     return
   }

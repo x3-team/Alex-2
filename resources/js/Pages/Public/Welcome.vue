@@ -99,7 +99,7 @@ const goTo = (path) => {
   router.visit(path)
 }
 
-const blogListingUrl = computed(() => (isDoctorMode.value ? doctorsUrl('/blog') : '/blog'))
+const blogListingUrl = computed(() => (isDoctorMode.value ? doctorsUrl('/materials') : '/blog'))
 const BLOG_TRANSITION_DURATION = 1100
 
 // Search State
