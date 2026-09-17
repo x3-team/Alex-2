@@ -12,6 +12,11 @@ const emptyVideo = () => ({
   title: '',
   slug: '',
   description: '',
+  seo_title: '',
+  seo_description: '',
+  seo_keywords: '',
+  og_title: '',
+  og_description: '',
   cover_path: '',
   embed_url: '',
   duration: '',
@@ -52,6 +57,11 @@ const startEdit = (video) => {
     title: video.title,
     slug: video.slug,
     description: video.description || '',
+    seo_title: video.seo_title || '',
+    seo_description: video.seo_description || '',
+    seo_keywords: video.seo_keywords || '',
+    og_title: video.og_title || '',
+    og_description: video.og_description || '',
     cover_path: video.cover_path || '',
     embed_url: video.embed_url,
     duration: video.duration || '',
@@ -75,12 +85,12 @@ const removeVideo = (video) => {
 </script>
 
 <template>
-  <Head title="Видеолекции для врачей" />
+  <Head title="Видео — админка" />
   <AdminLayout>
     <div class="py-12">
       <div class="max-w-5xl mx-auto px-4 space-y-6">
         <div class="flex justify-between items-center">
-          <h1 class="text-2xl font-bold text-gray-800">Видеолекции</h1>
+          <h1 class="text-2xl font-bold text-gray-800">Видео</h1>
           <Link :href="route('admin.home')" class="text-sm text-blue-600 hover:underline">← Назад в админку</Link>
         </div>
 
@@ -118,12 +128,36 @@ const removeVideo = (video) => {
               </select>
             </label>
           </div>
-          <label class="inline-flex items-center gap-2 text-sm">
-            <input v-model="createForm.is_active" type="checkbox" /> Опубликовать
-          </label>
-          <button type="submit" :disabled="createForm.processing" class="px-5 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50">
-            Добавить видео
-          </button>
+
+          <details class="border border-gray-200 rounded-lg bg-gray-50">
+            <summary class="px-4 py-3 cursor-pointer font-medium text-gray-700">SEO настройки</summary>
+            <div class="px-4 pb-4 space-y-4">
+              <label class="block text-sm">SEO Title
+                <input v-model="createForm.seo_title" type="text" maxlength="255" class="mt-1 w-full border rounded-md px-3 py-2" :placeholder="createForm.title || 'По умолчанию = название + «— видео ALEX LAB»'" />
+              </label>
+              <label class="block text-sm">SEO Description
+                <textarea v-model="createForm.seo_description" rows="2" maxlength="500" class="mt-1 w-full border rounded-md px-3 py-2" :placeholder="createForm.description || 'По умолчанию = анонс или название'" />
+              </label>
+              <label class="block text-sm">SEO Keywords
+                <input v-model="createForm.seo_keywords" type="text" maxlength="500" class="mt-1 w-full border rounded-md px-3 py-2" />
+              </label>
+              <label class="block text-sm">OG Title
+                <input v-model="createForm.og_title" type="text" maxlength="255" class="mt-1 w-full border rounded-md px-3 py-2" placeholder="Пусто = SEO Title" />
+              </label>
+              <label class="block text-sm">OG Description
+                <textarea v-model="createForm.og_description" rows="2" maxlength="500" class="mt-1 w-full border rounded-md px-3 py-2" placeholder="Пусто = SEO Description" />
+              </label>
+            </div>
+          </details>
+
+          <div class="flex flex-wrap items-center gap-4 pt-1">
+            <label class="inline-flex items-center gap-2 text-sm shrink-0">
+              <input v-model="createForm.is_active" type="checkbox" /> Опубликовать
+            </label>
+            <button type="submit" :disabled="createForm.processing" class="ml-auto px-5 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50">
+              Добавить видео
+            </button>
+          </div>
         </form>
 
         <div v-for="video in videos" :key="video.id" class="bg-white p-5 rounded-lg border">
@@ -150,12 +184,24 @@ const removeVideo = (video) => {
                 <option v-for="blog in blogs" :key="blog.id" :value="blog.id">{{ blog.title }}</option>
               </select>
             </div>
-            <label class="inline-flex items-center gap-2 text-sm">
-              <input v-model="editState[video.id].is_active" type="checkbox" /> Опубликовать
-            </label>
-            <div class="flex gap-3">
-              <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md">Сохранить</button>
-              <button type="button" class="text-sm text-gray-600" @click="editingId = null">Отмена</button>
+            <details class="border border-gray-200 rounded-lg bg-gray-50">
+              <summary class="px-4 py-3 cursor-pointer font-medium text-gray-700">SEO настройки</summary>
+              <div class="px-4 pb-4 space-y-3">
+                <input v-model="editState[video.id].seo_title" placeholder="SEO Title" class="w-full border rounded-md px-3 py-2" maxlength="255" />
+                <textarea v-model="editState[video.id].seo_description" placeholder="SEO Description" rows="2" class="w-full border rounded-md px-3 py-2" maxlength="500" />
+                <input v-model="editState[video.id].seo_keywords" placeholder="SEO Keywords" class="w-full border rounded-md px-3 py-2" maxlength="500" />
+                <input v-model="editState[video.id].og_title" placeholder="OG Title" class="w-full border rounded-md px-3 py-2" maxlength="255" />
+                <textarea v-model="editState[video.id].og_description" placeholder="OG Description" rows="2" class="w-full border rounded-md px-3 py-2" maxlength="500" />
+              </div>
+            </details>
+            <div class="flex flex-wrap items-center gap-4">
+              <label class="inline-flex items-center gap-2 text-sm shrink-0">
+                <input v-model="editState[video.id].is_active" type="checkbox" /> Опубликовать
+              </label>
+              <div class="ml-auto flex gap-3">
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md">Сохранить</button>
+                <button type="button" class="text-sm text-gray-600" @click="editingId = null">Отмена</button>
+              </div>
             </div>
           </form>
         </div>
