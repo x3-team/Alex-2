@@ -202,10 +202,10 @@ class BlogController extends Controller
                 'type' => $materialType,
             ],
             'materialType' => $materialType,
-            'documentCategories' => [],
-            'documentFiles' => ($isDoctors && in_array($materialType, ['all', 'documents'], true))
-                ? tap(new DoctorMaterialsStore(), fn ($store) => $store->ensureDefaultCategory())->files()
+            'documentCategories' => ($isDoctors && in_array($materialType, ['all', 'documents'], true))
+                ? tap(new DoctorMaterialsStore(), fn ($store) => $store->ensureDefaultCategory())->publicCategories()
                 : [],
+            'documentFiles' => [],
             'blogMeta' => [
                 'title' => $metaTitle,
                 'description' => $metaDescription,
