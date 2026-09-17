@@ -62,7 +62,11 @@ apply() {
 
   php artisan optimize:clear
   php artisan config:cache
-  php artisan route:cache
+  # Known prod issue: duplicate named route [logout] breaks route:cache.
+  if ! php artisan route:cache; then
+    echo "==> route:cache failed (duplicate route names); falling back to route:clear"
+    php artisan route:clear
+  fi
   php artisan view:cache
 
   if [[ "${RESTART_SERVICES}" == "true" ]]; then
