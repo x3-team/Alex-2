@@ -1,35 +1,31 @@
 # Правила работы агента (Alex-2)
 
-Зафиксировано 2026-09-16. **Git only.** Live на VPS не меняли в ходе настройки CI/CD.
+Зафиксировано 2026-09-17. **Git only** на VPS; выкладка — **SSH с VM cloud-агента**.
 
 ## Source of truth в git
 
 | Ветка | Роль |
 |-------|------|
-| **`production`** | **Default branch** репозитория и цель всех рабочих PR. Снимок live **1.0.118** + UI после 14.09. Branch protection: required check `test-and-build`. |
-| `cursor/prod-baseline-20260916-2397` | Старое длинное имя того же tip (после merge #27). Не использовать как base новых PR. |
-| `main` | Пустой исторический скелет. **Не мержить сюда. Не считать продом. Не открывать PR в `main`.** |
+| **`production`** | **Default branch** и цель всех рабочих PR. Branch protection: required check `test-and-build`. |
+| `cursor/prod-baseline-20260916-2397` | Старое имя baseline. Не использовать как base новых PR. |
+| `main` | Пустой исторический скелет. **Не мержить сюда. Не открывать PR в `main`.** |
 
-Новые правки: ветка `cursor/<имя>-2397` **от `production`** → PR с base **`production`**. Старый `main` не использовать.
+Новые правки: ветка `cursor/<имя>-2397` **от `production`** → PR с base **`production`**.
 
-## Iron-аудит VPS ↔ git (2026-09-16)
+## Cloud Agent environment (обязательно)
 
-- Полная сверка исходников VPS ↔ git `production` (нормализация CRLF): **403 файла совпали**.
-- Единственный реальный path-diff: на VPS файл `database/migrations/2026_08_17_134746_change_value_column_in_settings_table.php` **испорчен** (лежит копия `DoctorAppointmentMail` — старая коллизия scp). Правильный Mail на месте: `app/Mail/DoctorAppointmentMail.php` (= git). В git по пути миграции — **правильная миграция**.
-- Вывод: деплой из `production` **исправит** этот битый файл, не затрёт живой код. Не считать это «расхождением фич».
-- `bootstrap/ssr/*` и sqlite на сервере могут отличаться (сборка/runtime) — ок.
-- Вне скоупа: `.env`, `storage/`, `public/videos`, `public/build`.
+- Агент **всегда** работает в linked environment **Alex-2** (`7677cce2-a0c2-11f1-b532-320a589b8025`). Без него не подхватятся секреты деплоя.
+- Секреты (имена): `ALEXADMIN_SSH_PRIVATE_KEY`, `ALEX_SSH_HOST`, `ALEX_SSH_USER` (`alexadmin`), `ALEX_APP_ROOT` (абсолютный корень приложения на VPS). Legacy `SSH_*` — не использовать для деплоя (часто `root`).
+- Ключ нормализовать на VM: `~/.ssh/alexadmin`, `chmod 600`, newline в конце. **Не логировать ключ.**
 
 ## Жёсткий порядок релиза
 
-После #30/#31 агент задеплоил на VPS, а bump `SITE_VERSION` довёл в git отдельным PR — потому что прямой push в `production` заблокирован. **Так больше нельзя.**
-
-1. Правки **и** bump `SITE_VERSION` — **в одном PR** в `production` (сейчас live **1.0.120** → следующий релиз **1.0.121+**).
+1. Правки **и** bump `SITE_VERSION` — **в одном PR** в `production`.
 2. Дождаться зелёного CI.
 3. Merge в `production`.
-4. **Только потом** деплой на VPS (по явной команде Виталия «залей»): scp/rsync + build + optimize:clear.
+4. **Только потом** деплой на VPS по явной команде Виталия («залей», «деплой»).
 5. **Запрещено:** деплоить, а потом отдельным PR догонять `siteVersion.js`.
-6. **Запрещено:** пытаться `git push` напрямую в `production` (branch protection) — версию всегда класть в feature-PR.
+6. **Запрещено:** `git push` напрямую в `production`.
 7. После деплоя smoke: live `siteVersion-*.js` == значение из смерженного PR.
 
 Checklist:
@@ -37,41 +33,37 @@ Checklist:
 - [ ] SITE_VERSION bumped in same PR as code
 - [ ] CI green
 - [ ] merged to production
-- [ ] then deploy
+- [ ] then deploy (по «залей»)
 - [ ] live chunk matches
 
-## Деплой
+## Деплой (основной путь — cloud-агент по SSH)
 
-- На VPS **нет git**. Не `git pull` / `git reset` на сервере.
-- **Не деплоить** без явной команды Виталия («залей», «деплой», confirm).
-- **Не запускать** workflow `Deploy to VPS (manual)` «на всякий случай».
-- Не делать scp / rsync / `npm run build` на сервере без этой команды.
-- CD: только `workflow_dispatch`. **Запрещено** включать `on: push` для Deploy.
-- **Каждый** деплой на прод (Actions Deploy или ручной scp+build) → bump `SITE_VERSION` уже должен быть **в том же смерженном PR**, что и код (`resources/js/siteVersion.js`; live сейчас **1.0.120** → следующий **1.0.121+**), даже для одной строки CSS/видео. Скрипт **не** бампит сам.
-- Rebuild без bump **запрещён** как завершённый релиз. Не считать `SITE_VERSION` правдой, если сборка была без bump.
-- После OK Виталия: либо Actions Deploy + строка `I_CONFIRM_PRODUCTION_DEPLOY`, либо точечный scp + бэкап `public/build` + сборка **на VPS**.
-- Перед выкладкой smoke: patient + `doc.*` + `/blog`; live `siteVersion-*.js` == значение из смерженного PR.
+**Все production-деплои выполняет этот cloud-агент** после команды «залей». Не просить Виталия вручную жать GitHub Actions, если SSH с VM работает.
 
-Подробности ручного процесса и секретов: [DEPLOY.md](./DEPLOY.md).
+1. `git fetch` / sync с `origin/production`.
+2. Проверка SSH: `alexadmin@$ALEX_SSH_HOST` (BatchMode), каталог `$ALEX_APP_ROOT`.
+3. **Бэкап** на VPS: `bash scripts/deploy-vps.sh backup` (если есть) или `~/backups/alexallergotest.ru/<UTC-stamp>/` (`public/build`, `siteVersion.js`, `manifest.json`).
+4. **Rsync/scp** с VM агента (excludes как в [DEPLOY.md](./DEPLOY.md)): не трогать `.env`, `storage/`, `public/videos`, `public/build` до сборки на сервере.
+5. На VPS: `RUN_MIGRATIONS=true` (только если релиз с миграциями) и `bash scripts/deploy-vps.sh apply` → `composer install --no-dev`, `npm ci`, `npm run build`, `migrate --force` при флаге, `optimize:clear`, `config:cache`, `view:cache`. **`route:cache`** — только если нет дубликатов имён маршрутов; иначе `route:clear`.
+6. **Restart** php-fpm / Inertia SSR — по необходимости (существующий process manager на VPS); флаг `RESTART_SERVICES=true` в скрипте — напоминание оператору.
+7. Smoke: patient + doctor (`/up` или главные), `/admin/doctor-videos`, live chunk `SITE_VERSION`.
+
+**Запасной путь:** GitHub Actions `Deploy to VPS (manual)` — для человека в UI. Агент **не полагается** на `workflow_dispatch` (у integration token часто **403**).
+
+Подробности: [DEPLOY.md](./DEPLOY.md).
 
 ## Никогда
 
 - `.env` / `.env.production`
 - `storage/`, `public/storage`
 - `public/videos`
-- полный слепой rsync
-- `migrate --force` без явной просьбы
+- полный слепой rsync без excludes
+- `migrate --force` без явной просьбы / без миграций в релизе
 - правки nginx
 - ломать статьи, ссылки, SEO
-- merge в старый `main`, чтобы «включить деплой»
+- merge в `main`
 
 ## CI
 
-- Required check на **`production`**: `test-and-build` (Unit + `npm run build` на GitHub).
-- `ci.yml` `on.push.branches`: `production`, плюс baseline и `sync-prod` (наследие).
-- Feature-тесты Breeze в CI не гоняются.
-- Secrets и environment `production` уже заведены (имена `ALEX_*`, healthchecks). Значения в git не писать.
-
-## Cloud Agent
-
-Окружение запуска: **Alex-2** (`ALEX_APP_ROOT`, `ALEX_SSH_HOST`, `ALEXADMIN_SSH_PRIVATE_KEY`). Ключи не логировать и не коммитить.
+- Required check на **`production`**: `test-and-build`.
+- Feature PHPUnit (Breeze) в CI не гоняются.
