@@ -4,6 +4,7 @@ import { Head, Link, router } from '@inertiajs/vue3'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import DoctorTypeChips from '@/Components/DoctorTypeChips.vue'
 import DoctorBreadcrumbIcon from '@/Components/DoctorBreadcrumbIcon.vue'
+import DoctorDocumentCategoryCard from '@/Components/DoctorDocumentCategoryCard.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
@@ -520,24 +521,12 @@ const ogImage = computed(() => {
           </div>
 
           <template v-if="isDocumentsView">
-            <div v-if="documentFiles.length" class="doctor-file-list">
-              <article v-for="(material, index) in documentFiles" :key="material.title + index" class="doctor-file-card">
-                <div class="doctor-file-copy">
-                  <h2>{{ material.title }}</h2>
-                  <p v-if="material.date">{{ material.date }}</p>
-                  <p v-else-if="material.description">{{ material.description }}</p>
-                </div>
-                <a
-                  v-if="material.file_path"
-                  class="doctor-file-download"
-                  :href="material.file_path"
-                  download
-                  target="_blank"
-                  :aria-label="`Скачать: ${material.title}`"
-                >
-                  <img src="/assets/figma-materials-download.svg" alt="" width="24" height="24" />
-                </a>
-              </article>
+            <div v-if="documentCategories.length" class="doctor-doc-grid">
+              <DoctorDocumentCategoryCard
+                v-for="category in documentCategories"
+                :key="category.id"
+                :category="category"
+              />
             </div>
             <p v-else class="text-[18px] text-black/50 py-6">
               Документы скоро появятся.
@@ -696,7 +685,7 @@ const ogImage = computed(() => {
           </span>
         </div>
 
-        <section v-if="isDoctorMode && !isDocumentsView && documentFiles.length" class="doctor-hub-docs">
+        <section v-if="isDoctorMode && !isDocumentsView && documentCategories.length" class="doctor-hub-docs">
           <div class="doctor-hub-docs-head">
             <h2>Документы лаборатории</h2>
             <Link :href="doctorsUrl('/materials?type=documents')" class="doctor-hub-docs-all">
@@ -704,24 +693,12 @@ const ogImage = computed(() => {
               <img src="/assets/figma-arrow-right.svg" alt="" width="24" height="24" />
             </Link>
           </div>
-          <div class="doctor-file-list">
-            <article v-for="(material, index) in documentFiles" :key="material.title + index" class="doctor-file-card">
-              <div class="doctor-file-copy">
-                <h2>{{ material.title }}</h2>
-                <p v-if="material.date">{{ material.date }}</p>
-                <p v-else-if="material.description">{{ material.description }}</p>
-              </div>
-              <a
-                v-if="material.file_path"
-                class="doctor-file-download"
-                :href="material.file_path"
-                download
-                target="_blank"
-                :aria-label="`Скачать: ${material.title}`"
-              >
-                <img src="/assets/figma-materials-download.svg" alt="" width="24" height="24" />
-              </a>
-            </article>
+          <div class="doctor-doc-grid">
+            <DoctorDocumentCategoryCard
+              v-for="category in documentCategories"
+              :key="category.id"
+              :category="category"
+            />
           </div>
         </section>
       </main>

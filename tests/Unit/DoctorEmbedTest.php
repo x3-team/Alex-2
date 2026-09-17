@@ -62,7 +62,7 @@ class DoctorEmbedTest extends TestCase
         $this->assertStringContainsString('isDoctorsSite && $seoPath !== \'/\'', $src);
     }
 
-    public function test_doctor_listing_lives_on_materials_without_categories(): void
+    public function test_doctor_listing_lives_on_materials_without_blog_categories(): void
     {
         $blog = file_get_contents(dirname(__DIR__, 2).'/app/Http/Controllers/Public/BlogController.php');
         $videos = file_get_contents(dirname(__DIR__, 2).'/app/Http/Controllers/Public/DoctorVideoController.php');
@@ -75,12 +75,15 @@ class DoctorEmbedTest extends TestCase
         $this->assertStringContainsString("\$url = '/materials';", $blog);
         $this->assertStringContainsString("'path' => \$request->root().'/materials'", $blog);
         $this->assertMatchesRegularExpression('/if \(\$isDoctors\) \{\s+\$category = null;/', $blog);
+        $this->assertStringContainsString('publicCategories()', $blog);
 
         $this->assertIsString($videos);
         $this->assertStringContainsString("redirect()->to('/materials?type=videos', 301)", $videos);
 
         $this->assertIsString($docs);
         $this->assertStringContainsString("redirect()->to('/materials?type=documents', 301)", $docs);
+        $this->assertStringContainsString('categoryBySlug', $docs);
+        $this->assertStringContainsString("Public/DoctorMaterialCategory", $docs);
 
         $this->assertIsString($chips);
         $this->assertStringContainsString("{ key: 'all', label: 'Все', path: '/materials' }", $chips);
@@ -92,5 +95,6 @@ class DoctorEmbedTest extends TestCase
         $this->assertStringContainsString("return doctorsUrl('/materials')", $index);
         $this->assertStringContainsString('v-if="!isDoctorMode"', $index);
         $this->assertStringContainsString('Выберите категорию', $index);
+        $this->assertStringContainsString('DoctorDocumentCategoryCard', $index);
     }
 }
