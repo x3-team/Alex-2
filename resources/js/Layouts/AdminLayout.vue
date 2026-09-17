@@ -38,7 +38,7 @@ const menuItems = [
         urlPrefix: '/admin/doctor-materials'
       },
       {
-        title: 'Видеолекции',
+        title: 'Видео',
         route: 'admin.doctor-videos.index',
         urlPrefix: '/admin/doctor-videos'
       }

@@ -54,8 +54,15 @@ class DoctorVideoController extends Controller
             'relatedVideos' => $related,
             'relatedArticle' => $relatedArticle,
             'videosMeta' => [
-                'title' => $video->title.' — видео ALEX LAB',
-                'description' => $video->description ?: $video->title,
+                'title' => trim((string) ($video->seo_title ?: '')) !== ''
+                    ? $video->seo_title
+                    : ($video->title.' — видео ALEX LAB'),
+                'description' => trim((string) ($video->seo_description ?: '')) !== ''
+                    ? $video->seo_description
+                    : ($video->description ?: $video->title),
+                'keywords' => $video->seo_keywords,
+                'og_title' => $video->og_title,
+                'og_description' => $video->og_description,
                 'noindex' => true,
             ],
         ]);

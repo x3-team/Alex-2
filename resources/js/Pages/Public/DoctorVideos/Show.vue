@@ -48,12 +48,21 @@ const startPlayback = () => {
     playing.value = true
   }
 }
+
+const pageTitle = computed(() => props.videosMeta.title || props.video.title)
+const pageDescription = computed(() => props.videosMeta.description || props.video.description || props.video.title)
+const ogTitle = computed(() => props.videosMeta.og_title?.trim() || pageTitle.value)
+const ogDescription = computed(() => props.videosMeta.og_description?.trim() || pageDescription.value)
 </script>
 
 <template>
   <Head>
-    <title>{{ videosMeta.title || video.title }}</title>
-    <meta name="description" :content="videosMeta.description || video.description || video.title" />
+    <title>{{ pageTitle }}</title>
+    <meta name="description" :content="pageDescription" />
+    <meta v-if="videosMeta.keywords" name="keywords" :content="videosMeta.keywords" />
+    <meta property="og:title" :content="ogTitle" />
+    <meta property="og:description" :content="ogDescription" />
+    <meta v-if="video.cover" property="og:image" :content="video.cover" />
   </Head>
 
   <DoctorPublicShell :back-href="doctorsUrl('/blog?type=videos')" back-label="К видео">
