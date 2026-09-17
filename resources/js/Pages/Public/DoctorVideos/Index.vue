@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3'
 import DoctorPublicShell from '@/Components/DoctorPublicShell.vue'
 import DoctorTypeChips from '@/Components/DoctorTypeChips.vue'
+import DoctorBreadcrumbIcon from '@/Components/DoctorBreadcrumbIcon.vue'
 import DoctorVideoCard from '@/Components/DoctorVideoCard.vue'
 import { useDoctorMode } from '@/composables/useDoctorMode'
 
@@ -24,6 +25,7 @@ const { doctorsUrl } = useDoctorMode()
       class="breadcrumbs flex items-center gap-3 mb-6"
       style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center; padding: 0px; gap: 12px; min-height: 48px;"
     >
+      <DoctorBreadcrumbIcon />
       <Link :href="doctorsUrl('/')" class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30">Главная</Link>
       <span class="text-black opacity-[0.3]">
         <svg width="6" height="9" viewBox="0 0 6 9" fill="none" xmlns="http://www.w3.org/2000/svg">
