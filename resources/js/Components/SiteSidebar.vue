@@ -337,10 +337,9 @@ const openAbout = () => {
       <span class="mobile-close-icon" aria-hidden="true"></span>
       <span>Закрыть</span>
     </button>
-  </aside>
 
-  <!-- МОДАЛЬНОЕ ОКНО ВЫБОРА ЛАБОРАТОРИЙ -->
-  <Teleport to="body">
+    <!-- МОДАЛЬНОЕ ОКНО ВЫБОРА ЛАБОРАТОРИЙ -->
+    <Teleport to="body">
     <Transition name="test-location-modal-fade">
       <section
           v-if="isRegisterModalOpen"
@@ -398,10 +397,10 @@ const openAbout = () => {
         </div>
       </section>
     </Transition>
-  </Teleport>
+    </Teleport>
 
-  <!-- 🟡 НОВОЕ МОДАЛЬНОЕ ОКНО-ЗАГЛУШКА "В РАЗРАБОТКЕ" -->
-  <Teleport to="body">
+    <!-- 🟡 НОВОЕ МОДАЛЬНОЕ ОКНО-ЗАГЛУШКА "В РАЗРАБОТКЕ" -->
+    <Teleport to="body">
     <Transition name="test-location-modal-fade">
       <section
           v-if="isDevModalOpen"
@@ -451,7 +450,8 @@ const openAbout = () => {
         </div>
       </section>
     </Transition>
-  </Teleport>
+    </Teleport>
+  </aside>
 </template>
 
 <style scoped>
