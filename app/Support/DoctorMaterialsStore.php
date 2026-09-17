@@ -36,7 +36,9 @@ class DoctorMaterialsStore
 
     public function files(): array
     {
-        return array_values(array_filter(array_map(function ($row) {
+        $i = 0;
+
+        $files = array_values(array_filter(array_map(function ($row) use (&$i) {
             if (! is_array($row)) {
                 return null;
             }
@@ -46,14 +48,20 @@ class DoctorMaterialsStore
                 return null;
             }
 
+            $i++;
+
             return [
+                'id' => (string) ($row['id'] ?? Str::uuid()),
                 'title' => $title,
                 'file_path' => trim((string) ($row['file_path'] ?? '')),
                 'date' => trim((string) ($row['date'] ?? '')),
                 'description' => trim((string) ($row['description'] ?? '')),
                 'category_id' => trim((string) ($row['category_id'] ?? '')),
+                'sort_order' => isset($row['sort_order']) ? (int) $row['sort_order'] : $i,
             ];
         }, $this->decode(self::FILES_KEY))));
+
+        return self::sortFiles($files);
     }
 
     public function publicCategories(): array
@@ -74,7 +82,29 @@ class DoctorMaterialsStore
 
     public function filesForCategory(string $categoryId): array
     {
-        return array_values(array_filter($this->files(), fn ($file) => ($file['category_id'] ?? '') === $categoryId));
+        return array_values(array_filter(
+            $this->files(),
+            fn ($file) => ($file['category_id'] ?? '') === $categoryId
+        ));
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $files
+     * @return list<array<string, mixed>>
+     */
+    public static function sortFiles(array $files): array
+    {
+        $indexed = array_values($files);
+        usort($indexed, function ($a, $b) {
+            $byCategory = strcmp((string) ($a['category_id'] ?? ''), (string) ($b['category_id'] ?? ''));
+            if ($byCategory !== 0) {
+                return $byCategory;
+            }
+
+            return ((int) ($a['sort_order'] ?? 0)) <=> ((int) ($b['sort_order'] ?? 0));
+        });
+
+        return $indexed;
     }
 
     /**

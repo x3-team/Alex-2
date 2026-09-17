@@ -36,11 +36,13 @@ class DoctorMaterialsController extends Controller
             'categories.*.slug' => 'nullable|string|max:255',
             'categories.*.description' => 'nullable|string|max:500',
             'materials' => 'present|array',
+            'materials.*.id' => 'nullable|string|max:64',
             'materials.*.title' => 'required|string|max:255',
             'materials.*.file_path' => 'nullable|string|max:500',
             'materials.*.date' => 'nullable|string|max:64',
             'materials.*.description' => 'nullable|string|max:500',
             'materials.*.category_id' => 'nullable|string|max:64',
+            'materials.*.sort_order' => 'nullable|integer|min:0|max:9999',
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string|max:500',
             'meta_keywords' => 'nullable|string|max:500',
@@ -68,18 +70,24 @@ class DoctorMaterialsController extends Controller
         }, array_slice($validated['categories'], 0, DoctorMaterialsStore::MAX_CATEGORIES));
 
         $categoryIds = array_column($categories, 'id');
-        $files = array_map(function (array $row) use ($categoryIds) {
+        $perCategory = [];
+        $files = array_map(function (array $row) use ($categoryIds, &$perCategory) {
             $categoryId = trim((string) ($row['category_id'] ?? ''));
             if ($categoryId !== '' && ! in_array($categoryId, $categoryIds, true)) {
                 $categoryId = $categoryIds[0] ?? '';
             }
 
+            $bucket = $categoryId !== '' ? $categoryId : '_none';
+            $perCategory[$bucket] = ($perCategory[$bucket] ?? 0) + 1;
+
             return [
+                'id' => trim((string) ($row['id'] ?? '')) ?: (string) Str::uuid(),
                 'title' => trim($row['title']),
                 'file_path' => trim((string) ($row['file_path'] ?? '')),
                 'date' => trim((string) ($row['date'] ?? '')),
                 'description' => trim((string) ($row['description'] ?? '')),
                 'category_id' => $categoryId,
+                'sort_order' => $perCategory[$bucket],
             ];
         }, $validated['materials']);
 
