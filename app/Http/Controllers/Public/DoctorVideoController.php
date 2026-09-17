@@ -11,9 +11,7 @@ class DoctorVideoController extends Controller
 {
     public function index()
     {
-        request()->merge(['type' => 'videos']);
-
-        return app(BlogController::class)->index(request());
+        return redirect()->to('/materials?type=videos', 301);
     }
 
     public function show(string $slug): Response

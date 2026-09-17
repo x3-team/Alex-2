@@ -3,9 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
-use App\Models\Setting;
-use App\Support\DoctorMaterialsStore;
-use Inertia\Inertia;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Response;
 
 class DoctorMaterialController extends Controller
@@ -15,49 +13,13 @@ class DoctorMaterialController extends Controller
         return app(BlogController::class)->index(request());
     }
 
-    public function documents(): Response
+    public function documents(): RedirectResponse
     {
-        $request = request();
-        $request->query->set('type', 'documents');
-
-        return app(BlogController::class)->index($request);
+        return redirect()->to('/materials?type=documents', 301);
     }
 
-    public function category(string $categorySlug): Response
+    public function category(string $categorySlug): RedirectResponse
     {
-        if ($categorySlug === 'documents') {
-            return $this->documents();
-        }
-
-        $store = new DoctorMaterialsStore();
-        $store->ensureDefaultCategory();
-
-        $category = $store->categoryBySlug($categorySlug);
-        if (! $category) {
-            abort(404);
-        }
-
-        $files = $store->filesForCategory($category['id']);
-        $others = array_values(array_filter(
-            $store->publicCategories(),
-            fn ($item) => $item['id'] !== $category['id']
-        ));
-
-        return Inertia::render('Public/DoctorMaterialCategory', [
-            'category' => $category,
-            'materials' => $files,
-            'otherCategories' => $others,
-            'seoMeta' => $this->seoMeta(),
-        ]);
-    }
-
-    private function seoMeta(?string $title = null, ?string $description = null): array
-    {
-        return [
-            'title' => $title ?: Setting::get('doctor_materials_meta_title', 'Документы для врачей — ALEX LAB'),
-            'description' => $description ?: Setting::get('doctor_materials_meta_description', 'Регистрационные документы, инструкции и бланки лаборатории.'),
-            'keywords' => Setting::get('doctor_materials_meta_keywords', ''),
-            'noindex' => true,
-        ];
+        return redirect()->to('/materials?type=documents', 301);
     }
 }

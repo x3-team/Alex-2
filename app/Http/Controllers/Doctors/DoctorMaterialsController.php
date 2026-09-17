@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Doctors;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Public\DoctorMaterialController;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Response;
 
 class DoctorMaterialsController extends Controller
@@ -13,12 +14,12 @@ class DoctorMaterialsController extends Controller
         return app(DoctorMaterialController::class)->index();
     }
 
-    public function documents(): Response
+    public function documents(): RedirectResponse
     {
         return app(DoctorMaterialController::class)->documents();
     }
 
-    public function category(string $category): Response
+    public function category(string $category): RedirectResponse
     {
         return app(DoctorMaterialController::class)->category($category);
     }

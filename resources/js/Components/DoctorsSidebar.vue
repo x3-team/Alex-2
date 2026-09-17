@@ -30,7 +30,7 @@
                 <span>Посмотреть демо-результат</span>
             </Link>
             <Link
-                :href="doctorsUrl('/blog')"
+                :href="doctorsUrl('/materials')"
                 class="doctors-sidebar-item"
                 :class="{ 'is-active': isBlog }"
             >

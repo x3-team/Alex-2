@@ -4,7 +4,6 @@ import { Head, Link, router } from '@inertiajs/vue3'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import DoctorTypeChips from '@/Components/DoctorTypeChips.vue'
 import DoctorBreadcrumbIcon from '@/Components/DoctorBreadcrumbIcon.vue'
-import DoctorDocumentCategoryCard from '@/Components/DoctorDocumentCategoryCard.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
@@ -20,9 +19,10 @@ const props = defineProps({
   blogMeta: { type: Object, default: () => ({ title: '', description: '', keywords: '' }) },
   materialType: { type: String, default: null },
   documentCategories: { type: Array, default: () => [] },
+  documentFiles: { type: Array, default: () => [] },
 })
 
-const { isDoctorMode, blogBreadcrumbLabel } = useDoctorMode()
+const { isDoctorMode, doctorsUrl, blogBreadcrumbLabel } = useDoctorMode()
 
 const hasSelectedTags = computed(() => selectedTags.value.length > 0)
 
@@ -96,6 +96,9 @@ const toggleTag = (tagSlug) => {
 }
 
 const listingPath = () => {
+  if (isDoctorMode.value) {
+    return doctorsUrl('/materials')
+  }
   if (selectedCategories.value.length === 1) {
     return `/blog/${selectedCategories.value[0]}`
   }
@@ -124,7 +127,7 @@ const resetFilters = () => {
   selectedAuthor.value = ''
   selectedCategories.value = []
   selectedTags.value = []
-  router.get('/blog', { ...typeQuery() }, { preserveState: true, preserveScroll: true })
+  router.get(listingPath(), { ...typeQuery() }, { preserveState: true, preserveScroll: true })
 }
 
 const buildPageUrl = (page) => {
@@ -253,7 +256,12 @@ const canonicalUrl = computed(() => {
     params.set('page', currentPage)
   }
 
-  if (selectedCategories.value.length > 1) {
+  const type = typeQuery().type
+  if (type) {
+    params.set('type', type)
+  }
+
+  if (!isDoctorMode.value && selectedCategories.value.length > 1) {
     params.set('category', selectedCategories.value.join(','))
   }
   if (selectedTags.value.length) {
@@ -363,7 +371,7 @@ const ogImage = computed(() => {
 
           <Link
             v-if="currentCategory"
-            href="/blog"
+            :href="listingPath()"
             class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30"
           >
             {{ blogBreadcrumbLabel }}
@@ -405,7 +413,7 @@ const ogImage = computed(() => {
           </div>
         </div>
 
-        <div class="mb-6 xl:mb-8 pt-[1rem]" :style="{ borderTop: '1px solid rgba(0, 0, 0, 0.3)' }">
+        <div v-if="!isDoctorMode" class="mb-6 xl:mb-8 pt-[1rem]" :style="{ borderTop: '1px solid rgba(0, 0, 0, 0.3)' }">
           <div class="text-[16px] xl:text-[18px] text-[rgba(0, 0, 0, 1)] mb-2 opacity-[0.5] font-400">Выберите категорию</div>
 
           <div class="flex gap-[5px] overflow-x-auto pb-2 xl:flex-wrap xl:overflow-visible xl:pb-0 scrollbar-hide">
@@ -429,7 +437,10 @@ const ogImage = computed(() => {
           </div>
         </div>
 
-        <div class="grid pt-8 xl:pt-[9px]">
+        <div
+          class="grid pt-8 xl:pt-[9px]"
+          :style="isDoctorMode ? { borderTop: '1px solid rgba(0, 0, 0, 0.3)', paddingTop: '1rem' } : {}"
+        >
           <div class="feed-toolbar" :class="{ 'is-doctor': isDoctorMode }">
             <div class="text-[21px] mb-[8px] xl:text-[32px] font-[400] text-gray-900 break-words" style="line-height: 1">
               <span class="title-wrapper">
@@ -509,12 +520,24 @@ const ogImage = computed(() => {
           </div>
 
           <template v-if="isDocumentsView">
-            <div v-if="documentCategories.length" class="doctor-doc-grid">
-              <DoctorDocumentCategoryCard
-                v-for="category in documentCategories"
-                :key="category.id"
-                :category="category"
-              />
+            <div v-if="documentFiles.length" class="doctor-file-list">
+              <article v-for="(material, index) in documentFiles" :key="material.title + index" class="doctor-file-card">
+                <div class="doctor-file-copy">
+                  <h2>{{ material.title }}</h2>
+                  <p v-if="material.date">{{ material.date }}</p>
+                  <p v-else-if="material.description">{{ material.description }}</p>
+                </div>
+                <a
+                  v-if="material.file_path"
+                  class="doctor-file-download"
+                  :href="material.file_path"
+                  download
+                  target="_blank"
+                  :aria-label="`Скачать: ${material.title}`"
+                >
+                  <img src="/assets/figma-materials-download.svg" alt="" width="24" height="24" />
+                </a>
+              </article>
             </div>
             <p v-else class="text-[18px] text-black/50 py-6">
               Документы скоро появятся.
@@ -673,20 +696,32 @@ const ogImage = computed(() => {
           </span>
         </div>
 
-        <section v-if="isDoctorMode && !isDocumentsView && documentCategories.length" class="doctor-hub-docs">
+        <section v-if="isDoctorMode && !isDocumentsView && documentFiles.length" class="doctor-hub-docs">
           <div class="doctor-hub-docs-head">
             <h2>Документы лаборатории</h2>
-            <Link href="/materials/documents" class="doctor-hub-docs-all">
+            <Link :href="doctorsUrl('/materials?type=documents')" class="doctor-hub-docs-all">
               Все документы
               <img src="/assets/figma-arrow-right.svg" alt="" width="24" height="24" />
             </Link>
           </div>
-          <div class="doctor-doc-grid">
-            <DoctorDocumentCategoryCard
-              v-for="category in documentCategories"
-              :key="category.id"
-              :category="category"
-            />
+          <div class="doctor-file-list">
+            <article v-for="(material, index) in documentFiles" :key="material.title + index" class="doctor-file-card">
+              <div class="doctor-file-copy">
+                <h2>{{ material.title }}</h2>
+                <p v-if="material.date">{{ material.date }}</p>
+                <p v-else-if="material.description">{{ material.description }}</p>
+              </div>
+              <a
+                v-if="material.file_path"
+                class="doctor-file-download"
+                :href="material.file_path"
+                download
+                target="_blank"
+                :aria-label="`Скачать: ${material.title}`"
+              >
+                <img src="/assets/figma-materials-download.svg" alt="" width="24" height="24" />
+              </a>
+            </article>
           </div>
         </section>
       </main>
@@ -798,6 +833,43 @@ const ogImage = computed(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 33px;
+}
+.doctor-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.doctor-file-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #dfdfdf;
+}
+.doctor-file-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.doctor-file-copy h2 {
+  margin: 0;
+  font-family: Roboto, Arial, sans-serif;
+  font-size: 21px;
+  font-weight: 400;
+}
+.doctor-file-copy p {
+  margin: 0;
+  font-size: 16px;
+}
+.doctor-file-download {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.doctor-file-download img {
+  width: 24px;
+  height: 24px;
 }
 @media (max-width: 1024px) {
   .doctor-hub-docs-head {

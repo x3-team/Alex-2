@@ -17,6 +17,10 @@ class BlogController extends Controller
 {
     public function index(Request $request)
     {
+        if ($this->isDoctorsSite() && $request->is('blog')) {
+            return redirect()->to($this->doctorMaterialsUrl($request->query()), 301);
+        }
+
         if ($redirect = $this->redirectLegacyCategoryQuery($request)) {
             return $redirect;
         }
@@ -35,7 +39,33 @@ class BlogController extends Controller
             return $this->show($categorySlug);
         }
 
+        if ($this->isDoctorsSite()) {
+            return redirect()->to($this->doctorMaterialsUrl($request->query()), 301);
+        }
+
         return $this->renderListing($request, $category);
+    }
+
+    private function isDoctorsSite(): bool
+    {
+        return DetectSite::make()->isDoctorsSite();
+    }
+
+    private function doctorMaterialsUrl(array $query = []): string
+    {
+        unset($query['category']);
+
+        $query = array_filter(
+            $query,
+            fn ($value) => $value !== null && $value !== ''
+        );
+
+        $url = '/materials';
+        if ($query !== []) {
+            $url .= '?'.http_build_query($query);
+        }
+
+        return $url;
     }
 
     private function redirectLegacyCategoryQuery(Request $request)
@@ -61,6 +91,10 @@ class BlogController extends Controller
         $query = $request->query();
         unset($query['category']);
 
+        if ($this->isDoctorsSite()) {
+            return redirect()->to($this->doctorMaterialsUrl($query), 301);
+        }
+
         $target = url('/blog/'.$slug);
         if (!empty($query)) {
             $target .= '?'.http_build_query($query);
@@ -71,6 +105,11 @@ class BlogController extends Controller
 
     private function renderListing(Request $request, ?\App\Models\Category $category)
     {
+        $isDoctors = $this->isDoctorsSite();
+        if ($isDoctors) {
+            $category = null;
+        }
+
         $query = Blog::with(['author', 'category', 'tags'])
             ->forCurrentSite()
             ->whereNotNull('published_at')
@@ -90,9 +129,9 @@ class BlogController extends Controller
             $query->where('user_id', $request->author);
         }
 
-        if ($category) {
+        if (! $isDoctors && $category) {
             $query->where('category_id', $category->id);
-        } elseif ($request->filled('category')) {
+        } elseif (! $isDoctors && $request->filled('category')) {
             $categorySlugs = array_filter(explode(',', $request->category));
 
             if (count($categorySlugs) > 0) {
@@ -111,11 +150,10 @@ class BlogController extends Controller
             }
         }
 
-        $isDoctors = DetectSite::make()->audience() === DetectSite::MODE_DOCTORS;
         $materialType = $isDoctors ? $this->materialType($request) : null;
 
         $blogs = $isDoctors
-            ? $this->paginateDoctorFeed($request, $query, $category, $materialType)
+            ? $this->paginateDoctorFeed($request, $query, $materialType)
             : $query->orderBy('sort_order', 'asc')->latest('published_at')->paginate(3)->withQueryString();
 
         if (! $isDoctors) {
@@ -164,8 +202,9 @@ class BlogController extends Controller
                 'type' => $materialType,
             ],
             'materialType' => $materialType,
-            'documentCategories' => ($isDoctors && in_array($materialType, ['all', 'documents'], true))
-                ? tap(new DoctorMaterialsStore(), fn ($store) => $store->ensureDefaultCategory())->publicCategories()
+            'documentCategories' => [],
+            'documentFiles' => ($isDoctors && in_array($materialType, ['all', 'documents'], true))
+                ? tap(new DoctorMaterialsStore(), fn ($store) => $store->ensureDefaultCategory())->files()
                 : [],
             'blogMeta' => [
                 'title' => $metaTitle,
@@ -183,16 +222,17 @@ class BlogController extends Controller
         return in_array($type, ['all', 'articles', 'videos', 'documents'], true) ? $type : 'all';
     }
 
-    private function paginateDoctorFeed(Request $request, $articleQuery, ?\App\Models\Category $category, string $type): LengthAwarePaginator
+    private function paginateDoctorFeed(Request $request, $articleQuery, string $type): LengthAwarePaginator
     {
+        $page = max(1, (int) $request->query('page', 1));
+        $perPage = 3;
+        $options = [
+            'path' => $request->root().'/materials',
+            'query' => $request->query(),
+        ];
+
         if ($type === 'documents') {
-            return new LengthAwarePaginator(
-                [],
-                0,
-                3,
-                1,
-                ['path' => $request->url(), 'query' => $request->query()]
-            );
+            return new LengthAwarePaginator([], 0, $perPage, 1, $options);
         }
 
         $items = collect();
@@ -205,34 +245,23 @@ class BlogController extends Controller
         }
 
         if ($type !== 'articles' && ! $request->filled('tags')) {
-            $videos = DoctorVideo::query()
-                ->published()
-                ->with(['relatedBlog.author', 'relatedBlog.category']);
-
-            if ($category) {
-                $videos->whereHas('relatedBlog', fn ($q) => $q->where('category_id', $category->id));
-            } elseif ($request->filled('category')) {
-                $slugs = array_filter(explode(',', (string) $request->category));
-                if ($slugs) {
-                    $videos->whereHas('relatedBlog.category', fn ($q) => $q->whereIn('slug', $slugs));
-                }
-            }
-
             $items = $items->concat(
-                $videos->get()->map(fn (DoctorVideo $video) => $this->videoFeedItem($video))
+                DoctorVideo::query()
+                    ->published()
+                    ->with(['relatedBlog.author', 'relatedBlog.category'])
+                    ->get()
+                    ->map(fn (DoctorVideo $video) => $this->videoFeedItem($video))
             );
         }
 
         $sorted = $items->sortByDesc(fn (array $item) => $item['published_at'] ?? '')->values();
-        $page = max(1, (int) $request->query('page', 1));
-        $perPage = 3;
 
         return new LengthAwarePaginator(
             $sorted->forPage($page, $perPage)->values(),
             $sorted->count(),
             $perPage,
             $page,
-            ['path' => $request->url(), 'query' => $request->query()]
+            $options
         );
     }
 
