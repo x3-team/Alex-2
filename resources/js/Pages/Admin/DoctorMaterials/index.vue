@@ -135,7 +135,7 @@ const handleFileUpload = async (event, item) => {
       item.title = response.data.original_name || file.name
     }
   } catch (error) {
-    alert('Ошибка при загрузке файла. Проверьте формат и размер.')
+    alert('Ошибка при загрузке файла. Нужны pdf/jpg/png/doc/docx до 20 МБ.')
   }
 }
 
