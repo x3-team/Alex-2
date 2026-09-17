@@ -34,6 +34,18 @@ class DoctorEmbedTest extends TestCase
         $this->assertSame(6, DoctorMaterialsStore::MAX_CATEGORIES);
     }
 
+    public function test_files_are_sorted_by_category_then_sort_order(): void
+    {
+        $sorted = DoctorMaterialsStore::sortFiles([
+            ['title' => 'B2', 'category_id' => 'b', 'sort_order' => 2],
+            ['title' => 'A2', 'category_id' => 'a', 'sort_order' => 2],
+            ['title' => 'A1', 'category_id' => 'a', 'sort_order' => 1],
+            ['title' => 'B1', 'category_id' => 'b', 'sort_order' => 1],
+        ]);
+
+        $this->assertSame(['A1', 'A2', 'B1', 'B2'], array_column($sorted, 'title'));
+    }
+
     public function test_document_count_label(): void
     {
         $this->assertSame('1 документ', DoctorMaterialsStore::ruDocuments(1));
