@@ -146,15 +146,25 @@ const onCategoryChange = (item) => {
 const onDragStart = (event, categoryId, index) => {
   event.dataTransfer.effectAllowed = 'move'
   event.dataTransfer.setData('text/plain', String(index))
+  const row = event.currentTarget.closest('.file-row')
+  if (row) {
+    event.dataTransfer.setDragImage(row, 24, 24)
+  }
   dragging.value = { categoryId: categoryId || '', index }
 }
 
-const onDrop = (categoryId, index) => {
+const onDragOver = (categoryId, index) => {
   if (!dragging.value || (dragging.value.categoryId || '') !== (categoryId || '')) {
-    dragging.value = null
+    return
+  }
+  if (dragging.value.index === index) {
     return
   }
   moveInCategory(categoryId, dragging.value.index, index)
+  dragging.value = { categoryId: categoryId || '', index }
+}
+
+const onDragEnd = () => {
   dragging.value = null
 }
 
@@ -260,14 +270,15 @@ const submit = () => {
                 Пока пусто. Добавьте файл — он появится первым на сайте.
               </div>
 
-              <div class="divide-y">
+              <TransitionGroup name="file-sort" tag="div" class="file-list">
                 <article
                   v-for="(item, index) in group.files"
                   :key="item.id"
-                  class="p-4 bg-white space-y-3"
-                  :class="{ 'opacity-50': dragging?.categoryId === (group.id || '') && dragging?.index === index }"
-                  @dragover.prevent
-                  @drop.prevent="onDrop(group.id, index)"
+                  class="file-row p-4 bg-white space-y-3"
+                  :class="{ 'is-dragging': dragging?.categoryId === (group.id || '') && dragging?.index === index }"
+                  @dragenter.prevent
+                  @dragover.prevent="onDragOver(group.id, index)"
+                  @drop.prevent
                 >
                   <div class="flex items-start gap-3">
                     <div class="flex flex-col items-center gap-1 pt-1 select-none">
@@ -280,7 +291,7 @@ const submit = () => {
                         tabindex="0"
                         aria-label="Перетащить файл"
                         @dragstart="onDragStart($event, group.id, index)"
-                        @dragend="dragging = null"
+                        @dragend="onDragEnd"
                       >
                         <svg width="14" height="16" viewBox="0 0 14 16" fill="currentColor" aria-hidden="true">
                           <circle cx="4" cy="3" r="1.4" /><circle cx="10" cy="3" r="1.4" />
@@ -322,7 +333,7 @@ const submit = () => {
                     </div>
                   </div>
                 </article>
-              </div>
+              </TransitionGroup>
             </section>
 
             <button
@@ -345,3 +356,24 @@ const submit = () => {
     </div>
   </AdminLayout>
 </template>
+
+<style scoped>
+.file-list {
+  position: relative;
+}
+.file-row {
+  border-top: 1px solid #eee;
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.file-row.is-dragging {
+  background: #f7f7f7;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  opacity: 0.72;
+  position: relative;
+  z-index: 2;
+}
+.file-sort-move {
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+</style>
