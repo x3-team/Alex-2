@@ -1,104 +1,101 @@
 # Deploy (Alex-2 / Immunotech VPS)
 
-Рабочие PR → base **`production`** (это default branch). Правила: [AGENT_WORKFLOW.md](./AGENT_WORKFLOW.md).
+Рабочие PR → base **`production`**. Правила агента: [AGENT_WORKFLOW.md](./AGENT_WORKFLOW.md).
 
-`cursor/prod-baseline-20260916-2397` — то же содержимое после #27, не цель новых PR. `main` — пустой скелет, **не использовать**.
+На VPS **нет git**. Не `git pull` / `git reset` на сервере.
 
-There is **no git checkout on the VPS**. Do not `git pull` or `git reset` on the server.
+## Кто деплоит
 
-## Iron-аудит VPS ↔ git (2026-09-16)
+| Кто | Когда |
+|-----|--------|
+| **Cloud Agent (Alex-2 env)** | **Основной путь.** По команде Виталия «залей» после merge в `production`. SSH/rsync с VM агента. |
+| **Человек в GitHub UI** | Запасной: workflow `Deploy to VPS (manual)` + `I_CONFIRM_PRODUCTION_DEPLOY`. |
 
-- Полная сверка исходников VPS ↔ git `production` (нормализация CRLF): **403 файла совпали**.
-- Единственный реальный path-diff: на VPS файл `database/migrations/2026_08_17_134746_change_value_column_in_settings_table.php` **испорчен** (лежит копия `DoctorAppointmentMail` — старая коллизия scp). Правильный Mail на месте: `app/Mail/DoctorAppointmentMail.php` (= git). В git по пути миграции — **правильная миграция**.
-- Вывод: деплой из `production` **исправит** этот битый файл, не затрёт живой код. Не считать это «расхождением фич».
-- `bootstrap/ssr/*` и sqlite на сервере могут отличаться (сборка/runtime) — ок.
-- Вне скоупа: `.env`, `storage/`, `public/videos`, `public/build`.
+Агент **не** должен полагаться на `workflow_dispatch` (часто **403** у integration token). Не просить жать Actions, если SSH с агента работает.
+
+## Cloud Agent secrets (environment Alex-2)
+
+Имена (значения только в Cursor / GitHub Secrets, не в git):
+
+| Env | Назначение |
+|-----|------------|
+| `ALEXADMIN_SSH_PRIVATE_KEY` | OpenSSH ключ для `alexadmin` |
+| `ALEX_SSH_HOST` | IP/host VPS |
+| `ALEX_SSH_USER` | `alexadmin` |
+| `ALEX_APP_ROOT` | абсолютный путь app root на VPS (см. секрет в Alex-2) |
+
+Legacy `SSH_*` на VM могут указывать на `root` — **для деплоя использовать `alexadmin`**.
+
+На VM агента: `~/.ssh/alexadmin`, `chmod 600`. Нужен `rsync` (`apt install rsync` если отсутствует).
 
 ## Жёсткий порядок релиза
 
-После #30/#31 агент задеплоил на VPS, а bump `SITE_VERSION` довёл в git отдельным PR (#31) — потому что прямой push в `production` заблокирован. **Так больше нельзя.**
-
-1. Правки **и** bump `SITE_VERSION` — **в одном PR** в `production` (сейчас live **1.0.120** → следующий релиз **1.0.121+**).
-2. Дождаться зелёного CI.
-3. Merge в `production`.
-4. **Только потом** деплой на VPS (по явной команде Виталия «залей»): scp/rsync + build + optimize:clear.
-5. **Запрещено:** деплоить, а потом отдельным PR догонять `siteVersion.js`.
-6. **Запрещено:** пытаться `git push` напрямую в `production` (branch protection) — версию всегда класть в feature-PR.
-7. После деплоя smoke: live `siteVersion-*.js` == значение из смерженного PR.
+1. Код **и** bump `resources/js/siteVersion.js` — **один PR** → `production`.
+2. CI green → merge.
+3. Только потом деплой по «залей».
+4. Smoke: live `siteVersion-*.js` = версия из PR.
 
 Checklist:
 
 - [ ] SITE_VERSION bumped in same PR as code
 - [ ] CI green
 - [ ] merged to production
-- [ ] then deploy
+- [ ] deploy via agent SSH
 - [ ] live chunk matches
+- [ ] `.env` / `storage/` / `public/videos` не тронуты
+- [ ] `migrate --force` только если в релизе есть миграции
 
-## SITE_VERSION (жёстко)
+## Agent deploy steps (canonical)
 
-**Каждый** деплой на прод (Actions Deploy или ручной scp+build) обязан поднять `resources/js/siteVersion.js` **в том же PR, что и код**. Сейчас live **1.0.120** → следующий **1.0.121+**, даже для одной строки CSS или видео.
+```bash
+# 1) sync git locally
+git fetch origin production && git checkout production && git pull origin production
 
-- Rebuild без bump **запрещён** как завершённый релиз.
-- Скрипт на сервере **не** бампит версию сам (operator must bump in the feature PR before merge).
-- Нельзя «сначала выложить, потом догнать версию» отдельным PR.
+# 2) SSH smoke (no key in logs)
+ssh -i ~/.ssh/alexadmin -o BatchMode=yes alexadmin@$ALEX_SSH_HOST \
+  'echo OK; test -d '"$ALEX_APP_ROOT"' && echo APP_OK'
 
-## Current process (CD is off)
+# 3) backup on VPS
+ssh ... "cd $ALEX_APP_ROOT && bash scripts/deploy-vps.sh backup"
+# или: ~/backups/alexallergotest.ru/<UTC-stamp>/ (build, siteVersion.js, manifest.json)
 
-Use this until someone manually runs the GitHub `Deploy to VPS (manual)` workflow **and** types `I_CONFIRM_PRODUCTION_DEPLOY`.
+# 4) rsync (from repo root on agent VM)
+rsync -az \
+  --exclude '.git/' --exclude '.github/' --exclude 'node_modules/' --exclude 'vendor/' \
+  --exclude '.env' --exclude '.env.*' --exclude 'storage/' --exclude 'bootstrap/cache/' \
+  --exclude 'public/build/' --exclude 'public/hot/' --exclude 'public/storage/' \
+  --exclude 'public/videos/' --exclude 'tests/' --exclude 'phpunit.xml' \
+  --exclude '.phpunit.cache/' --exclude 'docs/' \
+  -e "ssh -i ~/.ssh/alexadmin -o BatchMode=yes" \
+  ./ alexadmin@$ALEX_SSH_HOST:$ALEX_APP_ROOT/
 
-Checklist перед merge/deploy:
+# 5) build + migrate on VPS
+ssh ... "cd $ALEX_APP_ROOT && RUN_MIGRATIONS=true bash scripts/deploy-vps.sh apply"
+# при ошибке route:cache (duplicate route names): php artisan route:clear && config:cache && view:cache
+```
 
-- [ ] PR в base **`production`**
-- [ ] SITE_VERSION bumped in same PR as code (live **1.0.120** → **1.0.121+**)
-- [ ] CI green
-- [ ] merged to production
-- [ ] then deploy (только по «залей»)
-- [ ] live chunk matches
-- [ ] Нет правок `.env` / `storage/` / `public/videos`
-- [ ] `migrate --force` только если явно просили
+`RESTART_SERVICES=true` — сигнал перезапустить php-fpm / SSR на VPS вручную или через ваш PM.
 
-1. Открыть feature-PR в **`production`** (not `main`, not the old baseline name) с кодом **и** bump `resources/js/siteVersion.js` (следующий после live **1.0.120**). Без bump релиз не завершён. **Не** `git push` в `production`.
-2. Дождаться зелёного CI, затем merge.
-3. **Только после merge** и только по «залей»: on the VPS, copy only the files you changed (scp). **Never** full-tree rsync from a laptop without the checklist below.
-4. Backup first:
-   - `public/build` (whole directory)
-   - `resources/js/siteVersion.js`
-   - every file you are about to overwrite  
-   Destination used on the server: `/var/backups/alexallergotest.ru/<UTC-stamp>/` (or `~/backups/…`).
-5. On the VPS: `npm run build` (client + SSR), then `php artisan optimize:clear`.
-6. Migrations only when the release contains schema changes (`php artisan migrate --force`). Default: skip.
-7. Restart php-fpm / `php artisan inertia:start-ssr` (port 13714) only if the new SSR bundle must replace a running process.
-8. Smoke: patient home, doctor home, `/blog`. Live `siteVersion-*.js` must equal the value from the merged PR.
+## Iron-аудит VPS ↔ git (2026-09-16)
 
-**Forbidden without a written checklist:** full `rsync` of the repo, overwrite of `.env*`, `storage/`, `public/storage`, `public/videos`, blind `vendor/` or `node_modules/` replace, `git reset --hard` on the server.
+- 403 файла совпали с `production`.
+- Испорченный path на VPS: `database/migrations/2026_08_17_134746_change_value_column_in_settings_table.php` — деплой из git **исправляет**.
+- Вне скоупа: `.env`, `storage/`, `public/videos`, `public/build` (до `npm run build` на сервере).
 
-## What GitHub Actions does today
+## GitHub Actions (fallback)
 
-| Workflow | When | Effect on VPS |
-|----------|------|----------------|
-| `CI` | pull requests; pushes to `production`, prod-baseline, sync-prod | **None** — tests + `npm run build` on GitHub runners |
-| `Deploy to VPS (manual)` | **only** Actions → Run workflow | None unless confirm string is exact; still **no** `on: push` |
+| Workflow | Когда | VPS |
+|----------|--------|-----|
+| `CI` | PR / push `production` | **None** |
+| `Deploy to VPS (manual)` | Run workflow + confirm string | rsync + build on VPS |
 
-Feature PHPUnit (`tests/Feature`, stock Breeze) is **not** in CI (routes differ from this app). CI runs `--testsuite=Unit` only.
+Секреты GitHub environment **`production`**: те же имена `ALEX_*`, `HEALTHCHECK_URL_PATIENT`, `HEALTHCHECK_URL_DOCTOR`.
 
-## Secrets (names only — values stay in GitHub / Cloud UI)
+**Запрещено** включать `on: push` для Deploy.
 
-GitHub repository / environment **`production` secrets already exist** (same names as Cloud `ALEX_*` + healthchecks). GitHub Actions does not read Cloud Agent env; keep names in sync:
+## Запреты
 
-| GitHub secret | Same idea as Cloud env | Purpose |
-|---------------|------------------------|---------|
-| `ALEX_APP_ROOT` | `ALEX_APP_ROOT` | Absolute app root on the VPS |
-| `ALEX_SSH_HOST` | `ALEX_SSH_HOST` | SSH host |
-| `ALEX_SSH_USER` | *(create; Cloud `SSH_USER` is not `alexadmin`)* | Deploy SSH user |
-| `ALEXADMIN_SSH_PRIVATE_KEY` | `ALEXADMIN_SSH_PRIVATE_KEY` | Deploy private key (PEM) |
-| `HEALTHCHECK_URL_PATIENT` | — | e.g. `https://alexallergotest.ru/up` |
-| `HEALTHCHECK_URL_DOCTOR` | — | e.g. `https://doc.alexallergotest.ru/up` |
-
-Do not put `.env` production contents in git or in workflow logs.
-
-When CD is first enabled: GitHub Environment **`production`** with required reviewers; `run_migrations` and `restart_services` stay **false** unless the release needs them.
-
-## Later (not this change)
-
-- Align `main` with the prod baseline **without** turning on `on: push` deploy.
-- Only then consider auto-deploy, still behind environment protection.
+- overwrite `.env*`, `storage/`, `public/videos`
+- blind full-tree rsync без excludes
+- `migrate --force` без нужды
+- rebuild без bump `SITE_VERSION` в том же PR
