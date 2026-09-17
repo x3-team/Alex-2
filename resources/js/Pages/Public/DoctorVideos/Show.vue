@@ -13,7 +13,7 @@ const props = defineProps({
   videosMeta: { type: Object, default: () => ({}) },
 })
 
-const { doctorsUrl } = useDoctorMode()
+const { doctorsUrl, articleUrl } = useDoctorMode()
 const playing = ref(false)
 
 const formatDate = (value) => {
@@ -122,7 +122,7 @@ const ogDescription = computed(() => props.videosMeta.og_description?.trim() || 
 
     <Link
       v-if="relatedArticle"
-      :href="doctorsUrl(`/blog/${relatedArticle.slug}`)"
+      :href="articleUrl(relatedArticle.slug)"
       class="related-article"
     >
       <img v-if="relatedArticle.cover" :src="relatedArticle.cover.startsWith('/') ? relatedArticle.cover : `/storage/${relatedArticle.cover}`" alt="" width="140" height="88" />

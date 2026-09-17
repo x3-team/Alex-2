@@ -23,7 +23,7 @@ const props = defineProps({
   documentFiles: { type: Array, default: () => [] },
 })
 
-const { isDoctorMode, doctorsUrl, blogBreadcrumbLabel } = useDoctorMode()
+const { isDoctorMode, doctorsUrl, articleUrl, blogBreadcrumbLabel } = useDoctorMode()
 
 const hasSelectedTags = computed(() => selectedTags.value.length > 0)
 
@@ -47,7 +47,7 @@ const formatDate = (dateString) => {
 
 const isVideoItem = (item) => item?.kind === 'video'
 
-const itemHref = (item) => (isVideoItem(item) ? `/video/${item.slug}` : `/blog/${item.slug}`)
+const itemHref = (item) => (isVideoItem(item) ? `/video/${item.slug}` : articleUrl(item.slug))
 
 const itemCover = (item) => {
   if (isVideoItem(item)) return item.cover || null

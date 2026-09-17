@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Models\Blog;
 use App\Models\Setting;
 use App\Support\DoctorMaterialsStore;
 use Illuminate\Http\RedirectResponse;
@@ -21,8 +22,20 @@ class DoctorMaterialController extends Controller
         return redirect()->to('/materials?type=documents', 301);
     }
 
-    public function category(string $categorySlug): Response
+    public function category(string $categorySlug)
     {
+        $articleExists = Blog::query()
+            ->forCurrentSite()
+            ->where('slug', $categorySlug)
+            ->where('is_active', true)
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
+            ->exists();
+
+        if ($articleExists) {
+            return app(BlogController::class)->show($categorySlug);
+        }
+
         $store = new DoctorMaterialsStore();
         $store->ensureDefaultCategory();
 

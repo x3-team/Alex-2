@@ -96,5 +96,24 @@ class DoctorEmbedTest extends TestCase
         $this->assertStringContainsString('v-if="!isDoctorMode"', $index);
         $this->assertStringContainsString('Выберите категорию', $index);
         $this->assertStringContainsString('DoctorDocumentCategoryCard', $index);
+        $this->assertStringContainsString('articleUrl(item.slug)', $index);
+    }
+
+    public function test_doctor_article_permalinks_use_materials(): void
+    {
+        $blog = file_get_contents(dirname(__DIR__, 2).'/app/Http/Controllers/Public/BlogController.php');
+        $docs = file_get_contents(dirname(__DIR__, 2).'/app/Http/Controllers/Public/DoctorMaterialController.php');
+        $mode = file_get_contents(dirname(__DIR__, 2).'/resources/js/composables/useDoctorMode.js');
+
+        $this->assertIsString($blog);
+        $this->assertStringContainsString("return redirect()->to('/materials/'.\$slug, 301);", $blog);
+
+        $this->assertIsString($docs);
+        $this->assertStringContainsString('if ($articleExists)', $docs);
+        $this->assertStringContainsString('BlogController::class)->show($categorySlug)', $docs);
+
+        $this->assertIsString($mode);
+        $this->assertStringContainsString('doctorsUrl(`/materials${path}`)', $mode);
+        $this->assertStringContainsString('`/blog${path}`', $mode);
     }
 }

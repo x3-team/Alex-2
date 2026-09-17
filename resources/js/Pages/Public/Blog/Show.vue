@@ -6,7 +6,7 @@ import { useDoctorMode } from '@/Composables/useDoctorMode'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 
-const { isDoctorMode, blogBreadcrumbLabel } = useDoctorMode()
+const { isDoctorMode, articleUrl, blogBreadcrumbLabel } = useDoctorMode()
 const listingHref = computed(() => (isDoctorMode.value ? '/materials' : '/blog'))
 // 🔹 Принимаем готовые JSON-LD строки с бэкенда (это самый надежный способ для SEO)
 const props = defineProps({
@@ -541,7 +541,7 @@ const toggleFaq = (index) => {
               <article
                   v-for="related in filteredRelatedPosts"
                   :key="related.id"
-                  @click="$inertia.visit(`/blog/${related.slug}`)"
+                  @click="$inertia.visit(articleUrl(related.slug))"
                   class="bg-[transparent] overflow-hidden transition-all duration-300 cursor-pointer"
               >
 
