@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import DoctorPublicShell from '@/Components/DoctorPublicShell.vue'
 import DoctorTypeChips from '@/Components/DoctorTypeChips.vue'
+import DoctorBreadcrumbIcon from '@/Components/DoctorBreadcrumbIcon.vue'
 import DoctorDocumentCategoryCard from '@/Components/DoctorDocumentCategoryCard.vue'
 import { useDoctorMode } from '@/composables/useDoctorMode'
 
@@ -40,6 +41,7 @@ const pageDescription = computed(() => (
       class="breadcrumbs flex items-center gap-3 mb-6"
       style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center; padding: 0px; gap: 12px; min-height: 48px;"
     >
+      <DoctorBreadcrumbIcon />
       <Link :href="doctorsUrl('/')" class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30">
         Главная
       </Link>

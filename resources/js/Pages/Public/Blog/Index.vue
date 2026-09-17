@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import DoctorTypeChips from '@/Components/DoctorTypeChips.vue'
+import DoctorBreadcrumbIcon from '@/Components/DoctorBreadcrumbIcon.vue'
 import DoctorDocumentCategoryCard from '@/Components/DoctorDocumentCategoryCard.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import '../../../../css/main.css'
@@ -347,12 +348,7 @@ const ogImage = computed(() => {
 
       <main class="main-content p-8 xl:p-16 flex-1">
         <div class="breadcrumbs flex items-center gap-3 mb-6" style="display: flex; flex-direction: row; justify-content: flex-start; align-items: center; padding: 0px; gap: 12px; min-height: 48px;">
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="6" y="6" width="36" height="36" rx="18" stroke="black" stroke-width="2"/>
-            <path d="M31.625 18.9583H17.375" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M26.875 24.5H17.375" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M28.4583 30.0417H17.375" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <DoctorBreadcrumbIcon />
 
           <Link href="/" class="flex-shrink-0 text-[14px] xl:text-[18px] text-black opacity-30">
             Главная
@@ -876,12 +872,15 @@ const ogImage = computed(() => {
 }
 
 .main-content {
-  padding: 24px; /* По умолчанию 32px */
+  padding: 24px 24px 80px;
   background-color: rgb(247, 247, 247);
-  /* Добавлено для гарантии отсутствия отступов у контента справа, если нужно */
   width: 100%;
-  padding-bottom: 80px;
   box-sizing: border-box;
+}
+@media (min-width: 1280px) {
+  .main-content {
+    padding: 64px 64px 80px;
+  }
 }
 .m_cust{
   margin-bottom: 1rem;

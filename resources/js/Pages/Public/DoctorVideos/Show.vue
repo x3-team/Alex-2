@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { Head, Link } from '@inertiajs/vue3'
 import DoctorPublicShell from '@/Components/DoctorPublicShell.vue'
+import DoctorBreadcrumbIcon from '@/Components/DoctorBreadcrumbIcon.vue'
 import DoctorVideoCard from '@/Components/DoctorVideoCard.vue'
 import { useDoctorMode } from '@/composables/useDoctorMode'
 

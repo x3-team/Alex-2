@@ -46,10 +46,15 @@ const { isDoctorMode } = useDoctorMode()
 
 <style scoped>
 .main-content {
-  padding: 24px;
+  padding: 24px 24px 80px;
   background-color: rgb(247, 247, 247);
   width: 100%;
-  padding-bottom: 80px;
   box-sizing: border-box;
+}
+
+@media (min-width: 1280px) {
+  .main-content {
+    padding: 64px 64px 80px;
+  }
 }
 </style>
