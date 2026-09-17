@@ -55,23 +55,29 @@ const { doctorsUrl } = useDoctorMode()
     </div>
 
     <div class="materials-list">
-      <article v-for="(material, index) in materials" :key="material.title + index" class="material-card">
+      <component
+        v-for="(material, index) in materials"
+        :key="material.title + index"
+        :is="material.file_path ? 'a' : 'article'"
+        class="material-card"
+        :class="{ 'is-downloadable': !!material.file_path }"
+        v-bind="material.file_path ? {
+          href: material.file_path,
+          download: '',
+          target: '_blank',
+          rel: 'noopener',
+          'aria-label': `Скачать: ${material.title}`,
+        } : {}"
+      >
         <div class="material-copy">
           <h2>{{ material.title }}</h2>
           <p v-if="material.date">{{ material.date }}</p>
           <p v-else-if="material.description">{{ material.description }}</p>
         </div>
-        <a
-          v-if="material.file_path"
-          class="material-download"
-          :href="material.file_path"
-          download
-          target="_blank"
-          :aria-label="`Скачать: ${material.title}`"
-        >
+        <span v-if="material.file_path" class="material-download" aria-hidden="true">
           <img src="/assets/figma-materials-download.svg" alt="" width="24" height="24" />
-        </a>
-      </article>
+        </span>
+      </component>
       <p v-if="materials.length === 0" class="materials-empty">В этой категории пока нет файлов.</p>
     </div>
 
@@ -97,13 +103,33 @@ const { doctorsUrl } = useDoctorMode()
 }
 .materials-list { display: flex; flex-direction: column; gap: 6px; }
 .material-card {
-  display: flex; align-items: center; justify-content: space-between; padding: 24px;
-  background: #fff; border: 1px solid #dfdfdf;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #dfdfdf;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.material-card.is-downloadable {
+  cursor: pointer;
+}
+.material-card.is-downloadable:hover {
+  background: #f5f5f5;
+  border-color: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.material-card.is-downloadable:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 2px;
 }
 .material-copy { display: flex; flex-direction: column; gap: 12px; }
 .material-copy h2 { margin: 0; font-family: Roboto, Arial, sans-serif; font-size: 21px; font-weight: 400; }
 .material-copy p { margin: 0; font-size: 16px; }
-.material-download { width: 24px; height: 24px; }
+.material-download { width: 24px; height: 24px; flex-shrink: 0; }
 .material-download img { width: 24px; height: 24px; }
 .materials-empty { padding: 24px 0; color: rgba(0, 0, 0, 0.5); }
 .others { margin-top: 48px; }
