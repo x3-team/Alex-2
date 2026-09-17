@@ -59,6 +59,7 @@ const itemDuration = (item) => {
 }
 
 const activeMaterialType = computed(() => props.materialType || props.filters?.type || 'all')
+const isDocumentsView = computed(() => isDoctorMode.value && activeMaterialType.value === 'documents')
 
 const excerpt = (html, words = 30) => {
   const raw = String(html || '')
@@ -507,6 +508,20 @@ const ogImage = computed(() => {
             </div>
           </div>
 
+          <template v-if="isDocumentsView">
+            <div v-if="documentCategories.length" class="doctor-doc-grid">
+              <DoctorDocumentCategoryCard
+                v-for="category in documentCategories"
+                :key="category.id"
+                :category="category"
+              />
+            </div>
+            <p v-else class="text-[18px] text-black/50 py-6">
+              Документы скоро появятся.
+            </p>
+          </template>
+
+          <template v-else>
           <article
               v-for="(blog, blogIdx) in blogs.data"
               :key="blog.id"
@@ -611,9 +626,10 @@ const ogImage = computed(() => {
               Сбросить фильтры
             </button>
           </div>
+          </template>
         </div>
 
-        <div v-if="blogs.last_page > 1" class="mt-8 flex justify-center items-center gap-2">
+        <div v-if="!isDocumentsView && blogs.last_page > 1" class="mt-8 flex justify-center items-center gap-2">
           <Link
               v-if="blogs.current_page > 1"
               :href="buildPageUrl(blogs.current_page - 1)"
@@ -657,7 +673,7 @@ const ogImage = computed(() => {
           </span>
         </div>
 
-        <section v-if="isDoctorMode && documentCategories.length" class="doctor-hub-docs">
+        <section v-if="isDoctorMode && !isDocumentsView && documentCategories.length" class="doctor-hub-docs">
           <div class="doctor-hub-docs-head">
             <h2>Документы лаборатории</h2>
             <Link href="/materials/documents" class="doctor-hub-docs-all">

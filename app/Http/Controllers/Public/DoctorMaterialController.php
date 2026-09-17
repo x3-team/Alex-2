@@ -17,16 +17,10 @@ class DoctorMaterialController extends Controller
 
     public function documents(): Response
     {
-        $store = new DoctorMaterialsStore();
-        $store->ensureDefaultCategory();
+        $request = request();
+        $request->query->set('type', 'documents');
 
-        return Inertia::render('Public/DoctorMaterials', [
-            'view' => 'documents',
-            'feed' => [],
-            'categories' => $store->publicCategories(),
-            'materials' => $store->files(),
-            'seoMeta' => $this->seoMeta(),
-        ]);
+        return app(BlogController::class)->index($request);
     }
 
     public function category(string $categorySlug): Response
