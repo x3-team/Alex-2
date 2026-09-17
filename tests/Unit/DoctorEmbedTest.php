@@ -61,4 +61,36 @@ class DoctorEmbedTest extends TestCase
         $this->assertStringContainsString('site.isDoctorsSite', $src);
         $this->assertStringContainsString('isDoctorsSite && $seoPath !== \'/\'', $src);
     }
+
+    public function test_doctor_listing_lives_on_materials_without_categories(): void
+    {
+        $blog = file_get_contents(dirname(__DIR__, 2).'/app/Http/Controllers/Public/BlogController.php');
+        $videos = file_get_contents(dirname(__DIR__, 2).'/app/Http/Controllers/Public/DoctorVideoController.php');
+        $docs = file_get_contents(dirname(__DIR__, 2).'/app/Http/Controllers/Public/DoctorMaterialController.php');
+        $chips = file_get_contents(dirname(__DIR__, 2).'/resources/js/Components/DoctorTypeChips.vue');
+        $index = file_get_contents(dirname(__DIR__, 2).'/resources/js/Pages/Public/Blog/Index.vue');
+
+        $this->assertIsString($blog);
+        $this->assertStringContainsString("return redirect()->to(\$this->doctorMaterialsUrl(\$request->query()), 301);", $blog);
+        $this->assertStringContainsString("\$url = '/materials';", $blog);
+        $this->assertStringContainsString("'path' => \$request->root().'/materials'", $blog);
+        $this->assertMatchesRegularExpression('/if \(\$isDoctors\) \{\s+\$category = null;/', $blog);
+
+        $this->assertIsString($videos);
+        $this->assertStringContainsString("redirect()->to('/materials?type=videos', 301)", $videos);
+
+        $this->assertIsString($docs);
+        $this->assertStringContainsString("redirect()->to('/materials?type=documents', 301)", $docs);
+
+        $this->assertIsString($chips);
+        $this->assertStringContainsString("{ key: 'all', label: 'Все', path: '/materials' }", $chips);
+        $this->assertStringContainsString("{ key: 'videos', label: 'Видео', path: '/materials?type=videos' }", $chips);
+        $this->assertStringNotContainsString("'/blog'", $chips);
+        $this->assertStringNotContainsString('/materials/documents', $chips);
+
+        $this->assertIsString($index);
+        $this->assertStringContainsString("return doctorsUrl('/materials')", $index);
+        $this->assertStringContainsString('v-if="!isDoctorMode"', $index);
+        $this->assertStringContainsString('Выберите категорию', $index);
+    }
 }
