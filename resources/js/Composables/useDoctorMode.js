@@ -89,6 +89,12 @@ export function useDoctorMode() {
         isDoctorMode.value ? 'Материалы для врачей' : 'Блог',
     );
 
+    const articleUrl = (slug) => {
+        const path = `/${String(slug || '').replace(/^\/+/, '')}`;
+
+        return isDoctorMode.value ? doctorsUrl(`/materials${path}`) : `/blog${path}`;
+    };
+
     watch(
         isDoctorMode,
         (value) => {
@@ -104,6 +110,7 @@ export function useDoctorMode() {
         themeColor,
         routePrefix,
         doctorsUrl,
+        articleUrl,
         blogBreadcrumbLabel,
         toggleAudienceMode,
     };

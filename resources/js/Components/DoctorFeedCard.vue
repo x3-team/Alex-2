@@ -7,14 +7,14 @@ const props = defineProps({
   item: { type: Object, required: true },
 })
 
-const { doctorsUrl } = useDoctorMode()
+const { doctorsUrl, articleUrl } = useDoctorMode()
 
 const isVideo = computed(() => props.item.type === 'video')
 
 const href = computed(() => (
   isVideo.value
     ? doctorsUrl(`/video/${props.item.slug}`)
-    : `/blog/${props.item.slug}`
+    : articleUrl(props.item.slug)
 ))
 
 const cover = computed(() => props.item.cover || null)

@@ -5,7 +5,7 @@ import SiteSidebar from '@/Components/SiteSidebar.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
-const { isDoctorMode, blogBreadcrumbLabel } = useDoctorMode()
+const { isDoctorMode, articleUrl, blogBreadcrumbLabel } = useDoctorMode()
 const props = defineProps({
   author: Object,
   blogs: Object,
@@ -713,7 +713,7 @@ const ogImage = computed(() => {
               class="bg-[transparent] overflow-hidden transition-all duration-300"
               style="height: auto;"
           >
-            <Link :href="`/blog/${blog.slug}`" class="block">
+            <Link :href="articleUrl(blog.slug)" class="block">
             <div class="block h-[250px] sm:h-[350px] xl:h-[494px] overflow-hidden relative">
               <img v-if="blog.preview_image"
                    :src="`/storage/${blog.preview_image}`"

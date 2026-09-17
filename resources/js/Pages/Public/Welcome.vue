@@ -1801,7 +1801,7 @@ onUnmounted(() => {
               <Link
                   v-for="(post, bIdx) in formattedBlogs"
                   :key="post.id || bIdx"
-                  :href="`/blog/${post.slug || post.id}`"
+                  :href="isDoctorMode ? doctorsUrl(`/materials/${post.slug || post.id}`) : `/blog/${post.slug || post.id}`"
                   class="exact-blog-card"
               >
                 <div class="exact-blog-cover">
@@ -1845,7 +1845,7 @@ onUnmounted(() => {
               </Link>
             </div>
 
-            <Link href="/blog" class="exact-bottom-link">
+            <Link :href="blogListingUrl" class="exact-bottom-link">
               <span>Все материалы</span>
               <img src="/assets/figma-faq-link-arrow.svg" alt="" width="16" height="16" />
             </Link>

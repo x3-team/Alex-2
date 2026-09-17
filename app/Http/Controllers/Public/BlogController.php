@@ -490,6 +490,10 @@ class BlogController extends Controller
 
     public function show($slug)
     {
+        if ($this->isDoctorsSite() && request()->is('blog/*') && $this->publishedBlogQuery()->where('slug', $slug)->exists()) {
+            return redirect()->to('/materials/'.$slug, 301);
+        }
+
         $blog = Blog::with(['author', 'category', 'tags', 'relatedPosts.author', 'relatedPosts.category'])
             ->forCurrentSite()
             ->where('slug', $slug)
@@ -605,6 +609,9 @@ class BlogController extends Controller
             ];
         }
 
+        $isDoctors = $this->isDoctorsSite();
+        $listingUrl = $isDoctors ? url('/materials') : url('/blog');
+
         $breadcrumbSchema = [
             '@context' => 'https://schema.org',
             '@type' => 'BreadcrumbList',
@@ -618,14 +625,14 @@ class BlogController extends Controller
                 [
                     '@type' => 'ListItem',
                     'position' => 2,
-                    'name' => 'Блог',
-                    'item' => url('/blog'),
+                    'name' => $isDoctors ? 'Материалы для врачей' : 'Блог',
+                    'item' => $listingUrl,
                 ],
             ]
         ];
 
         $crumbPosition = 3;
-        if (!empty($blog->category?->slug) && !empty($blog->category?->name)) {
+        if (! $isDoctors && !empty($blog->category?->slug) && !empty($blog->category?->name)) {
             $breadcrumbSchema['itemListElement'][] = [
                 '@type' => 'ListItem',
                 'position' => $crumbPosition,
