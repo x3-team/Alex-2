@@ -132,16 +132,16 @@ const durationLabel = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
-  margin: -28px 0 0 -28px;
-  border-radius: 28px;
+  width: 37px;
+  height: 37px;
+  margin: -18.5px 0 0 -18.5px;
+  border-radius: 18.5px;
   background: #fff;
 }
 
 .doctor-feed-play img {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 13px;
+  height: 13px;
 }
 </style>
