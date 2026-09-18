@@ -160,6 +160,22 @@ const parseCareerHistory = (jsonString) => {
   }
 }
 
+
+const authorProfileLinkLabel = computed(() => {
+  const raw = props.author?.profile_url || ''
+  if (!raw) return 'Ссылка'
+  try {
+    const host = new URL(raw).hostname.replace(/^www\./, '')
+    if (host.includes('instagram')) return 'Instagram'
+    if (host.includes('t.me') || host.includes('telegram')) return 'Telegram'
+    if (host.includes('vk.com')) return 'ВКонтакте'
+    if (host.includes('youtube') || host.includes('youtu.be')) return 'YouTube'
+    return host || 'Ссылка'
+  } catch (e) {
+    return 'Ссылка'
+  }
+})
+
 const totalExperience = computed(() => {
   if (!props.author?.career_history) return null
 
@@ -257,6 +273,19 @@ const hasMoreThanOneTag = computed(() => selectedTags.value.length > 1)
 
 // 🔹 🔥 Количество скрытых тегов
 const hiddenTagsCount = computed(() => selectedTags.value.length - 1)
+
+const pageTitle = computed(() => {
+  if (!selectedCategoryName.value && !selectedTags.value.length) {
+    const total = props.blogs?.total || 0
+    return `Всего ${total} ${pluralizePublications(total)}`
+  }
+  const parts = []
+  if (selectedCategoryName.value) parts.push(selectedCategoryName.value)
+  if (allTagNames.value.length) parts.push(allTagNames.value.join(', '))
+  return parts.join(': ')
+})
+
+
 
 // 🔹 🔥 Dropdown для тегов
 const showTagDropdown = ref(false)
