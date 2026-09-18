@@ -127,7 +127,8 @@ const submit = () => {
   formData.append('credentials', form.credentials ?? '')
   formData.append('profile_url', form.profile_url ?? '')
   formData.append('is_admin', form.is_admin ? '1' : '0')
-  // 🔹 Отправляем массив категорий
+  // Always mark categories as submitted so empty selection can clear; missing key = leave unchanged on server.
+  formData.append('author_categories_submitted', '1')
   if (form.author_categories?.length) {
     form.author_categories.forEach(id => {
       formData.append('author_categories[]', id)

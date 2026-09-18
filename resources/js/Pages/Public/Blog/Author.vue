@@ -595,7 +595,7 @@ const ogImage = computed(() => {
           </div>
 
 
-          <div v-if="author?.career_history" class="w-full">
+          <div v-if="author?.career_history?.length" class="w-full">
             <h3 class="text-[21px] font-[400] text-gray-900 mb-4">
               Опыт работы
               <span v-if="totalExperience" class="opacity-100">· {{ totalExperience }} {{ pluralizeYears(totalExperience) }} стажа</span>
@@ -618,7 +618,7 @@ const ogImage = computed(() => {
           </div>
 
 
-          <div v-if="author?.education" class="w-full">
+          <div v-if="author?.education?.length" class="w-full">
             <h3 class="text-[21px] font-[400] text-gray-900 mb-4">Образование</h3>
             <div class="space-y-3 opacity-[0.5]">
               <div
