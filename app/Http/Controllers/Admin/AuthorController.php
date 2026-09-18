@@ -260,8 +260,18 @@ class AuthorController extends Controller
             unset($validated['password']);
         }
 
-        $cleanCareer = array_filter($careerHistory, fn($e) => !empty($e['year_from']) || !empty($e['place']));
-        $cleanEducation = array_filter($educationData, fn($e) => !empty($e['year_from']) || !empty($e['place']));
+        $cleanCareer = array_values(array_filter($careerHistory, fn($e) => !empty($e['year_from']) || !empty($e['place'])));
+        $cleanEducation = array_values(array_filter($educationData, fn($e) => !empty($e['year_from']) || !empty($e['place'])));
+
+        // Empty JSON from admin form rows must not wipe existing DB data on unrelated field edits (e.g. profile_url).
+        $existingCareer = $author->career_history;
+        if ($cleanCareer === [] && is_array($existingCareer) && count($existingCareer) > 0) {
+            $cleanCareer = $existingCareer;
+        }
+        $existingEducation = $author->education;
+        if ($cleanEducation === [] && is_array($existingEducation) && count($existingEducation) > 0) {
+            $cleanEducation = $existingEducation;
+        }
 
         try {
             $author->update([
@@ -269,9 +279,9 @@ class AuthorController extends Controller
                 'email' => $validated['email'],
                 'phone' => $validated['phone'] ?? null,
                 'bio' => $validated['bio'] ?? $author->bio,
-                'career_history' => array_values($cleanCareer),
+                'career_history' => $cleanCareer,
                 'is_admin' => $validated['is_admin'] ?? false,
-                'education' => array_values($cleanEducation),
+                'education' => $cleanEducation,
                 'seo_title' => $validated['seo_title'] ?? null,
                 'seo_description' => $validated['seo_description'] ?? null,
                 'seo_keywords' => $validated['seo_keywords'] ?? null,
@@ -279,10 +289,9 @@ class AuthorController extends Controller
                 'profile_url' => $this->normalizeProfileUrl($validated['profile_url'] ?? null),
             ]);
 
-            if ($request->filled('author_categories')) {
-                $author->authorCategories()->sync($request->author_categories);
-            } else {
-                $author->authorCategories()->detach();
+            // Edit.vue sends author_categories_submitted=1 on every save. Without that flag, keep existing pivot.
+            if ($request->boolean('author_categories_submitted')) {
+                $author->authorCategories()->sync($request->input('author_categories', []));
             }
 
             if ($request->hasFile('avatar')) {
