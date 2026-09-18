@@ -63,10 +63,17 @@ class DoctorMaterialsController extends Controller
                     "materials.{$index}.link_url" => $message,
                 ]);
             }
-            if ($hasLink && ! filter_var($link, FILTER_VALIDATE_URL)) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    "materials.{$index}.link_url" => 'Укажите корректный URL ссылки (https://...).',
-                ]);
+            if ($hasLink) {
+                $candidate = $link;
+                if (! preg_match('#^https?://#i', $candidate)) {
+                    $candidate = 'https://'.$candidate;
+                }
+                if (! filter_var($candidate, FILTER_VALIDATE_URL)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "materials.{$index}.link_url" => 'Укажите корректный URL ссылки (https://...).',
+                    ]);
+                }
+                $validated['materials'][$index]['link_url'] = $candidate;
             }
         }
 
