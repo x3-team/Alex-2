@@ -274,6 +274,19 @@ const hasMoreThanOneTag = computed(() => selectedTags.value.length > 1)
 // 🔹 🔥 Количество скрытых тегов
 const hiddenTagsCount = computed(() => selectedTags.value.length - 1)
 
+const pageTitle = computed(() => {
+  if (!selectedCategoryName.value && !selectedTags.value.length) {
+    const total = props.blogs?.total || 0
+    return `Всего ${total} ${pluralizePublications(total)}`
+  }
+  const parts = []
+  if (selectedCategoryName.value) parts.push(selectedCategoryName.value)
+  if (allTagNames.value.length) parts.push(allTagNames.value.join(', '))
+  return parts.join(': ')
+})
+
+
+
 // 🔹 🔥 Dropdown для тегов
 const showTagDropdown = ref(false)
 
