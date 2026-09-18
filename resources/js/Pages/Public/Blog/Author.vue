@@ -160,6 +160,22 @@ const parseCareerHistory = (jsonString) => {
   }
 }
 
+
+const authorProfileLinkLabel = computed(() => {
+  const raw = props.author?.profile_url || ''
+  if (!raw) return 'Ссылка'
+  try {
+    const host = new URL(raw).hostname.replace(/^www\./, '')
+    if (host.includes('instagram')) return 'Instagram'
+    if (host.includes('t.me') || host.includes('telegram')) return 'Telegram'
+    if (host.includes('vk.com')) return 'ВКонтакте'
+    if (host.includes('youtube') || host.includes('youtu.be')) return 'YouTube'
+    return host || 'Ссылка'
+  } catch (e) {
+    return 'Ссылка'
+  }
+})
+
 const totalExperience = computed(() => {
   if (!props.author?.career_history) return null
 
