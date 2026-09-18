@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { Head, useForm, Link } from '@inertiajs/vue3'
+import { Head, useForm, Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 const props = defineProps({
@@ -134,6 +134,15 @@ const setSourceType = (item, type) => {
   }
 }
 
+const normalizeLinkUrl = (raw) => {
+  let url = (raw || '').trim()
+  if (!url) return ''
+  if (!/^https?:\/\//i.test(url)) {
+    url = `https://${url}`
+  }
+  return url
+}
+
 const removeMaterial = (id) => {
   form.materials = form.materials.filter((item) => item.id !== id)
 }
@@ -191,15 +200,16 @@ const submit = () => {
   const rows = flattenMaterials().map((item) => {
     const source = item.source_type === 'link' ? 'link' : 'file'
     const file_path = source === 'file' ? (item.file_path || '') : ''
-    const link_url = source === 'link' ? (item.link_url || '').trim() : ''
+    const link_url = source === 'link' ? normalizeLinkUrl(item.link_url) : ''
     return {
       id: item.id,
       title: item.title,
       file_path,
       link_url,
-      date: item.date,
-      description: item.description,
-      category_id: item.category_id,
+      source_type: source,
+      date: item.date || '',
+      description: item.description || '',
+      category_id: item.category_id || '',
       sort_order: item.sort_order,
     }
   })
@@ -213,10 +223,23 @@ const submit = () => {
       return
     }
   }
-  form.materials = rows
-  form.put(route('admin.doctor-materials.update'), {
+  // Explicit payload — useForm.put sometimes dropped nested link_url
+  const payload = {
+    categories: form.categories,
+    materials: rows.map(({ source_type, ...row }) => row),
+    meta_title: form.meta_title,
+    meta_description: form.meta_description,
+    meta_keywords: form.meta_keywords,
+  }
+  form.processing = true
+  router.put(route('admin.doctor-materials.update'), payload, {
     preserveScroll: true,
     onSuccess: () => { isEditingSeo.value = false },
+    onError: (errors) => {
+      const first = Object.values(errors || {})[0]
+      alert(Array.isArray(first) ? first[0] : (first || 'Не удалось сохранить. Проверьте файл/ссылку у каждого документа.'))
+    },
+    onFinish: () => { form.processing = false },
   })
 }
 </script>
@@ -385,7 +408,7 @@ const submit = () => {
                         <p v-if="item.file_path" class="text-xs text-green-700 truncate">{{ item.file_path }}</p>
                       </div>
                       <div v-else class="space-y-1">
-                        <input v-model="item.link_url" type="url" class="w-full border rounded-md px-3 py-2 text-sm" placeholder="https://… ссылка на скачивание" />
+                        <input v-model="item.link_url" type="text" inputmode="url" class="w-full border rounded-md px-3 py-2 text-sm" placeholder="https://… ссылка на скачивание" />
                         <p class="text-xs text-gray-500">При клике на плашку откроется эта ссылка. Файл на сайт не загружается.</p>
                       </div>
                       <input v-model="item.description" class="w-full border rounded-md px-3 py-2 text-sm" placeholder="Короткое описание" />
@@ -406,6 +429,9 @@ const submit = () => {
             </button>
           </div>
 
+          <div v-if="Object.keys(form.errors || {}).length" class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 space-y-1">
+            <p v-for="(msg, key) in form.errors" :key="key">{{ Array.isArray(msg) ? msg[0] : msg }}</p>
+          </div>
           <div class="flex justify-end">
             <button type="submit" :disabled="form.processing" class="px-6 py-2.5 bg-blue-600 text-white rounded-md disabled:opacity-50">
               Сохранить изменения
