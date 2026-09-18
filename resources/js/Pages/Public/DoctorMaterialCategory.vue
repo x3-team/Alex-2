@@ -91,7 +91,12 @@ const materialBind = (material) => {
           <p v-else-if="material.description">{{ material.description }}</p>
         </div>
         <span v-if="materialHref(material)" class="material-download" aria-hidden="true">
-          <img src="/assets/figma-materials-download.svg" alt="" width="24" height="24" />
+          <img
+            :src="isExternalLink(material) ? '/assets/figma-materials-link.svg' : '/assets/figma-materials-download.svg'"
+            alt=""
+            width="24"
+            height="24"
+          />
         </span>
       </component>
       <p v-if="materials.length === 0" class="materials-empty">В этой категории пока нет файлов.</p>
