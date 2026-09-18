@@ -29,6 +29,13 @@ const createForm = useForm(emptyVideo())
 const editingId = ref(null)
 const editState = reactive({})
 
+const editCoverInputs = {}
+const setEditCoverInput = (id, el) => {
+  if (el) editCoverInputs[id] = el
+  else delete editCoverInputs[id]
+}
+
+
 const uploadCover = async (event, target) => {
   const file = event.target.files?.[0]
   if (!file) return
@@ -43,6 +50,12 @@ const uploadCover = async (event, target) => {
     alert('Не удалось загрузить обложку.')
   }
 }
+
+const clearCover = (target, inputEl) => {
+  target.cover_path = ''
+  if (inputEl) inputEl.value = ''
+}
+
 
 const submitCreate = () => {
   createForm.post(route('admin.doctor-videos.store'), {
@@ -112,8 +125,12 @@ const removeVideo = (video) => {
               <textarea v-model="createForm.description" rows="2" class="mt-1 w-full border rounded-md px-3 py-2" />
             </label>
             <label class="text-sm">Обложка
-              <input type="file" accept="image/*" class="mt-1 w-full text-sm" @change="uploadCover($event, createForm)" />
-              <span v-if="createForm.cover_path" class="block mt-1 text-xs text-green-700">{{ createForm.cover_path }}</span>
+              <input ref="createCoverInput" type="file" accept="image/*" class="mt-1 w-full text-sm" @change="uploadCover($event, createForm)" />
+              <template v-if="createForm.cover_path">
+                <img :src="createForm.cover_path" alt="" class="mt-2 max-h-28 rounded border object-cover" />
+                <span class="block mt-1 text-xs text-green-700 break-all">{{ createForm.cover_path }}</span>
+                <button type="button" class="mt-1 text-sm text-red-600" @click="clearCover(createForm, $refs.createCoverInput)">Удалить обложку</button>
+              </template>
             </label>
             <label class="text-sm">Длительность
               <input v-model="createForm.duration" class="mt-1 w-full border rounded-md px-3 py-2" placeholder="24:10" />
@@ -175,7 +192,17 @@ const removeVideo = (video) => {
             <input v-model="editState[video.id].title" class="w-full border rounded-md px-3 py-2" />
             <input v-model="editState[video.id].embed_url" class="w-full border rounded-md px-3 py-2" />
             <textarea v-model="editState[video.id].description" rows="2" class="w-full border rounded-md px-3 py-2" />
-            <input type="file" accept="image/*" @change="uploadCover($event, editState[video.id])" />
+            <div class="space-y-2">
+              <label class="block text-sm text-gray-600">Обложка
+                <input :ref="(el) => setEditCoverInput(video.id, el)" type="file" accept="image/*" class="mt-1 w-full text-sm" @change="uploadCover($event, editState[video.id])" />
+              </label>
+              <template v-if="editState[video.id].cover_path">
+                <img :src="editState[video.id].cover_path" alt="" class="max-h-28 rounded border object-cover" />
+                <p class="text-xs text-gray-500 break-all">{{ editState[video.id].cover_path }}</p>
+                <button type="button" class="text-sm text-red-600" @click="clearCover(editState[video.id], editCoverInputs[video.id])">Удалить обложку</button>
+              </template>
+              <p v-else class="text-xs text-gray-400">Обложка не задана</p>
+            </div>
             <div class="grid md:grid-cols-3 gap-3">
               <input v-model="editState[video.id].duration" class="border rounded-md px-3 py-2" placeholder="24:10" />
               <input v-model="editState[video.id].published_at" type="date" class="border rounded-md px-3 py-2" />
