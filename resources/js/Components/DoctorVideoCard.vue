@@ -36,7 +36,7 @@ const formatDate = (value) => {
         <span>{{ video.source_label || 'Видео' }}</span>
       </div>
       <span class="doctor-video-card__play doctor-video-glass-play" aria-hidden="true">
-        <img src="/assets/figma-play-20.svg" alt="" width="20" height="20" />
+        <img src="/assets/figma-play-20.svg" alt="" width="13" height="13" />
       </span>
     </div>
     <div class="doctor-video-card__body">
@@ -107,16 +107,16 @@ const formatDate = (value) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  margin: -24px 0 0 -24px;
-  border-radius: 28px;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border-radius: 16px;
 }
 
 .doctor-video-card__play img {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 13px;
+  height: 13px;
 }
 
 .doctor-video-card__body {
