@@ -13,15 +13,21 @@ const newId = () => (typeof crypto !== 'undefined' && crypto.randomUUID)
   ? crypto.randomUUID()
   : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`
 
-const normalizeMaterials = (rows) => rows.map((item, index) => ({
-  id: item.id || newId(),
-  title: item.title || '',
-  file_path: item.file_path || '',
-  date: item.date || '',
-  description: item.description || '',
-  category_id: item.category_id || '',
-  sort_order: item.sort_order ?? index + 1,
-}))
+const normalizeMaterials = (rows) => rows.map((item, index) => {
+  const link_url = item.link_url || ''
+  const file_path = link_url ? '' : (item.file_path || '')
+  return {
+    id: item.id || newId(),
+    title: item.title || '',
+    file_path,
+    link_url: file_path ? '' : link_url,
+    source_type: link_url ? 'link' : 'file',
+    date: item.date || '',
+    description: item.description || '',
+    category_id: item.category_id || '',
+    sort_order: item.sort_order ?? index + 1,
+  }
+})
 
 const form = useForm({
   categories: props.categories.length
@@ -110,11 +116,22 @@ const addMaterial = (categoryId = '') => {
     id: newId(),
     title: '',
     file_path: '',
+    link_url: '',
+    source_type: 'file',
     date: '',
     description: '',
     category_id: categoryId || form.categories[0]?.id || '',
     sort_order: filesInCategory(categoryId || form.categories[0]?.id || '').length + 1,
   })
+}
+
+const setSourceType = (item, type) => {
+  item.source_type = type
+  if (type === 'file') {
+    item.link_url = ''
+  } else {
+    item.file_path = ''
+  }
 }
 
 const removeMaterial = (id) => {
@@ -131,6 +148,8 @@ const handleFileUpload = async (event, item) => {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     item.file_path = response.data.path
+    item.link_url = ''
+    item.source_type = 'file'
     if (!item.title) {
       item.title = response.data.original_name || file.name
     }
@@ -169,7 +188,32 @@ const onDragEnd = () => {
 }
 
 const submit = () => {
-  form.materials = flattenMaterials()
+  const rows = flattenMaterials().map((item) => {
+    const source = item.source_type === 'link' ? 'link' : 'file'
+    const file_path = source === 'file' ? (item.file_path || '') : ''
+    const link_url = source === 'link' ? (item.link_url || '').trim() : ''
+    return {
+      id: item.id,
+      title: item.title,
+      file_path,
+      link_url,
+      date: item.date,
+      description: item.description,
+      category_id: item.category_id,
+      sort_order: item.sort_order,
+    }
+  })
+  for (const row of rows) {
+    const hasFile = !!row.file_path
+    const hasLink = !!row.link_url
+    if (hasFile === hasLink) {
+      alert(hasFile
+        ? 'У документа можно указать либо файл, либо ссылку — не оба сразу.'
+        : 'У каждого документа нужен либо файл, либо ссылка.')
+      return
+    }
+  }
+  form.materials = rows
   form.put(route('admin.doctor-materials.update'), {
     preserveScroll: true,
     onSuccess: () => { isEditingSeo.value = false },
@@ -325,10 +369,26 @@ const submit = () => {
                           <option v-for="category in form.categories" :key="category.id" :value="category.id">{{ category.name || 'Без названия' }}</option>
                         </select>
                         <input v-model="item.date" class="border rounded-md px-3 py-2 text-sm" placeholder="От 12.04.2025" />
+                        <div class="flex flex-wrap items-center gap-4 text-sm">
+                          <label class="inline-flex items-center gap-2">
+                            <input type="radio" :name="`source-${item.id}`" value="file" :checked="item.source_type !== 'link'" @change="setSourceType(item, 'file')" />
+                            Файл
+                          </label>
+                          <label class="inline-flex items-center gap-2">
+                            <input type="radio" :name="`source-${item.id}`" value="link" :checked="item.source_type === 'link'" @change="setSourceType(item, 'link')" />
+                            Ссылка
+                          </label>
+                        </div>
+                      </div>
+                      <div v-if="item.source_type !== 'link'" class="space-y-1">
                         <input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" @change="handleFileUpload($event, item)" />
+                        <p v-if="item.file_path" class="text-xs text-green-700 truncate">{{ item.file_path }}</p>
+                      </div>
+                      <div v-else class="space-y-1">
+                        <input v-model="item.link_url" type="url" class="w-full border rounded-md px-3 py-2 text-sm" placeholder="https://… ссылка на скачивание" />
+                        <p class="text-xs text-gray-500">При клике на плашку откроется эта ссылка. Файл на сайт не загружается.</p>
                       </div>
                       <input v-model="item.description" class="w-full border rounded-md px-3 py-2 text-sm" placeholder="Короткое описание" />
-                      <p v-if="item.file_path" class="text-xs text-green-700 truncate">{{ item.file_path }}</p>
                       <button type="button" class="text-xs text-red-500" @click="removeMaterial(item.id)">Удалить строку</button>
                     </div>
                   </div>

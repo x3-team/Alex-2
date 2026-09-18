@@ -39,6 +39,7 @@ class DoctorMaterialsController extends Controller
             'materials.*.id' => 'nullable|string|max:64',
             'materials.*.title' => 'required|string|max:255',
             'materials.*.file_path' => 'nullable|string|max:500',
+            'materials.*.link_url' => 'nullable|string|max:1000',
             'materials.*.date' => 'nullable|string|max:64',
             'materials.*.description' => 'nullable|string|max:500',
             'materials.*.category_id' => 'nullable|string|max:64',
@@ -47,6 +48,27 @@ class DoctorMaterialsController extends Controller
             'meta_description' => 'nullable|string|max:500',
             'meta_keywords' => 'nullable|string|max:500',
         ]);
+
+        foreach ($validated['materials'] as $index => $row) {
+            $file = trim((string) ($row['file_path'] ?? ''));
+            $link = trim((string) ($row['link_url'] ?? ''));
+            $hasFile = $file !== '';
+            $hasLink = $link !== '';
+            if ($hasFile === $hasLink) {
+                $message = $hasFile
+                    ? 'У документа можно указать либо файл, либо ссылку — не оба сразу.'
+                    : 'У документа нужен либо файл, либо ссылка.';
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    "materials.{$index}.file_path" => $message,
+                    "materials.{$index}.link_url" => $message,
+                ]);
+            }
+            if ($hasLink && ! filter_var($link, FILTER_VALIDATE_URL)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    "materials.{$index}.link_url" => 'Укажите корректный URL ссылки (https://...).',
+                ]);
+            }
+        }
 
         $usedSlugs = [];
         $categories = array_map(function (array $row) use (&$usedSlugs) {
@@ -80,10 +102,19 @@ class DoctorMaterialsController extends Controller
             $bucket = $categoryId !== '' ? $categoryId : '_none';
             $perCategory[$bucket] = ($perCategory[$bucket] ?? 0) + 1;
 
+            $filePath = trim((string) ($row['file_path'] ?? ''));
+            $linkUrl = trim((string) ($row['link_url'] ?? ''));
+            if ($linkUrl !== '') {
+                $filePath = '';
+            } else {
+                $linkUrl = '';
+            }
+
             return [
                 'id' => trim((string) ($row['id'] ?? '')) ?: (string) Str::uuid(),
                 'title' => trim($row['title']),
-                'file_path' => trim((string) ($row['file_path'] ?? '')),
+                'file_path' => $filePath,
+                'link_url' => $linkUrl,
                 'date' => trim((string) ($row['date'] ?? '')),
                 'description' => trim((string) ($row['description'] ?? '')),
                 'category_id' => $categoryId,

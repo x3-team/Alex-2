@@ -54,6 +54,7 @@ class DoctorMaterialsStore
                 'id' => (string) ($row['id'] ?? Str::uuid()),
                 'title' => $title,
                 'file_path' => trim((string) ($row['file_path'] ?? '')),
+                'link_url' => trim((string) ($row['link_url'] ?? '')),
                 'date' => trim((string) ($row['date'] ?? '')),
                 'description' => trim((string) ($row['description'] ?? '')),
                 'category_id' => trim((string) ($row['category_id'] ?? '')),
