@@ -81,6 +81,7 @@ class AuthorController extends Controller
             'seo_description' => 'nullable|string|max:500',
             'seo_keywords' => 'nullable|string|max:255',
             'credentials' => 'nullable|string|max:255',
+            'profile_url' => 'nullable|string|max:500',
         ]);
 
         // 4. Ручная валидация структуры decoded массивов
@@ -136,6 +137,7 @@ class AuthorController extends Controller
             'career_history' => $careerHistory,
             'education' => $education,
             'credentials' => $validated['credentials'] ?? null,
+            'profile_url' => $this->normalizeProfileUrl($validated['profile_url'] ?? null),
         ];
 
         // 7. Создание пользователя
@@ -168,6 +170,7 @@ class AuthorController extends Controller
                 'seo_description' => $author->seo_description,
                 'seo_keywords' => $author->seo_keywords,
                 'credentials' => $author->credentials,
+                'profile_url' => $author->profile_url,
             ],
             'selectedCategories' => $author->authorCategories->pluck('id')->toArray(),
             'authorCategories' => \App\Models\AuthorCategory::all(),
@@ -225,6 +228,7 @@ class AuthorController extends Controller
             'seo_keywords' => 'nullable|string|max:255',
             'is_admin' => 'boolean',
             'credentials' => 'nullable|string|max:255',
+            'profile_url' => 'nullable|string|max:500',
         ]);
 
         // 🔹 Валидация year_to >= year_from
@@ -272,6 +276,7 @@ class AuthorController extends Controller
                 'seo_description' => $validated['seo_description'] ?? null,
                 'seo_keywords' => $validated['seo_keywords'] ?? null,
                 'credentials' => $validated['credentials'] ?? null,
+                'profile_url' => $this->normalizeProfileUrl($validated['profile_url'] ?? null),
             ]);
 
             if ($request->filled('author_categories')) {
@@ -305,6 +310,23 @@ class AuthorController extends Controller
             Log::error('Author update failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return back()->with('error', 'Ошибка: ' . $e->getMessage());
         }
+    }
+
+    
+    private function normalizeProfileUrl(?string $url): ?string
+    {
+        $url = is_string($url) ? trim($url) : '';
+        if ($url === '') {
+            return null;
+        }
+        if (! preg_match('#^https?://#i', $url)) {
+            $url = 'https://'.$url;
+        }
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            return null;
+        }
+
+        return $url;
     }
 
     public function destroy(User $author)
