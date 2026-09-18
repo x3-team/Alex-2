@@ -14,6 +14,28 @@ defineProps({
 })
 
 const { doctorsUrl } = useDoctorMode()
+
+const materialHref = (material) => material.link_url || material.file_path || ''
+const isExternalLink = (material) => !!material.link_url
+const materialBind = (material) => {
+  const href = materialHref(material)
+  if (!href) return {}
+  if (isExternalLink(material)) {
+    return {
+      href,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      'aria-label': `Открыть: ${material.title}`,
+    }
+  }
+  return {
+    href,
+    download: '',
+    target: '_blank',
+    rel: 'noopener',
+    'aria-label': `Скачать: ${material.title}`,
+  }
+}
 </script>
 
 <template>
@@ -58,23 +80,17 @@ const { doctorsUrl } = useDoctorMode()
       <component
         v-for="(material, index) in materials"
         :key="material.title + index"
-        :is="material.file_path ? 'a' : 'article'"
+        :is="materialHref(material) ? 'a' : 'article'"
         class="material-card"
-        :class="{ 'is-downloadable': !!material.file_path }"
-        v-bind="material.file_path ? {
-          href: material.file_path,
-          download: '',
-          target: '_blank',
-          rel: 'noopener',
-          'aria-label': `Скачать: ${material.title}`,
-        } : {}"
+        :class="{ 'is-downloadable': !!materialHref(material) }"
+        v-bind="materialBind(material)"
       >
         <div class="material-copy">
           <h2>{{ material.title }}</h2>
           <p v-if="material.date">{{ material.date }}</p>
           <p v-else-if="material.description">{{ material.description }}</p>
         </div>
-        <span v-if="material.file_path" class="material-download" aria-hidden="true">
+        <span v-if="materialHref(material)" class="material-download" aria-hidden="true">
           <img src="/assets/figma-materials-download.svg" alt="" width="24" height="24" />
         </span>
       </component>
