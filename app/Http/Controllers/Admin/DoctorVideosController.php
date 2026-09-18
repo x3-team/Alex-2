@@ -35,6 +35,7 @@ class DoctorVideosController extends Controller
         $data['is_active'] = $request->boolean('is_active', true);
         $data['related_blog_id'] = $data['related_blog_id'] ?: null;
         $data['published_at'] = $data['published_at'] ?: now();
+        $data['cover_path'] = $this->normalizeCoverPath($data['cover_path'] ?? null);
 
         DoctorVideo::create($data);
 
@@ -51,6 +52,13 @@ class DoctorVideosController extends Controller
         $data['source'] = DoctorEmbed::source($data['embed_url']);
         $data['is_active'] = $request->boolean('is_active', true);
         $data['related_blog_id'] = $data['related_blog_id'] ?: null;
+        $data['cover_path'] = $this->normalizeCoverPath($data['cover_path'] ?? null);
+
+        $oldCover = $doctorVideo->cover_path;
+        $newCover = $data['cover_path'];
+        if ($oldCover && $oldCover !== $newCover) {
+            $this->deleteCoverFile($oldCover);
+        }
 
         $doctorVideo->update($data);
 
@@ -59,6 +67,7 @@ class DoctorVideosController extends Controller
 
     public function destroy(DoctorVideo $doctorVideo)
     {
+        $this->deleteCoverFile($doctorVideo->cover_path);
         $doctorVideo->delete();
 
         return back()->with('success', 'Видео удалено.');
@@ -99,6 +108,33 @@ class DoctorVideosController extends Controller
             'is_active' => 'nullable|boolean',
             'sort_order' => 'nullable|integer|min:0',
         ]);
+    }
+
+
+    private function normalizeCoverPath(?string $path): ?string
+    {
+        $path = is_string($path) ? trim($path) : '';
+        return $path === '' ? null : $path;
+    }
+
+    private function deleteCoverFile(?string $urlOrPath): void
+    {
+        if (!$urlOrPath) {
+            return;
+        }
+        $path = $urlOrPath;
+        if (str_starts_with($path, '/storage/')) {
+            $path = substr($path, strlen('/storage/'));
+        } elseif (str_starts_with($path, 'storage/')) {
+            $path = substr($path, strlen('storage/'));
+        }
+        // Only delete files we own under doctor-videos/
+        if (!str_starts_with($path, 'doctor-videos/')) {
+            return;
+        }
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
     }
 
     private function uniqueSlug(string $slug, string $title, ?int $ignoreId = null): string
