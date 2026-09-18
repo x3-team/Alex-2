@@ -70,7 +70,13 @@ apply() {
   php artisan view:cache
 
   if [[ "${RESTART_SERVICES}" == "true" ]]; then
-    echo "==> RESTART_SERVICES=true — restart php-fpm / SSR using your existing server process manager (not guessed here)."
+    echo "==> RESTART_SERVICES=true — reload php-fpm so opcache picks up new PHP"
+    if command -v systemctl >/dev/null 2>&1; then
+      sudo -n systemctl reload php8.2-fpm 2>/dev/null         || sudo -n systemctl reload php8.3-fpm 2>/dev/null         || sudo -n systemctl reload php-fpm 2>/dev/null         || echo "==> WARN: could not reload php-fpm via systemctl (need passwordless sudo or manual reload)"
+    fi
+    if command -v php >/dev/null 2>&1; then
+      php -r 'if (function_exists("opcache_reset")) { opcache_reset(); echo "==> opcache_reset via CLI\n"; }' 2>/dev/null || true
+    fi
   else
     echo "==> Leaving php-fpm and Inertia SSR untouched. Restart them manually if the new SSR bundle must load."
   fi
