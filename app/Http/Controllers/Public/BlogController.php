@@ -455,6 +455,7 @@ class BlogController extends Controller
                 'avatar' => $author->avatar,
                 'position' => $author->position,
                 'credentials' => $author->credentials,
+                'profile_url' => $author->profile_url,
                 'bio' => $author->bio,
                 'career_history' => $author->career_history,
                 'education' => $author->education,
