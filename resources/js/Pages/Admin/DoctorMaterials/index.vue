@@ -223,23 +223,25 @@ const submit = () => {
       return
     }
   }
-  // Explicit payload — useForm.put sometimes dropped nested link_url
-  const payload = {
+  // Explicit transform so nested link_url always goes in the PUT body
+  form.materials = rows
+  const materialsPayload = rows.map(({ source_type, ...row }) => row)
+  form.transform(() => ({
     categories: form.categories,
-    materials: rows.map(({ source_type, ...row }) => row),
+    materials: materialsPayload,
     meta_title: form.meta_title,
     meta_description: form.meta_description,
     meta_keywords: form.meta_keywords,
-  }
-  form.processing = true
-  router.put(route('admin.doctor-materials.update'), payload, {
+  })).put(route('admin.doctor-materials.update'), {
     preserveScroll: true,
     onSuccess: () => { isEditingSeo.value = false },
     onError: (errors) => {
       const first = Object.values(errors || {})[0]
       alert(Array.isArray(first) ? first[0] : (first || 'Не удалось сохранить. Проверьте файл/ссылку у каждого документа.'))
     },
-    onFinish: () => { form.processing = false },
+    onFinish: () => {
+      form.transform((data) => data)
+    },
   })
 }
 </script>
