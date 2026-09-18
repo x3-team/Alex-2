@@ -281,6 +281,7 @@ const submit = () => {
               maxlength="255"
           />
           <p class="text-xs text-gray-500 mt-1">Например: к.м.н., аллерголог. Показывается рядом с именем на сайте, если заполнено.</p>
+        </div>
         <div class="mt-4">
           <label class="block text-sm font-medium text-gray-700 mb-1">Ссылка (Instagram и др.)</label>
           <input
@@ -292,7 +293,6 @@ const submit = () => {
               maxlength="500"
           />
           <p class="text-xs text-gray-500 mt-1">Необязательно. На странице автора показывается под специальностями, открывается в новом окне.</p>
-        </div>
         </div>
 
         <!-- Био -->
