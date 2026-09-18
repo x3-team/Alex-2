@@ -51,6 +51,7 @@ const form = useForm({
   seo_description: props.author.seo_description ?? '',
   seo_keywords: props.author.seo_keywords ?? '',
   credentials: props.author.credentials ?? '',
+  profile_url: props.author.profile_url ?? '',
 })
 
 const previewUrl = ref(props.author?.avatar ? `/storage/${props.author.avatar}` : null)
@@ -124,6 +125,7 @@ const submit = () => {
   formData.append('seo_description', form.seo_description ?? '')
   formData.append('seo_keywords', form.seo_keywords ?? '')
   formData.append('credentials', form.credentials ?? '')
+  formData.append('profile_url', form.profile_url ?? '')
   formData.append('is_admin', form.is_admin ? '1' : '0')
   // 🔹 Отправляем массив категорий
   if (form.author_categories?.length) {
@@ -279,6 +281,18 @@ const submit = () => {
               maxlength="255"
           />
           <p class="text-xs text-gray-500 mt-1">Например: к.м.н., аллерголог. Показывается рядом с именем на сайте, если заполнено.</p>
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Ссылка (Instagram и др.)</label>
+          <input
+              v-model="form.profile_url"
+              type="text"
+              inputmode="url"
+              class="w-full border rounded px-3 py-2"
+              placeholder="https://instagram.com/..."
+              maxlength="500"
+          />
+          <p class="text-xs text-gray-500 mt-1">Необязательно. На странице автора показывается под специальностями, открывается в новом окне.</p>
+        </div>
         </div>
 
         <!-- Био -->

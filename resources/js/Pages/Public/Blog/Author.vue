@@ -549,7 +549,15 @@ const ogImage = computed(() => {
               >
                 {{ author.author_categories.map(c => c.name).join(', ') }}
               </p>
-              
+
+              <a
+                v-if="author?.profile_url"
+                :href="author.profile_url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-block text-[18px] font-[400] text-gray-900 underline underline-offset-2 mb-4 hover:opacity-70"
+                style="font-family: 'Roboto'; line-height: 25px;"
+              >{{ authorProfileLinkLabel }}</a>
 
               <p v-if="author?.position" class="text-[18px] font-[400] text-gray-700">
                 {{ author.position }}

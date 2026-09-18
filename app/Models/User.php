@@ -36,6 +36,7 @@ class User extends Authenticatable
         'seo_keywords',
         'education',
         'credentials',
+        'profile_url',
     ];
 
     /**
