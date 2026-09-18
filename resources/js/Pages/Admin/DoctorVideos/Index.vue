@@ -29,6 +29,13 @@ const createForm = useForm(emptyVideo())
 const editingId = ref(null)
 const editState = reactive({})
 
+const editCoverInputs = {}
+const setEditCoverInput = (id, el) => {
+  if (el) editCoverInputs[id] = el
+  else delete editCoverInputs[id]
+}
+
+
 const uploadCover = async (event, target) => {
   const file = event.target.files?.[0]
   if (!file) return
