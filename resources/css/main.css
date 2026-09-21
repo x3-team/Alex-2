@@ -5222,6 +5222,7 @@ body:has(.home-page-container.doctor-mode) {
         --mobile-advantages-lift: clamp(0px, calc(450px - 120vw), 44px);
         --mobile-advantages-drop: 0px;
         --mobile-results-lift: clamp(0px, calc(375px - 100vw), 20px);
+        --mobile-results-cta-clearance: 0px;
         --mobile-glass-top-alpha: 0;
         --mobile-glass-shoulder-alpha: 0;
         --mobile-glass-shoulder-stop: 12%;
@@ -5294,6 +5295,9 @@ body:has(.home-page-container.doctor-mode) {
     [data-active-slide="slide-10"],
     [data-active-slide="slide-11"]
   ) {
+        /* Same extra lift on 1/2/3 so title + description clear the sticky
+           «Записаться» dock. Patient no longer gets a second +30px. */
+        --mobile-results-cta-clearance: 64px;
         --mobile-glass-mid-alpha: 0.5;
         --mobile-glass-mid-stop: 44%;
         --mobile-glass-bottom-alpha: 0.84;
@@ -5315,7 +5319,7 @@ body:has(.home-page-container.doctor-mode) {
     }
 
     .home-page-container .figma-persistent-step-indicator.persistent-results {
-        top: calc(100dvh - 249 * var(--mobile-fixed-unit) - var(--mobile-results-lift));
+        top: calc(100dvh - 249 * var(--mobile-fixed-unit) - var(--mobile-results-lift) - var(--mobile-results-cta-clearance, 0px));
     }
 
     .home-page-container .figma-step-block.advantages-pos {
@@ -5325,7 +5329,7 @@ body:has(.home-page-container.doctor-mode) {
     }
 
     .home-page-container .figma-step-block.results-pos {
-        top: calc(100dvh - 185 * var(--mobile-fixed-unit) - var(--mobile-results-lift));
+        top: calc(100dvh - 185 * var(--mobile-fixed-unit) - var(--mobile-results-lift) - var(--mobile-results-cta-clearance, 0px));
         bottom: auto;
         gap: 0;
     }
@@ -5338,7 +5342,7 @@ body:has(.home-page-container.doctor-mode) {
         right: 0 !important;
         bottom: 0 !important;
         width: 100% !important;
-        height: calc(470 * var(--mobile-unit) - var(--mobile-advantages-drop, 0px)) !important;
+        height: calc(470 * var(--mobile-unit) - var(--mobile-advantages-drop, 0px) + var(--mobile-results-cta-clearance, 0px)) !important;
         border-radius: 0 !important;
         overflow: visible;
         isolation: isolate;
@@ -7626,23 +7630,8 @@ button {
   }
 }
 
-/* lift-results-30px: mobile Results slides 9-11 only, air above Записаться dock */
-@media (max-width: 1024px) {
-  .home-page-container:not(.doctor-mode) .home-content:is(
-    [data-active-slide="slide-9"],
-    [data-active-slide="slide-10"],
-    [data-active-slide="slide-11"]
-  ) .figma-step-block.results-pos {
-    top: calc(100dvh - 185 * var(--mobile-fixed-unit) - var(--mobile-results-lift) - 30px);
-  }
-  .home-page-container:not(.doctor-mode) .home-content:is(
-    [data-active-slide="slide-9"],
-    [data-active-slide="slide-10"],
-    [data-active-slide="slide-11"]
-  ) .figma-persistent-step-indicator.persistent-results {
-    top: calc(100dvh - 249 * var(--mobile-fixed-unit) - var(--mobile-results-lift) - 30px);
-  }
-}
+/* Patient +30px Results lift is folded into --mobile-results-cta-clearance
+   (64px, doctor + patient) so 1/2/3 stay even and do not double-count. */
 
 
 /* Patient desktop Results share Advantages height; keep title-row min-height. */

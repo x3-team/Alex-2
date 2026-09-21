@@ -262,7 +262,7 @@ const doctorStoryFile = (index, reverse = false) => {
   return reverse ? `s${index}r.webm` : `s${index}.webm`
 }
 
-const doctorStoryHasMobile = (index) => (index >= 3 && index <= 6) || index === 8 || index === 9 || index === 11 || index === 12
+const doctorStoryHasMobile = (index) => (index >= 3 && index <= 6) || index === 8 || index === 9 || index === 10 || index === 11 || index === 12
 
 const doctorForwardPlaybackRate = (src) => {
   const s = String(src || '')
@@ -689,6 +689,7 @@ const videoElementUrl = (video) => String(video?.currentSrc || video?.src || '')
 const isDoctorS12FamilyUrl = (url) => /\/s12r?\.webm(?:\?|$)/.test(String(url || ''))
 const isDoctorS12ForwardUrl = (url) => /\/s12\.webm(?:\?|$)/.test(String(url || ''))
 const isDoctorS11Url = (url) => /\/s11\.webm(?:\?|$)/.test(String(url || ''))
+const isDoctorS8Url = (url) => /\/s8-zoomout-v1\.webm(?:\?|$)|\/s8\.webm(?:\?|$)/.test(String(url || ''))
 
 const forceAssignVideoSrc = (video, src) => {
   if (!video || !src) return
@@ -793,6 +794,11 @@ const preloadUpcomingVideo = () => {
     // and can flash Babutin (last frame of s12r / first of s12).
     const resultsPoint3 = slides.value.find((s) => s.id === 'slide-11')
     nextSrc = getSlideVideo(resultsPoint3)
+  } else if (isDoctorMode.value && isMobileViewport.value && currentSlide?.id === 'slide-6') {
+    // Next is Results intro (s8). Preloading s6r leaves the chip on the
+    // inactive layer and races the mobile s8 settle.
+    const resultsIntro = slides.value.find((s) => s.id === 'slide-8')
+    nextSrc = getSlideVideo(resultsIntro)
   } else if (currentSlideIndex.value > 0 && currentReverseSrc) {
     nextSrc = currentReverseSrc
   } else {
@@ -1156,6 +1162,62 @@ const settleDoctorFaqToResultsPoint3 = async (src, requestId) => {
   }
 }
 
+/** Mobile doctor Results intro (slide-8): hold last frame of s8, never the Advantages chip. */
+const settleDoctorMobileResultsIntro = async (src, requestId) => {
+  if (!src || requestId !== videoRequestId) return
+
+  const activeEl = activeVideoElement.value === 'A' ? videoA.value : videoB.value
+  const stillEl = activeVideoElement.value === 'A' ? videoB.value : videoA.value
+  if (!activeEl || !stillEl) return
+
+  const stillReadyAsS8 = () => (
+    isDoctorS8Url(videoElementUrl(stillEl))
+    && stillEl.src === getAbsoluteVideoUrl(src)
+  )
+
+  const ensureStillIsS8 = async () => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (requestId !== videoRequestId) return false
+      if (!stillReadyAsS8()) {
+        forceAssignVideoSrc(stillEl, src)
+      } else {
+        configureVideoElement(stillEl)
+        stillEl.pause()
+      }
+      await waitForDecodedFrame(stillEl, { ignoreCurrent: !stillReadyAsS8() })
+      if (requestId !== videoRequestId) return false
+      if (stillReadyAsS8()) return true
+    }
+    return stillReadyAsS8()
+  }
+
+  try {
+    holdingVideoElement.value = null
+    stillEl.pause()
+
+    if (!await ensureStillIsS8()) {
+      return
+    }
+
+    await seekToLastFrame(stillEl)
+    if (requestId !== videoRequestId) return
+    if (!stillReadyAsS8()) {
+      if (!await ensureStillIsS8()) return
+      await seekToLastFrame(stillEl)
+      if (requestId !== videoRequestId) return
+      if (!stillReadyAsS8()) return
+    }
+
+    const stillLetter = activeVideoElement.value === 'A' ? 'B' : 'A'
+    videoBackgroundReady.value = true
+    holdingVideoElement.value = null
+    activeVideoElement.value = stillLetter
+    finishVideoLayerSwap(activeEl, requestId, { preload: true })
+  } catch (error) {
+    // Keep the current frame; do not blank the background.
+  }
+}
+
 watch(isDoctorMode, async () => {
   suppressHeldVideoFrame.value = false
   await nextTick()
@@ -1203,11 +1265,19 @@ watch(currentSlideIndex, (newIndex, oldIndex) => {
     && isDoctorMode.value
     && DOCTOR_DELAYED_TEXT_SLIDE_IDS.has(slide?.id)
   )
-  const safetyFallbackMs = delayDoctorAdvantageText
-    ? Math.ceil(DOCTOR_ADVANTAGE_CONTENT_REVEAL_TIME * 1000) + 800
-    : isMobileViewport.value
-      ? (goingBack ? 500 : 700)
-      : (goingBack ? 1200 : 900)
+  const isDoctorMobileResultsIntro = (
+    isDoctorMode.value
+    && isMobileViewport.value
+    && slide?.id === 'slide-8'
+    && !goingBack
+  )
+  const safetyFallbackMs = isDoctorMobileResultsIntro
+    ? 1800
+    : delayDoctorAdvantageText
+      ? Math.ceil(DOCTOR_ADVANTAGE_CONTENT_REVEAL_TIME * 1000) + 800
+      : isMobileViewport.value
+        ? (goingBack ? 500 : 700)
+        : (goingBack ? 1200 : 900)
   const safetyFallbackTimer = setTimeout(() => {
     if (transitionId === slideTransitionId) {
       contentReadySlideIndex.value = newIndex
@@ -1304,6 +1374,12 @@ watch(currentSlideIndex, (newIndex, oldIndex) => {
   contentReadySlideIndex.value = -1
 
   if (isDirectJump) {
+    if (isDoctorMobileResultsIntro && slideVideoSrc) {
+      const requestId = ++videoRequestId
+      settleDoctorMobileResultsIntro(slideVideoSrc, requestId)
+        .finally(finishCurrentTransition)
+      return
+    }
     if (slideVideoSrc) {
       playVideoShot(slideVideoSrc, {
         playbackRate: doctorForwardPlaybackRate(slideVideoSrc),
@@ -1372,6 +1448,13 @@ watch(currentSlideIndex, (newIndex, oldIndex) => {
           : settleWithoutVideo(requestId)
       settle.finally(finishCurrentTransition)
     }
+    return
+  }
+
+  if (isDoctorMobileResultsIntro && slideVideoSrc) {
+    const requestId = ++videoRequestId
+    settleDoctorMobileResultsIntro(slideVideoSrc, requestId)
+      .finally(finishCurrentTransition)
     return
   }
 
