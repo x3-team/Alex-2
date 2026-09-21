@@ -1068,53 +1068,54 @@ const settleDoctorFaqToResultsPoint3 = async (src, requestId) => {
   const stillEl = activeVideoElement.value === 'A' ? videoB.value : videoA.value
   if (!activeEl || !stillEl) return
 
-  const stillHasS11 = isDoctorS11Url(videoElementUrl(stillEl))
+  const stillReadyAsS11 = () => (
+    isDoctorS11Url(videoElementUrl(stillEl))
     && stillEl.src === getAbsoluteVideoUrl(src)
     && !isDoctorS12FamilyUrl(videoElementUrl(stillEl))
+  )
+
+  const ensureStillIsS11 = async () => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (requestId !== videoRequestId) return false
+      if (!stillReadyAsS11()) {
+        forceAssignVideoSrc(stillEl, src)
+      } else {
+        configureVideoElement(stillEl)
+        stillEl.pause()
+      }
+      await waitForDecodedFrame(stillEl, { ignoreCurrent: !stillReadyAsS11() })
+      if (requestId !== videoRequestId) return false
+      if (stillReadyAsS11()) return true
+    }
+    return stillReadyAsS11()
+  }
 
   try {
-    activeEl.pause()
+    // Keep the visible FAQ layer (end of s12) on screen. Hide only the
+    // inactive layer so we can decode s11 there without a beige blank.
+    holdingVideoElement.value = null
     stillEl.pause()
-    if (!stillHasS11) {
-      forceAssignVideoSrc(stillEl, src)
-    } else {
-      configureVideoElement(stillEl)
-    }
 
-    await waitForDecodedFrame(stillEl, { ignoreCurrent: !stillHasS11 })
-    if (requestId !== videoRequestId) return
-
-    if (isDoctorS12FamilyUrl(videoElementUrl(stillEl)) || !isDoctorS11Url(videoElementUrl(stillEl))) {
-      forceAssignVideoSrc(stillEl, src)
-      await waitForDecodedFrame(stillEl, { ignoreCurrent: true })
-      if (requestId !== videoRequestId) return
-    }
-
-    if (isDoctorS12FamilyUrl(videoElementUrl(stillEl)) || !isDoctorS11Url(videoElementUrl(stillEl))) {
-      suppressHeldVideoFrame.value = false
-      await settleWithoutVideo(requestId)
+    if (!await ensureStillIsS11()) {
       return
     }
 
     await seekToLastFrame(stillEl)
     if (requestId !== videoRequestId) return
 
-    if (isDoctorS12FamilyUrl(videoElementUrl(stillEl)) || !isDoctorS11Url(videoElementUrl(stillEl))) {
-      suppressHeldVideoFrame.value = false
-      await settleWithoutVideo(requestId)
-      return
+    if (!stillReadyAsS11()) {
+      if (!await ensureStillIsS11()) return
+      await seekToLastFrame(stillEl)
+      if (requestId !== videoRequestId) return
+      if (!stillReadyAsS11()) return
     }
 
-    holdingVideoElement.value = null
-    activeVideoElement.value = activeVideoElement.value === 'A' ? 'B' : 'A'
     videoBackgroundReady.value = true
-    suppressHeldVideoFrame.value = false
+    holdingVideoElement.value = activeVideoElement.value
+    activeVideoElement.value = activeVideoElement.value === 'A' ? 'B' : 'A'
     finishVideoLayerSwap(activeEl, requestId, { preload: true })
   } catch (error) {
-    if (requestId === videoRequestId) {
-      suppressHeldVideoFrame.value = false
-      await settleWithoutVideo(requestId)
-    }
+    // Keep the FAQ frame; never blank the background on this path.
   }
 }
 
@@ -1310,14 +1311,12 @@ watch(currentSlideIndex, (newIndex, oldIndex) => {
 
     if (isDoctorFaqToResultsPoint3) {
       const requestId = ++videoRequestId
-      suppressHeldVideoFrame.value = true
-      videoA.value?.pause()
-      videoB.value?.pause()
-      holdingVideoElement.value = null
+      // Keep FAQ held frame visible until s11 last frame is ready — do not
+      // suppress layers (that flashes empty beige) and do not settleWithoutVideo.
       const destSrc = getSlideVideo(slide)
       const settle = destSrc
           ? settleDoctorFaqToResultsPoint3(destSrc, requestId)
-          : settleWithoutVideo(requestId).then(() => { suppressHeldVideoFrame.value = false })
+          : Promise.resolve()
       settle.finally(finishCurrentTransition)
       return
     }
