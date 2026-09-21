@@ -504,6 +504,7 @@ const isVideoBackgroundVisible = computed(() => {
 const CONTENT_EXIT_DURATION = 850
 const CONTENT_EXIT_BACK_DURATION = 1400
 const VIDEO_CONTENT_REVEAL_TIME = 1.0
+const DOCTOR_MOBILE_S8_CONTENT_REVEAL_TIME = 2.5
 // Doctor advantages steps 2–4 of 4 (slide-4 panel, slide-5 IgE, slide-6 CCD): hold text during the shot
 const DOCTOR_ADVANTAGE_CONTENT_REVEAL_TIME = 2.5
 const DOCTOR_DELAYED_TEXT_SLIDE_IDS = new Set(['slide-4', 'slide-5', 'slide-6'])
@@ -980,6 +981,21 @@ const attachPinDoctorS12OnEnded = (video) => {
   if (video.ended) pin()
 }
 
+/** After s8-zoomout plays, stay on the QR last frame — do not snap back to the CCD chip. */
+const pinDoctorS8HeldFrame = async (video) => {
+  if (!video || !isDoctorS8Url(videoElementUrl(video))) return
+  video.pause()
+  await seekToLastFrame(video)
+  video.pause()
+}
+
+const attachPinDoctorS8OnEnded = (video) => {
+  if (!video || !isDoctorS8Url(videoElementUrl(video) || video.src)) return
+  const pin = () => { void pinDoctorS8HeldFrame(video) }
+  video.addEventListener('ended', pin, { once: true })
+  if (video.ended) pin()
+}
+
 const playVideoShot = async (src, { playbackRate = 1, onPlaybackStarted, onComplete } = {}) => {
   if (!src) { onComplete?.(); return }
 
@@ -1049,9 +1065,13 @@ const playVideoShot = async (src, { playbackRate = 1, onPlaybackStarted, onCompl
     activeVideoElement.value = activeVideoElement.value === 'A' ? 'B' : 'A'
     finishVideoLayerSwap(activeEl, requestId, { preload: true })
     attachPinDoctorS12OnEnded(incomingEl)
+    attachPinDoctorS8OnEnded(incomingEl)
 
     onPlaybackStarted?.(incomingEl, requestId)
     if (!played) {
+      if (isDoctorS8Url(videoElementUrl(incomingEl) || incomingEl.src)) {
+        await pinDoctorS8HeldFrame(incomingEl)
+      }
       // Content can reveal; actual playback resumes on first gesture via safePlayVideo.
       onComplete?.()
     }
@@ -1162,7 +1182,7 @@ const settleDoctorFaqToResultsPoint3 = async (src, requestId) => {
   }
 }
 
-/** Mobile doctor Results intro (slide-8): hold last frame of s8, never the Advantages chip. */
+/** Mobile doctor slide-8 direct-jump only: last frame of s8 (QR), skip playing the zoom-out. */
 const settleDoctorMobileResultsIntro = async (src, requestId) => {
   if (!src || requestId !== videoRequestId) return
 
@@ -1272,7 +1292,7 @@ watch(currentSlideIndex, (newIndex, oldIndex) => {
     && !goingBack
   )
   const safetyFallbackMs = isDoctorMobileResultsIntro
-    ? 1800
+    ? Math.ceil(DOCTOR_MOBILE_S8_CONTENT_REVEAL_TIME * 1000) + 800
     : delayDoctorAdvantageText
       ? Math.ceil(DOCTOR_ADVANTAGE_CONTENT_REVEAL_TIME * 1000) + 800
       : isMobileViewport.value
@@ -1354,7 +1374,14 @@ watch(currentSlideIndex, (newIndex, oldIndex) => {
       && DOCTOR_DELAYED_TEXT_SLIDE_IDS.has(slideId)
     )
       ? DOCTOR_ADVANTAGE_CONTENT_REVEAL_TIME
-      : VIDEO_CONTENT_REVEAL_TIME
+      : (
+        !goingBack
+        && isDoctorMode.value
+        && isMobileViewport.value
+        && slideId === 'slide-8'
+      )
+        ? DOCTOR_MOBILE_S8_CONTENT_REVEAL_TIME
+        : VIDEO_CONTENT_REVEAL_TIME
     revealContentAtVideoProgress(video, newIndex, requestId, revealCurrentSlide, {
       targetTime
     })
@@ -1448,13 +1475,6 @@ watch(currentSlideIndex, (newIndex, oldIndex) => {
           : settleWithoutVideo(requestId)
       settle.finally(finishCurrentTransition)
     }
-    return
-  }
-
-  if (isDoctorMobileResultsIntro && slideVideoSrc) {
-    const requestId = ++videoRequestId
-    settleDoctorMobileResultsIntro(slideVideoSrc, requestId)
-      .finally(finishCurrentTransition)
     return
   }
 
