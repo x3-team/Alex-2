@@ -5534,13 +5534,20 @@ body:has(.home-page-container.doctor-mode) {
 @media (min-width: 1025px) {
     .home-page-container:not(.doctor-mode) .figma-smoke-cloud-fixed.results-cloud-primary {
         left: -8% !important;
-        top: auto !important;
-        bottom: -5% !important;
+        top: 26% !important;
+        bottom: auto !important;
         width: min(100%, 720px) !important;
-        height: min(40%, 540px) !important;
-        border-radius: 52% 62% 18% 0 / 68% 68% 22% 0;
+        height: min(52%, 580px) !important;
+        border-radius: 52% 62% 42% 18% / 58% 62% 38% 32%;
         mask-image: none !important;
         -webkit-filter: blur(30px) !important;
+        background: radial-gradient(
+                ellipse at 22% 38%,
+                rgba(255, 255, 255, 0.98) 0%,
+                rgba(255, 255, 255, 0.84) 43%,
+                rgba(255, 255, 255, 0.34) 72%,
+                rgba(255, 255, 255, 0) 100%
+        ) !important;
     }
 
     .home-page-container.doctor-mode .figma-smoke-cloud-fixed.results-cloud-primary.visible {
@@ -7662,6 +7669,15 @@ button {
   ) .results-pos .figma-slide-desc-inline {
     min-height: 72px;
   }
+  .home-page-container:not(.doctor-mode) .home-content:is(
+    [data-active-slide="slide-9"],
+    [data-active-slide="slide-10"],
+    [data-active-slide="slide-11"]
+  ) .figma-smoke-cloud-fixed.results-cloud-primary {
+    top: 26% !important;
+    bottom: auto !important;
+    height: min(52%, 580px) !important;
+  }
 }
 @media (min-width: 1025px) and (max-width: 1120px) {
   .home-page-container:not(.doctor-mode) .home-content:is(
@@ -7679,6 +7695,15 @@ button {
   ) .figma-persistent-step-indicator.persistent-results {
     top: calc(100dvh - 372px) !important;
     bottom: auto !important;
+  }
+  .home-page-container:not(.doctor-mode) .home-content:is(
+    [data-active-slide="slide-9"],
+    [data-active-slide="slide-10"],
+    [data-active-slide="slide-11"]
+  ) .figma-smoke-cloud-fixed.results-cloud-primary {
+    top: calc(100dvh - 460px) !important;
+    bottom: auto !important;
+    height: 280px !important;
   }
 }
 
