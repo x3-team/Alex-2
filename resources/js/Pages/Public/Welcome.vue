@@ -262,7 +262,7 @@ const doctorStoryFile = (index, reverse = false) => {
   return reverse ? `s${index}r.webm` : `s${index}.webm`
 }
 
-const doctorStoryHasMobile = (index) => (index >= 3 && index <= 6) || index === 8 || index === 9
+const doctorStoryHasMobile = (index) => (index >= 3 && index <= 6) || index === 8 || index === 9 || index === 11
 
 const doctorForwardPlaybackRate = (src) => {
   const s = String(src || '')
