@@ -7642,15 +7642,16 @@ button {
    (64px, doctor + patient) so 1/2/3 stay even and do not double-count. */
 
 
-/* Patient desktop Results share Advantages height; keep title-row min-height. */
+/* lift-results-desk-30px: patient desktop Results 9-11 stay on the floor.
+   Doctor keeps the 40.1% Advantages height from the base .results-pos. */
 @media (min-width: 1025px) {
   .home-page-container:not(.doctor-mode) .home-content:is(
     [data-active-slide="slide-9"],
     [data-active-slide="slide-10"],
     [data-active-slide="slide-11"]
   ) .figma-step-block.results-pos {
-    top: 40.1% !important;
-    bottom: auto !important;
+    top: auto !important;
+    bottom: calc(clamp(80px, 9.9vh, 108px) + 30px) !important;
   }
   .home-page-container:not(.doctor-mode) .home-content:is(
     [data-active-slide="slide-9"],
@@ -7666,16 +7667,16 @@ button {
     [data-active-slide="slide-10"],
     [data-active-slide="slide-11"]
   ) .figma-step-block.results-pos {
-    top: calc(100dvh - 320px) !important;
-    bottom: auto !important;
+    top: auto !important;
+    bottom: 150px !important;
   }
   .home-page-container:not(.doctor-mode) .home-content:is(
     [data-active-slide="slide-9"],
     [data-active-slide="slide-10"],
     [data-active-slide="slide-11"]
   ) .figma-persistent-step-indicator.persistent-results {
-    top: calc(100dvh - 372px) !important;
-    bottom: auto !important;
+    top: auto !important;
+    bottom: 250px !important;
   }
 }
 
