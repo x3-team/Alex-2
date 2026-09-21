@@ -266,8 +266,10 @@ const doctorStoryHasMobile = (index) => (index >= 3 && index <= 6) || index === 
 
 const doctorForwardPlaybackRate = (src) => {
   const s = String(src || '')
-  // Point 1 (slide-3 / s3-chip): speed up forward shot by 20%
-  if (s.includes('s3-chip') || s.includes('/s3.') || /(^|\/)s3\.webm/.test(s)) return 1.44
+  const isS3 = s.includes('s3-chip') || s.includes('/s3.') || /(^|\/)s3\.webm/.test(s)
+  const isS5 = s.includes('s5-ige') || s.includes('/s5.') || /(^|\/)s5\.webm/.test(s)
+  if (isMobileViewport.value && (isS3 || isS5)) return 1.4
+  if (isS3) return 1.44
   return 1
 }
 
