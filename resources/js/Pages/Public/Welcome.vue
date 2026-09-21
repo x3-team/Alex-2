@@ -18,11 +18,14 @@ import {
   shouldIncludePatientSlide7,
 } from '@/composables/welcomeSlideDeck'
 
+// How-to is part of the doctor/patient menu jump path — keep it sync so
+// «Как сдать тест» cannot land on editorial beige while the chunk loads.
+import FigmaInfoSlide from '@/Components/FigmaInfoSlide.vue'
+
 // Асинхронные компоненты для оптимизации первоначальной загрузки (Code Splitting)
 const HomeBackLink = defineAsyncComponent(() => import('@/Components/HomeBackLink.vue'))
 const SiteSidebar = defineAsyncComponent(() => import('@/Components/SiteSidebar.vue'))
 const FigmaContactsSlide = defineAsyncComponent(() => import('@/Components/FigmaContactsSlide.vue'))
-const FigmaInfoSlide = defineAsyncComponent(() => import('@/Components/FigmaInfoSlide.vue'))
 const DoctorBlogTransition = defineAsyncComponent(() => import('@/Components/DoctorBlogTransition.vue'))
 
 const QuizModal = defineAsyncComponent(() => import('@/Components/QuizModal.vue'))
@@ -188,6 +191,9 @@ const scrollHintReady = ref(false)
 const mountBelowFoldSlides = ref(false)
 const mountSidebar = ref(false)
 const shouldMountHeavySlide = (index) => {
+  // Direct menu jump to how-to/contacts used to render before the idle
+  // below-fold flag flipped, so the editorial still painted with no body.
+  if (index === currentSlideIndex.value) return true
   if (!mountBelowFoldSlides.value) return false
   return Math.abs(index - currentSlideIndex.value) <= 1
 }
@@ -1316,29 +1322,27 @@ watch(currentSlideIndex, (newIndex, oldIndex) => {
 
   if (isHowToSection(newIndex)) {
     cancelEarlyContentReveal()
+    clearTimeout(safetyFallbackTimer)
     contentReadySlideIndex.value = newIndex
+    // First menu entry used to fall through, reset contentReady to -1, and
+    // settle a previous FAQ frame — leaving editorial beige with no how-to body.
+    window.clearTimeout(contentExitTimer)
+    exitingContentSlideIndex.value = -1
+    exitingContentIsBack.value = false
     const intraHowTo = isHowToSection(oldIndex)
     // Desktop wheel already has a cooldown, so unlocking immediately is fine.
     // On mobile, 1.0.33 unlocked instantly and one gesture (touchend + pointerup
     // or touchend + wheel) consumed two how-to steps (1 → 3). Keep the lock.
     if (!(isMobileViewport.value && intraHowTo)) {
       isSlideTransitioning.value = false
+    } else {
+      window.setTimeout(() => {
+        if (transitionId === slideTransitionId) {
+          isSlideTransitioning.value = false
+        }
+      }, WHEEL_COOLDOWN_MS)
     }
-    if (intraHowTo) {
-      // Reverse/forward inside how-to used to leave the previous FigmaInfoSlide
-      // (and a still-exiting contacts layer) painting on top of the current step.
-      window.clearTimeout(contentExitTimer)
-      exitingContentSlideIndex.value = -1
-      exitingContentIsBack.value = false
-      if (isMobileViewport.value) {
-        window.setTimeout(() => {
-          if (transitionId === slideTransitionId) {
-            isSlideTransitioning.value = false
-          }
-        }, WHEEL_COOLDOWN_MS)
-      }
-      return
-    }
+    return
   }
 
   const destinationHasVideo = hasSlideVideo(slide)

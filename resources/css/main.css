@@ -2802,8 +2802,8 @@ body:has(.home-page-container.doctor-mode) {
     .home-page-container .slide-layer:nth-child(n+12).content-exiting {
         visibility: visible;
     }
-    .home-page-container .slide-layer.content-exiting > .figma-exact-info-slide,
-    .home-page-container .slide-layer.content-exiting > .figma-exact-contacts {
+    .home-page-container .slide-layer.content-exiting .figma-exact-info-slide,
+    .home-page-container .slide-layer.content-exiting .figma-exact-contacts {
         opacity: 0 !important;
         pointer-events: none;
     }
@@ -4435,15 +4435,15 @@ body:has(.home-page-container.doctor-mode) {
     will-change: transform, opacity, filter;
 }
 
-.slide-layer > .figma-exact-info-slide,
-.slide-layer > .figma-exact-contacts {
+.slide-layer .figma-exact-info-slide,
+.slide-layer .figma-exact-contacts {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.slide-layer.active[data-content-ready="true"] > .figma-exact-info-slide,
-.slide-layer.active[data-content-ready="true"] > .figma-exact-contacts {
+.slide-layer.active[data-content-ready="true"] .figma-exact-info-slide,
+.slide-layer.active[data-content-ready="true"] .figma-exact-contacts {
     opacity: 1;
     pointer-events: auto;
 }
@@ -4586,8 +4586,8 @@ body:has(.home-page-container.doctor-mode) {
     transform: none !important;
 }
 
-.slide-layer.content-exiting > .figma-exact-info-slide,
-.slide-layer.content-exiting > .figma-exact-contacts {
+.slide-layer.content-exiting .figma-exact-info-slide,
+.slide-layer.content-exiting .figma-exact-contacts {
     opacity: 0 !important;
     pointer-events: none;
 }
@@ -4681,7 +4681,12 @@ body:has(.home-page-container.doctor-mode) {
     .home-page-container .slide-layer.active[data-content-ready="true"] .figma-scroll-icon,
     .home-page-container .slide-layer.active[data-content-ready="true"] .figma-story-tabs,
     .home-page-container .slide-layer.active[data-content-ready="true"] .figma-story-content,
-    .home-page-container .slide-layer.active[data-content-ready="true"] .figma-story-footer {
+    .home-page-container .slide-layer.active[data-content-ready="true"] .figma-story-footer,
+    .home-page-container .slide-layer.active[data-content-ready="true"] .figma-exact-info-slide,
+    .home-page-container .slide-layer.active[data-content-ready="true"] .exact-section-title,
+    .home-page-container .slide-layer.active[data-content-ready="true"] .exact-howto-copy,
+    .home-page-container .slide-layer.active[data-content-ready="true"] .exact-howto-image,
+    .home-page-container .slide-layer.active[data-content-ready="true"] .exact-step-indicator {
         opacity: 1;
     }
 
@@ -5422,7 +5427,12 @@ body:has(.home-page-container.doctor-mode) {
     .home-page-container .slide-layer.active[data-content-ready="true"] .figma-slide-title-inline,
     .home-page-container .slide-layer.active[data-content-ready="true"] .figma-intro-title,
     .home-page-container .slide-layer.active[data-content-ready="true"] .figma-section-title,
-    .home-page-container .slide-layer.active[data-content-ready="true"] .figma-result-title-row {
+    .home-page-container .slide-layer.active[data-content-ready="true"] .figma-result-title-row,
+    .home-page-container .slide-layer.active[data-content-ready="true"] .figma-exact-info-slide,
+    .home-page-container .slide-layer.active[data-content-ready="true"] .exact-section-title,
+    .home-page-container .slide-layer.active[data-content-ready="true"] .exact-howto-copy,
+    .home-page-container .slide-layer.active[data-content-ready="true"] .exact-howto-image,
+    .home-page-container .slide-layer.active[data-content-ready="true"] .exact-step-indicator {
         opacity: 1 !important;
     }
 
@@ -5472,9 +5482,7 @@ body:has(.home-page-container.doctor-mode) {
     }
 
     .home-page-container.doctor-mode .mobile-info-background.visible {
-        background:
-                linear-gradient(141.59deg, rgba(92, 61, 27, 0.7) 0%, rgba(120, 83, 46, 0.7) 100%),
-                #ffffff;
+        background: #cba98e url('/assets/doctor-faq-final.webp') center / cover no-repeat;
     }
 
     .home-page-container.doctor-mode .figma-right-menu.visible.mobile-backdrop-visible::before {
