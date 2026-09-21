@@ -1222,6 +1222,24 @@ watch(currentSlideIndex, (newIndex, oldIndex) => {
       return
     }
 
+    // Doctor FAQ → Results point 3: skip s12r (FAQ reverse) on desktop and mobile.
+    // Forward point 3 → FAQ still plays s12 via the normal slideVideoSrc path.
+    const isDoctorFaqToResultsPoint3 = (
+        isDoctorMode.value
+        && oldSlide?.id === 'slide-16'
+        && slide?.id === 'slide-11'
+    )
+
+    if (isDoctorFaqToResultsPoint3) {
+      const requestId = ++videoRequestId
+      const destSrc = getSlideVideo(slide)
+      const settle = destSrc
+          ? settleOnSlideFrame(destSrc, requestId)
+          : settleWithoutVideo(requestId)
+      settle.finally(finishCurrentTransition)
+      return
+    }
+
     if (oldSlideReverseSrc) {
       playVideoShot(oldSlideReverseSrc, {
         playbackRate: String(oldSlideReverseSrc).includes('s3r') ? 7 : 3,
