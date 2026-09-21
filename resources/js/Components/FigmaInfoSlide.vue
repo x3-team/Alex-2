@@ -679,13 +679,14 @@ button {
   .exact-howto-step-2 .exact-howto-copy,
   .exact-howto-step-3 .exact-howto-copy {
     left: calc(16 * var(--mu));
-    top: calc(100cqh - 271 * var(--mu));
+    /* Lift ~15px off the sticky CTA dock on mobile */
+    top: calc(100cqh - 271 * var(--mu) - 15px);
     width: calc(388 * var(--mu));
     gap: calc(21 * var(--mu));
   }
 
   .exact-howto-step-3 .exact-howto-copy {
-    top: calc(100cqh - 279 * var(--mu));
+    top: calc(100cqh - 279 * var(--mu) - 15px);
     gap: calc(16 * var(--mu));
   }
 
@@ -796,11 +797,11 @@ button {
 
   .exact-howto-slide .exact-howto-copy,
   .exact-howto-step-2 .exact-howto-copy {
-    top: clamp(401px, calc(112.5cqw + 41px), 482px);
+    top: clamp(386px, calc(112.5cqw + 41px - 15px), 467px);
   }
 
   .exact-howto-step-3 .exact-howto-copy {
-    top: clamp(393px, calc(112.5cqw + 33px), 474px);
+    top: clamp(378px, calc(112.5cqw + 33px - 15px), 459px);
   }
 }
 
@@ -848,11 +849,11 @@ button {
 
   .exact-howto-slide .exact-howto-copy,
   .exact-howto-step-2 .exact-howto-copy {
-    top: calc(37.5cqw + 160px);
+    top: calc(37.5cqw + 160px - 15px);
   }
 
   .exact-howto-step-3 .exact-howto-copy {
-    top: calc(37.5cqw + 152px);
+    top: calc(37.5cqw + 152px - 15px);
   }
 }
 
