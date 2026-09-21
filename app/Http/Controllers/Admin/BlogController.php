@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use App\Services\ImageService;
 use App\Models\Redirect;
+use App\Support\AdminPublishedAt;
+
 class BlogController extends Controller
 {
     protected ImageService $imageService;
@@ -580,7 +582,7 @@ class BlogController extends Controller
         // Дата на сайте = момент публикации (вкл. «Активен»), не дата создания в админке.
         if ($blog->is_active) {
             if ($request->filled('published_at')) {
-                $blog->published_at = $request->date('published_at');
+                $blog->published_at = AdminPublishedAt::parse($request->input('published_at'));
             } elseif (! $wasActive || empty($blog->published_at)) {
                 $blog->published_at = now();
             }
