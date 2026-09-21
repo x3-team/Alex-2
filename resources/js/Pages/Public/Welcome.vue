@@ -685,6 +685,21 @@ const getAbsoluteVideoUrl = (src) => {
   }
 }
 
+const videoElementUrl = (video) => String(video?.currentSrc || video?.src || '')
+const isDoctorS12FamilyUrl = (url) => /\/s12r?\.webm(?:\?|$)/.test(String(url || ''))
+const isDoctorS11Url = (url) => /\/s11\.webm(?:\?|$)/.test(String(url || ''))
+
+const forceAssignVideoSrc = (video, src) => {
+  if (!video || !src) return
+  configureVideoElement(video)
+  video.pause()
+  // Detach any preloaded clip first so stale duration/currentTime cannot leak.
+  video.removeAttribute('src')
+  video.load()
+  video.src = src
+  video.load()
+}
+
 // Улучшенная безопасная настройка видеоэлемента под iOS Safari
 const configureVideoElement = (video) => {
   if (!video) return
@@ -772,7 +787,12 @@ const preloadUpcomingVideo = () => {
   let nextSrc = ''
   const currentSlide = slides.value[currentSlideIndex.value]
   const currentReverseSrc = getSlideReverseVideo(currentSlide)
-  if (currentSlideIndex.value > 0 && currentReverseSrc) {
+  if (isDoctorMode.value && currentSlide?.id === 'slide-16') {
+    // FAQ reverse (s12r) is never played; preloading it races the p.3 settle
+    // and can flash Babutin (last frame of s12r / first of s12).
+    const resultsPoint3 = slides.value.find((s) => s.id === 'slide-11')
+    nextSrc = getSlideVideo(resultsPoint3)
+  } else if (currentSlideIndex.value > 0 && currentReverseSrc) {
     nextSrc = currentReverseSrc
   } else {
     for (let index = currentSlideIndex.value + 1; index < slides.value.length; index++) {
@@ -1040,6 +1060,64 @@ const settleOnSlideFrame = async (src, requestId) => {
   }
 }
 
+/** FAQ → Results p.3: never show s12 / s12r (Babutin). Only last frame of s11 (mob on mobile). */
+const settleDoctorFaqToResultsPoint3 = async (src, requestId) => {
+  if (!src || requestId !== videoRequestId) return
+
+  const activeEl = activeVideoElement.value === 'A' ? videoA.value : videoB.value
+  const stillEl = activeVideoElement.value === 'A' ? videoB.value : videoA.value
+  if (!activeEl || !stillEl) return
+
+  const stillHasS11 = isDoctorS11Url(videoElementUrl(stillEl))
+    && stillEl.src === getAbsoluteVideoUrl(src)
+    && !isDoctorS12FamilyUrl(videoElementUrl(stillEl))
+
+  try {
+    activeEl.pause()
+    stillEl.pause()
+    if (!stillHasS11) {
+      forceAssignVideoSrc(stillEl, src)
+    } else {
+      configureVideoElement(stillEl)
+    }
+
+    await waitForDecodedFrame(stillEl, { ignoreCurrent: !stillHasS11 })
+    if (requestId !== videoRequestId) return
+
+    if (isDoctorS12FamilyUrl(videoElementUrl(stillEl)) || !isDoctorS11Url(videoElementUrl(stillEl))) {
+      forceAssignVideoSrc(stillEl, src)
+      await waitForDecodedFrame(stillEl, { ignoreCurrent: true })
+      if (requestId !== videoRequestId) return
+    }
+
+    if (isDoctorS12FamilyUrl(videoElementUrl(stillEl)) || !isDoctorS11Url(videoElementUrl(stillEl))) {
+      suppressHeldVideoFrame.value = false
+      await settleWithoutVideo(requestId)
+      return
+    }
+
+    await seekToLastFrame(stillEl)
+    if (requestId !== videoRequestId) return
+
+    if (isDoctorS12FamilyUrl(videoElementUrl(stillEl)) || !isDoctorS11Url(videoElementUrl(stillEl))) {
+      suppressHeldVideoFrame.value = false
+      await settleWithoutVideo(requestId)
+      return
+    }
+
+    holdingVideoElement.value = null
+    activeVideoElement.value = activeVideoElement.value === 'A' ? 'B' : 'A'
+    videoBackgroundReady.value = true
+    suppressHeldVideoFrame.value = false
+    finishVideoLayerSwap(activeEl, requestId, { preload: true })
+  } catch (error) {
+    if (requestId === videoRequestId) {
+      suppressHeldVideoFrame.value = false
+      await settleWithoutVideo(requestId)
+    }
+  }
+}
+
 watch(isDoctorMode, async () => {
   suppressHeldVideoFrame.value = false
   await nextTick()
@@ -1232,10 +1310,14 @@ watch(currentSlideIndex, (newIndex, oldIndex) => {
 
     if (isDoctorFaqToResultsPoint3) {
       const requestId = ++videoRequestId
+      suppressHeldVideoFrame.value = true
+      videoA.value?.pause()
+      videoB.value?.pause()
+      holdingVideoElement.value = null
       const destSrc = getSlideVideo(slide)
       const settle = destSrc
-          ? settleOnSlideFrame(destSrc, requestId)
-          : settleWithoutVideo(requestId)
+          ? settleDoctorFaqToResultsPoint3(destSrc, requestId)
+          : settleWithoutVideo(requestId).then(() => { suppressHeldVideoFrame.value = false })
       settle.finally(finishCurrentTransition)
       return
     }
