@@ -3467,19 +3467,24 @@ body:has(.home-page-container.doctor-mode) {
 }
 
 .home-page-container.doctor-mode .slide-layer.active[data-content-ready="true"] .figma-step-block.advantages-pos .figma-step-text-stack::before,
-.home-page-container.doctor-mode .slide-layer.active[data-content-ready="true"] .figma-step-block.results-pos .figma-step-text-stack::before {
+.home-page-container.doctor-mode .slide-layer.active[data-content-ready="true"] .figma-step-block.results-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.active[data-content-ready="true"] .figma-step-block.results-pos .figma-step-indicator::before {
     opacity: 1;
     transition-delay: 0.05s;
 }
 
 .home-page-container.doctor-mode .slide-layer:not(.active) .figma-step-block.advantages-pos .figma-step-text-stack::before,
 .home-page-container.doctor-mode .slide-layer:not(.active) .figma-step-block.results-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer:not(.active) .figma-step-block.results-pos .figma-step-indicator::before,
 .home-page-container.doctor-mode .slide-layer.active[data-content-ready="false"] .figma-step-block.advantages-pos .figma-step-text-stack::before,
 .home-page-container.doctor-mode .slide-layer.active[data-content-ready="false"] .figma-step-block.results-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.active[data-content-ready="false"] .figma-step-block.results-pos .figma-step-indicator::before,
 .home-page-container.doctor-mode .slide-layer.content-exiting .figma-step-block.advantages-pos .figma-step-text-stack::before,
 .home-page-container.doctor-mode .slide-layer.content-exiting .figma-step-block.results-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.content-exiting .figma-step-block.results-pos .figma-step-indicator::before,
 .home-page-container.doctor-mode .slide-layer.content-exiting-back .figma-step-block.advantages-pos .figma-step-text-stack::before,
-.home-page-container.doctor-mode .slide-layer.content-exiting-back .figma-step-block.results-pos .figma-step-text-stack::before {
+.home-page-container.doctor-mode .slide-layer.content-exiting-back .figma-step-block.results-pos .figma-step-text-stack::before,
+.home-page-container.doctor-mode .slide-layer.content-exiting-back .figma-step-block.results-pos .figma-step-indicator::before {
     opacity: 0 !important;
     transition-duration: 0.55s;
     transition-delay: 0s !important;
@@ -3521,6 +3526,67 @@ body:has(.home-page-container.doctor-mode) {
 
 .home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-text-stack {
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.55), 0 1px 18px rgba(0, 0, 0, 0.45);
+}
+
+/* Results pager 1–2–3 sits above the copy haze and over white clipboards.
+   Same soft cloud under the circles so they stay readable like the title. */
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-indicator {
+    position: relative;
+    z-index: 1;
+}
+
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-indicator::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    left: -56px;
+    right: -72px;
+    top: -36px;
+    bottom: -36px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    background:
+        radial-gradient(
+            ellipse 78% 82% at 28% 50%,
+            rgba(0, 0, 0, 0.8) 0%,
+            rgba(0, 0, 0, 0.42) 42%,
+            transparent 72%
+        );
+    filter: blur(16px);
+    -webkit-filter: blur(16px);
+}
+
+.home-page-container.doctor-mode .figma-step-block.results-pos .figma-step-circle {
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.75), 0 1px 8px rgba(0, 0, 0, 0.5);
+}
+
+.home-page-container.doctor-mode .figma-persistent-step-indicator.persistent-results::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    left: -48px;
+    right: -56px;
+    top: -28px;
+    bottom: -28px;
+    pointer-events: none;
+    background:
+        radial-gradient(
+            ellipse 78% 82% at 28% 50%,
+            rgba(0, 0, 0, 0.8) 0%,
+            rgba(0, 0, 0, 0.42) 42%,
+            transparent 72%
+        );
+    filter: blur(16px);
+    -webkit-filter: blur(16px);
+}
+
+.home-page-container.doctor-mode .figma-persistent-step-indicator.persistent-results .figma-step-circle {
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.75), 0 1px 8px rgba(0, 0, 0, 0.5);
 }
 
 .figma-slide-title-inline {
