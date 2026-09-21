@@ -687,6 +687,7 @@ const getAbsoluteVideoUrl = (src) => {
 
 const videoElementUrl = (video) => String(video?.currentSrc || video?.src || '')
 const isDoctorS12FamilyUrl = (url) => /\/s12r?\.webm(?:\?|$)/.test(String(url || ''))
+const isDoctorS12ForwardUrl = (url) => /\/s12\.webm(?:\?|$)/.test(String(url || ''))
 const isDoctorS11Url = (url) => /\/s11\.webm(?:\?|$)/.test(String(url || ''))
 
 const forceAssignVideoSrc = (video, src) => {
@@ -945,6 +946,34 @@ const seekToLastFrame = (video) => new Promise((resolve) => {
   video.addEventListener('loadedmetadata', onMeta)
 })
 
+/** Park s12 on its last (FAQ beige) frame. s12r last frame is Babutin — park at t=0. */
+const pinDoctorFaqHeldFrame = async (video) => {
+  if (!video || !isDoctorS12FamilyUrl(videoElementUrl(video))) return
+  video.pause()
+  if (isDoctorS12ForwardUrl(videoElementUrl(video))) {
+    await seekToLastFrame(video)
+  } else if (video.currentTime > 0.001) {
+    await new Promise((resolve) => {
+      const t = window.setTimeout(resolve, 250)
+      const onSeeked = () => {
+        video.removeEventListener('seeked', onSeeked)
+        window.clearTimeout(t)
+        resolve()
+      }
+      video.addEventListener('seeked', onSeeked)
+      video.currentTime = 0
+    })
+  }
+  video.pause()
+}
+
+const attachPinDoctorS12OnEnded = (video) => {
+  if (!video || !isDoctorS12ForwardUrl(videoElementUrl(video) || video.src)) return
+  const pin = () => { void pinDoctorFaqHeldFrame(video) }
+  video.addEventListener('ended', pin, { once: true })
+  if (video.ended) pin()
+}
+
 const playVideoShot = async (src, { playbackRate = 1, onPlaybackStarted, onComplete } = {}) => {
   if (!src) { onComplete?.(); return }
 
@@ -1013,6 +1042,7 @@ const playVideoShot = async (src, { playbackRate = 1, onPlaybackStarted, onCompl
     holdingVideoElement.value = activeVideoElement.value
     activeVideoElement.value = activeVideoElement.value === 'A' ? 'B' : 'A'
     finishVideoLayerSwap(activeEl, requestId, { preload: true })
+    attachPinDoctorS12OnEnded(incomingEl)
 
     onPlaybackStarted?.(incomingEl, requestId)
     if (!played) {
@@ -1091,8 +1121,14 @@ const settleDoctorFaqToResultsPoint3 = async (src, requestId) => {
   }
 
   try {
-    // Keep the visible FAQ layer (end of s12) on screen. Hide only the
-    // inactive layer so we can decode s11 there without a beige blank.
+    // Pin FAQ beige (s12 last / s12r first) so a t≈0 snap cannot flash Babutin.
+    if (isDoctorS12FamilyUrl(videoElementUrl(activeEl))) {
+      await pinDoctorFaqHeldFrame(activeEl)
+      if (requestId !== videoRequestId) return
+    }
+
+    // Keep that FAQ frame on the active layer only. Do not hold s12 during
+    // the swap — holding a t=0 s12 layer would flash Babutin.
     holdingVideoElement.value = null
     stillEl.pause()
 
@@ -1110,9 +1146,10 @@ const settleDoctorFaqToResultsPoint3 = async (src, requestId) => {
       if (!stillReadyAsS11()) return
     }
 
+    const stillLetter = activeVideoElement.value === 'A' ? 'B' : 'A'
     videoBackgroundReady.value = true
-    holdingVideoElement.value = activeVideoElement.value
-    activeVideoElement.value = activeVideoElement.value === 'A' ? 'B' : 'A'
+    holdingVideoElement.value = null
+    activeVideoElement.value = stillLetter
     finishVideoLayerSwap(activeEl, requestId, { preload: true })
   } catch (error) {
     // Keep the FAQ frame; never blank the background on this path.
