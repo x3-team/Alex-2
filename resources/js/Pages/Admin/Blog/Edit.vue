@@ -35,6 +35,14 @@ const toDatetimeLocalValue = (iso) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+/** datetime-local is browser-local; store/send as UTC for the server (app TZ is UTC). */
+const datetimeLocalToUtcIso = (local) => {
+  if (!local) return ''
+  const d = new Date(local)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toISOString()
+}
+
 const parseSources = (sourcesData) => {
   if (!sourcesData) return []
   if (Array.isArray(sourcesData)) {
@@ -301,7 +309,7 @@ const submit = () => {
     seo_description: form.seo_description || '',
     seo_keywords: form.seo_keywords || '',
     is_active: form.is_active ? 1 : 0,
-    published_at: form.is_active && form.published_at ? form.published_at : '',
+    published_at: form.is_active && form.published_at ? datetimeLocalToUtcIso(form.published_at) : '',
     noindex: form.noindex ? 1 : 0,
     og_title: form.og_title || '',
     og_description: form.og_description || '',
