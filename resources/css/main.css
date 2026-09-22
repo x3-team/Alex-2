@@ -8045,3 +8045,41 @@ button {
         background: #c8ccbe;
     }
 }
+
+/* Listing covers are 2:1 photo+type composites. Fixed xl:h-[494px] +
+   object-fit:cover crops the right-hand overlay once the desktop sidebar
+   narrows the column (1280–1512). Match the frame to 2:1 and contain. */
+.blog-feed-cover {
+    display: block;
+    position: relative;
+    overflow: hidden;
+    height: 250px;
+}
+
+@media (min-width: 640px) {
+    .blog-feed-cover {
+        height: 350px;
+    }
+}
+
+@media (min-width: 1025px) {
+    .blog-feed-cover {
+        height: auto;
+        aspect-ratio: 2 / 1;
+    }
+}
+
+.blog-feed-cover > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    background-color: rgb(247, 247, 247);
+}
+
+@media (min-width: 1025px) {
+    .blog-feed-cover > img {
+        object-fit: contain;
+    }
+}

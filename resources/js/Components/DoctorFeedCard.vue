@@ -40,13 +40,12 @@ const durationLabel = computed(() => {
 
 <template>
   <article class="bg-[transparent] overflow-hidden">
-    <Link :href="href" class="block h-[250px] sm:h-[350px] xl:h-[494px] overflow-hidden relative">
+    <Link :href="href" class="blog-feed-cover">
       <img
         v-if="cover"
         :src="cover"
         :alt="item.title"
-        class="w-full h-full object-cover"
-        style="background-color: rgb(247, 247, 247);"
+        class="w-full h-full"
         loading="lazy"
         decoding="async"
       />

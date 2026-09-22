@@ -751,11 +751,11 @@ const ogImage = computed(() => {
               style="height: auto;"
           >
             <Link :href="articleUrl(blog.slug)" class="block">
-            <div class="block h-[250px] sm:h-[350px] xl:h-[494px] overflow-hidden relative">
+            <div class="blog-feed-cover">
               <img v-if="blog.preview_image"
                    :src="`/storage/${blog.preview_image}`"
                    :alt="blog.title"
-                   class="w-full h-full object-cover" style="background-color: rgb(247, 247, 247);"
+                   class="w-full h-full"
                    :loading="blogIdx === 0 ? 'eager' : 'lazy'"
                    decoding="async" />
               <div v-else class="w-full h-full bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center">
