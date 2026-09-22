@@ -31,8 +31,8 @@ const normalizeMaterials = (rows) => rows.map((item, index) => {
 
 const form = useForm({
   categories: props.categories.length
-    ? props.categories
-    : [{ id: newId(), name: 'Документы', slug: 'dokumenty', description: '' }],
+    ? props.categories.map((category) => ({ ...category, link_url: category.link_url || '' }))
+    : [{ id: newId(), name: 'Документы', slug: 'dokumenty', description: '', link_url: '' }],
   materials: props.materials.length
     ? normalizeMaterials(props.materials)
     : [],
@@ -99,7 +99,7 @@ const moveInCategory = (categoryId, from, to) => {
 
 const addCategory = () => {
   if (!canAddCategory()) return
-  form.categories.push({ id: newId(), name: '', slug: '', description: '' })
+  form.categories.push({ id: newId(), name: '', slug: '', description: '', link_url: '' })
 }
 
 const removeCategory = (index) => {
@@ -227,7 +227,11 @@ const submit = () => {
   form.materials = rows
   const materialsPayload = rows.map(({ source_type, ...row }) => row)
   form.transform(() => ({
-    categories: form.categories,
+    categories: form.categories.map((category) => {
+      const raw = (category.link_url || '').trim()
+      const link_url = !raw || raw.startsWith('/') ? raw : normalizeLinkUrl(raw)
+      return { ...category, link_url }
+    }),
     materials: materialsPayload,
     meta_title: form.meta_title,
     meta_description: form.meta_description,
@@ -286,7 +290,7 @@ const submit = () => {
             <div class="flex justify-between mb-4">
               <div>
                 <h3 class="text-lg font-medium">Категории</h3>
-                <p class="text-xs text-gray-500">До {{ MAX_CATEGORIES }} плашек. На сайте рисуются только созданные категории.</p>
+                <p class="text-xs text-gray-500">До {{ MAX_CATEGORIES }} плашек. Ссылка необязательна: если она есть, клик ведёт по ней и не открывает категорию.</p>
               </div>
               <button
                 type="button"
@@ -303,6 +307,8 @@ const submit = () => {
                 <input v-model="category.slug" class="border rounded-md px-3 py-2 text-sm" placeholder="slug (необязательно)" />
               </div>
               <input v-model="category.description" class="w-full border rounded-md px-3 py-2 text-sm" placeholder="Короткое описание" />
+              <input v-model="category.link_url" type="text" inputmode="url" class="w-full border rounded-md px-3 py-2 text-sm" placeholder="Ссылка категории (необязательно) — https://… или /путь" />
+              <p class="text-xs text-gray-500">Пусто — плашка открывает категорию с документами. Заполнена — клик сразу переходит по ссылке.</p>
               <button type="button" class="text-xs text-red-500" @click="removeCategory(index)">Удалить категорию</button>
             </div>
           </div>

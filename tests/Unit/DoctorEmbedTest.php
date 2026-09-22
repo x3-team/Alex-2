@@ -29,6 +29,15 @@ class DoctorEmbedTest extends TestCase
         $this->assertNull(DoctorEmbed::iframeSrc('https://example.com/not-a-video'));
     }
 
+    public function test_category_link_is_optional_and_normalized(): void
+    {
+        $this->assertSame('', DoctorMaterialsStore::normalizeCategoryLink('  '));
+        $this->assertSame('/materials?type=documents', DoctorMaterialsStore::normalizeCategoryLink('/materials?type=documents'));
+        $this->assertSame('https://eaaci.org/guide', DoctorMaterialsStore::normalizeCategoryLink('eaaci.org/guide'));
+        $this->assertSame('https://eaaci.org/guide', DoctorMaterialsStore::normalizeCategoryLink('https://eaaci.org/guide'));
+        $this->assertNull(DoctorMaterialsStore::normalizeCategoryLink('not a url'));
+    }
+
     public function test_public_category_plaques_are_capped_at_six(): void
     {
         $this->assertSame(6, DoctorMaterialsStore::MAX_CATEGORIES);

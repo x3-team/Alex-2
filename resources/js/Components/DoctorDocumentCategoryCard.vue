@@ -1,16 +1,34 @@
 <script setup>
+import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { useDoctorMode } from '@/composables/useDoctorMode'
 
-defineProps({
+const props = defineProps({
   category: { type: Object, required: true },
 })
 
 const { doctorsUrl } = useDoctorMode()
+
+const link = computed(() => (props.category.link_url || '').trim())
+const external = computed(() => /^(https?:)?\/\//i.test(link.value))
+const href = computed(() => link.value || doctorsUrl(`/materials/${props.category.slug}`))
 </script>
 
 <template>
-  <Link :href="doctorsUrl(`/materials/${category.slug}`)" class="doctor-doc-cat">
+  <a
+    v-if="external"
+    :href="href"
+    class="doctor-doc-cat"
+  >
+    <div class="doctor-doc-cat-copy">
+      <h3>{{ category.name }}</h3>
+      <p v-if="category.description">{{ category.description }}</p>
+    </div>
+    <div class="doctor-doc-cat-meta">
+      <img src="/assets/figma-arrow-right.svg" alt="" width="24" height="24" />
+    </div>
+  </a>
+  <Link v-else :href="href" class="doctor-doc-cat">
     <div class="doctor-doc-cat-copy">
       <h3>{{ category.name }}</h3>
       <p v-if="category.description">{{ category.description }}</p>
