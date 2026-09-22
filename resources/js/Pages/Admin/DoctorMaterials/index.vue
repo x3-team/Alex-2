@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { Head, useForm, Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import { SITE_VERSION } from '@/siteVersion.js'
 
 const props = defineProps({
   categories: { type: Array, default: () => [] },
@@ -43,6 +44,12 @@ const form = useForm({
 
 const isEditingSeo = ref(false)
 const dragging = ref(null)
+const isSaving = ref(false)
+const saveFeedback = ref(null)
+
+const clearSaveFeedback = () => {
+  saveFeedback.value = null
+}
 
 const MAX_CATEGORIES = 6
 const canAddCategory = () => form.categories.length < MAX_CATEGORIES
@@ -196,35 +203,49 @@ const onDragEnd = () => {
   dragging.value = null
 }
 
-const submit = () => {
-  const rows = flattenMaterials().map((item) => {
-    const source = item.source_type === 'link' ? 'link' : 'file'
-    const file_path = source === 'file' ? (item.file_path || '') : ''
-    const link_url = source === 'link' ? normalizeLinkUrl(item.link_url) : ''
-    return {
-      id: item.id,
-      title: item.title,
-      file_path,
-      link_url,
-      source_type: source,
-      date: item.date || '',
-      description: item.description || '',
-      category_id: item.category_id || '',
-      sort_order: item.sort_order,
-    }
-  })
+const buildMaterialsPayload = () => {
+  const rows = flattenMaterials()
+    .filter((item) => (item.title || '').trim() !== '')
+    .map((item) => {
+      const source = item.source_type === 'link' ? 'link' : 'file'
+      const file_path = source === 'file' ? (item.file_path || '') : ''
+      const link_url = source === 'link' ? normalizeLinkUrl(item.link_url) : ''
+      return {
+        id: item.id,
+        title: item.title.trim(),
+        file_path,
+        link_url,
+        date: item.date || '',
+        description: item.description || '',
+        category_id: item.category_id || '',
+        sort_order: item.sort_order,
+      }
+    })
+
   for (const row of rows) {
     const hasFile = !!row.file_path
     const hasLink = !!row.link_url
     if (hasFile === hasLink) {
-      alert(hasFile
-        ? 'У документа можно указать либо файл, либо ссылку — не оба сразу.'
-        : 'У каждого документа нужен либо файл, либо ссылка.')
-      return
+      return {
+        error: hasFile
+          ? `«${row.title}»: у документа можно указать либо файл, либо ссылку — не оба сразу.`
+          : `«${row.title}»: добавьте файл или ссылку.`,
+      }
     }
   }
-  form.materials = rows
-  const materialsPayload = rows.map(({ source_type, ...row }) => row)
+
+  return { rows }
+}
+
+const submit = () => {
+  clearSaveFeedback()
+
+  const { rows, error } = buildMaterialsPayload()
+  if (error) {
+    saveFeedback.value = { type: 'error', text: error }
+    return
+  }
+
   const categoriesPayload = form.categories.map((category) => {
     const raw = (category.link_url || '').trim()
     const link_url = !raw || raw.startsWith('/') ? raw : normalizeLinkUrl(raw)
@@ -237,18 +258,32 @@ const submit = () => {
     }
   })
 
-  router.put(route('admin.doctor-materials.update'), {
+  const payload = {
     categories: categoriesPayload,
-    materials: materialsPayload,
+    materials: rows,
     meta_title: form.meta_title,
     meta_description: form.meta_description,
     meta_keywords: form.meta_keywords,
-  }, {
+  }
+
+  isSaving.value = true
+  saveFeedback.value = { type: 'saving', text: 'Сохраняем…' }
+
+  router.put(route('admin.doctor-materials.update'), payload, {
     preserveScroll: true,
-    onSuccess: () => { isEditingSeo.value = false },
+    onSuccess: () => {
+      isEditingSeo.value = false
+      saveFeedback.value = { type: 'success', text: 'Сохранено' }
+    },
     onError: (errors) => {
       const first = Object.values(errors || {})[0]
-      alert(Array.isArray(first) ? first[0] : (first || 'Не удалось сохранить. Проверьте файл/ссылку у каждого документа.'))
+      saveFeedback.value = {
+        type: 'error',
+        text: Array.isArray(first) ? first[0] : (first || 'Не удалось сохранить. Проверьте данные.'),
+      }
+    },
+    onFinish: () => {
+      isSaving.value = false
     },
   })
 }
@@ -289,7 +324,7 @@ const submit = () => {
           </div>
         </div>
 
-        <form @submit.prevent="submit" class="space-y-6">
+        <form @submit.prevent="submit" class="space-y-6 doctor-materials-form">
           <div class="bg-white p-6 rounded-lg border">
             <div class="flex justify-between mb-4">
               <div>
@@ -441,15 +476,35 @@ const submit = () => {
             </button>
           </div>
 
-          <div v-if="Object.keys(form.errors || {}).length" class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 space-y-1">
-            <p v-for="(msg, key) in form.errors" :key="key">{{ Array.isArray(msg) ? msg[0] : msg }}</p>
-          </div>
-          <div class="flex justify-end">
-            <button type="submit" :disabled="form.processing" class="px-6 py-2.5 bg-blue-600 text-white rounded-md disabled:opacity-50">
-              Сохранить изменения
+          <div class="doctor-materials-form-spacer" aria-hidden="true" />
+        </form>
+
+        <div class="doctor-materials-save-dock" role="region" aria-label="Сохранение">
+          <div class="doctor-materials-save-dock-inner">
+            <div class="doctor-materials-save-meta">
+              <span class="text-xs text-gray-500 tabular-nums">Админ · v{{ SITE_VERSION }}</span>
+              <p
+                v-if="saveFeedback"
+                class="doctor-materials-save-status"
+                :class="`is-${saveFeedback.type}`"
+                role="status"
+              >
+                {{ saveFeedback.text }}
+              </p>
+              <p v-else-if="$page.props.flash?.success" class="doctor-materials-save-status is-success" role="status">
+                {{ $page.props.flash.success }}
+              </p>
+            </div>
+            <button
+              type="button"
+              class="doctor-materials-save-btn"
+              :disabled="isSaving"
+              @click="submit"
+            >
+              {{ isSaving ? 'Сохраняем…' : 'Сохранить изменения' }}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   </AdminLayout>
@@ -473,5 +528,82 @@ const submit = () => {
 .file-sort-move {
   transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
+}
+
+.doctor-materials-form-spacer {
+  height: 5rem;
+}
+
+.doctor-materials-save-dock {
+  position: fixed;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-top: 1px solid #e5e7eb;
+  background: rgba(249, 250, 251, 0.96);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
+}
+
+@media (min-width: 1024px) {
+  .doctor-materials-save-dock {
+    left: 20%;
+  }
+}
+
+.doctor-materials-save-dock-inner {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.doctor-materials-save-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.doctor-materials-save-status {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.doctor-materials-save-status.is-saving {
+  color: #2563eb;
+}
+
+.doctor-materials-save-status.is-success {
+  color: #15803d;
+}
+
+.doctor-materials-save-status.is-error {
+  color: #b91c1c;
+}
+
+.doctor-materials-save-btn {
+  flex-shrink: 0;
+  padding: 0.625rem 1.5rem;
+  border-radius: 0.375rem;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.doctor-materials-save-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.doctor-materials-save-btn:not(:disabled):hover {
+  background: #1d4ed8;
 }
 </style>
