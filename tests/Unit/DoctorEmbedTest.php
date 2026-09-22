@@ -108,6 +108,11 @@ class DoctorEmbedTest extends TestCase
         $this->assertStringContainsString("(\$category['link_url'] ?? '')", $docs);
         $this->assertStringContainsString('redirect()->away', $docs);
 
+        $admin = file_get_contents(dirname(__DIR__, 2).'/app/Http/Controllers/Admin/DoctorMaterialsController.php');
+        $this->assertIsString($admin);
+        $this->assertStringContainsString('category_links', $admin);
+        $this->assertStringContainsString("'link_url' => \$link", $admin);
+
         $this->assertIsString($chips);
         $this->assertStringContainsString("{ key: 'all', label: 'Все', path: '/materials' }", $chips);
         $this->assertStringContainsString("{ key: 'videos', label: 'Видео', path: '/materials?type=videos' }", $chips);
