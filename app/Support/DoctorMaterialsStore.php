@@ -30,6 +30,7 @@ class DoctorMaterialsStore
                 'name' => $name,
                 'slug' => $this->slug((string) ($row['slug'] ?? ''), $name),
                 'description' => trim((string) ($row['description'] ?? '')),
+                'link_url' => self::normalizeCategoryLink((string) ($row['link_url'] ?? '')) ?? '',
             ];
         }, $this->decode(self::CATEGORIES_KEY))));
     }
@@ -109,7 +110,7 @@ class DoctorMaterialsStore
     }
 
     /**
-     * @return list<array{id:string,name:string,slug:string,description:string,count:int,count_label:string}>
+     * @return list<array{id:string,name:string,slug:string,description:string,link_url:string,count:int,count_label:string}>
      */
     public function categoriesWithCounts(): array
     {
@@ -140,6 +141,7 @@ class DoctorMaterialsStore
             'name' => 'Документы',
             'slug' => 'dokumenty',
             'description' => 'Регистрационные документы, инструкции и бланки лаборатории.',
+            'link_url' => '',
         ];
 
         $files = array_map(function (array $file) use ($default) {
@@ -159,6 +161,29 @@ class DoctorMaterialsStore
     {
         Setting::set(self::CATEGORIES_KEY, json_encode(array_values($categories), JSON_UNESCAPED_UNICODE));
         Setting::set(self::FILES_KEY, json_encode(array_values($files), JSON_UNESCAPED_UNICODE));
+    }
+
+    /**
+     * Empty stays empty. A leading slash is an in-site path.
+     * Anything else must be an http(s) URL (https:// is added if the scheme is missing).
+     * Invalid input returns null.
+     */
+    public static function normalizeCategoryLink(string $raw): ?string
+    {
+        $url = trim($raw);
+        if ($url === '') {
+            return '';
+        }
+
+        if (str_starts_with($url, '/') && ! str_starts_with($url, '//')) {
+            return $url;
+        }
+
+        if (! preg_match('#^https?://#i', $url)) {
+            $url = 'https://'.$url;
+        }
+
+        return filter_var($url, FILTER_VALIDATE_URL) ? $url : null;
     }
 
     public static function ruDocuments(int $n): string

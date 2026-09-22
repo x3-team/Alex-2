@@ -35,6 +35,7 @@ class DoctorMaterialsController extends Controller
             'categories.*.name' => 'required|string|max:255',
             'categories.*.slug' => 'nullable|string|max:255',
             'categories.*.description' => 'nullable|string|max:500',
+            'categories.*.link_url' => 'nullable|string|max:1000',
             'materials' => 'present|array',
             'materials.*.id' => 'nullable|string|max:64',
             'materials.*.title' => 'required|string|max:255',
@@ -78,7 +79,7 @@ class DoctorMaterialsController extends Controller
         }
 
         $usedSlugs = [];
-        $categories = array_map(function (array $row) use (&$usedSlugs) {
+        $categories = array_map(function (array $row, int $index) use (&$usedSlugs) {
             $name = trim($row['name']);
             $id = trim((string) ($row['id'] ?? '')) ?: (string) Str::uuid();
             $slug = Str::slug($row['slug'] ?: $name, '-', 'ru') ?: 'dokumenty';
@@ -90,13 +91,21 @@ class DoctorMaterialsController extends Controller
             }
             $usedSlugs[] = $slug;
 
+            $link = DoctorMaterialsStore::normalizeCategoryLink((string) ($row['link_url'] ?? ''));
+            if ($link === null) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    "categories.{$index}.link_url" => 'Укажите корректный URL (https://…) или путь на сайте (/…).',
+                ]);
+            }
+
             return [
                 'id' => $id,
                 'name' => $name,
                 'slug' => $slug,
                 'description' => trim((string) ($row['description'] ?? '')),
+                'link_url' => $link,
             ];
-        }, array_slice($validated['categories'], 0, DoctorMaterialsStore::MAX_CATEGORIES));
+        }, array_slice($validated['categories'], 0, DoctorMaterialsStore::MAX_CATEGORIES), array_keys(array_slice($validated['categories'], 0, DoctorMaterialsStore::MAX_CATEGORIES)));
 
         $categoryIds = array_column($categories, 'id');
         $perCategory = [];
