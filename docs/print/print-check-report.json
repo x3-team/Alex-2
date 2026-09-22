@@ -1,0 +1,78 @@
+{
+  "solid_black_cmyk_percent": [
+    0.0,
+    0.0,
+    0.0,
+    100.0
+  ],
+  "bleed_tint_px": {
+    "top": 0,
+    "bottom": 0,
+    "left": 0,
+    "right": 0
+  },
+  "sheet_mm": [
+    205.0,
+    280.0
+  ],
+  "trim_mm": [
+    165.0,
+    240.0
+  ],
+  "bleed_mm": 20.0,
+  "dpi": 300,
+  "pixels": [
+    2421,
+    3307
+  ],
+  "content_scale": 0.92,
+  "qr_payload_sha256": "119d2470edda65e71e34125d19e9058ab42cfc5434fec9f075ae9a511be53d2e",
+  "type_area_intrusions_px": {
+    "top": 0,
+    "bottom": 0,
+    "left": 0,
+    "right": 0
+  },
+  "max_total_ink_percent": 116.1,
+  "darkest_ink_cmyk_percent": [
+    0.0,
+    0.0,
+    0.0,
+    99.8
+  ],
+  "rules_reach_sheet_edge": {
+    "left_edge": true,
+    "right_edge": true,
+    "top_edge": true
+  },
+  "brand_greens": {
+    "sage": {
+      "rgb": [
+        151,
+        174,
+        150
+      ],
+      "cmyk": [
+        102,
+        31,
+        103,
+        41
+      ],
+      "pixels": 13009
+    },
+    "mint": {
+      "rgb": [
+        210,
+        232,
+        209
+      ],
+      "cmyk": [
+        56,
+        0,
+        61,
+        0
+      ],
+      "pixels": 10198
+    }
+  }
+}
