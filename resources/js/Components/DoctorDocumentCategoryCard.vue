@@ -9,16 +9,27 @@ const props = defineProps({
 
 const { doctorsUrl } = useDoctorMode()
 
-const link = computed(() => (props.category.link_url || '').trim())
-const external = computed(() => /^(https?:)?\/\//i.test(link.value))
-const href = computed(() => link.value || doctorsUrl(`/materials/${props.category.slug}`))
+const categoryLink = computed(() => (props.category.link_url || '').trim())
+const hasCustomLink = computed(() => categoryLink.value !== '')
+const isAbsoluteUrl = computed(() => /^(https?:)?\/\//i.test(categoryLink.value))
+const href = computed(() => {
+  if (!hasCustomLink.value) {
+    return doctorsUrl(`/materials/${props.category.slug}`)
+  }
+  if (categoryLink.value.startsWith('/') && !categoryLink.value.startsWith('//')) {
+    return doctorsUrl(categoryLink.value)
+  }
+  return categoryLink.value
+})
 </script>
 
 <template>
   <a
-    v-if="external"
+    v-if="hasCustomLink"
     :href="href"
     class="doctor-doc-cat"
+    :target="isAbsoluteUrl ? '_blank' : undefined"
+    :rel="isAbsoluteUrl ? 'noopener noreferrer' : undefined"
   >
     <div class="doctor-doc-cat-copy">
       <h3>{{ category.name }}</h3>

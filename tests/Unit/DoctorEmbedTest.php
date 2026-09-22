@@ -105,6 +105,8 @@ class DoctorEmbedTest extends TestCase
         $this->assertStringContainsString("redirect()->to('/materials?type=documents', 301)", $docs);
         $this->assertStringContainsString('categoryBySlug', $docs);
         $this->assertStringContainsString("Public/DoctorMaterialCategory", $docs);
+        $this->assertStringContainsString("(\$category['link_url'] ?? '')", $docs);
+        $this->assertStringContainsString('redirect()->away', $docs);
 
         $this->assertIsString($chips);
         $this->assertStringContainsString("{ key: 'all', label: 'Все', path: '/materials' }", $chips);
