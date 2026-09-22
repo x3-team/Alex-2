@@ -258,8 +258,16 @@ const submit = () => {
     }
   })
 
+  const category_links = {}
+  for (const category of categoriesPayload) {
+    if (category.id) {
+      category_links[category.id] = category.link_url || ''
+    }
+  }
+
   const payload = {
     categories: categoriesPayload,
+    category_links,
     materials: rows,
     meta_title: form.meta_title,
     meta_description: form.meta_description,
@@ -271,9 +279,25 @@ const submit = () => {
 
   router.put(route('admin.doctor-materials.update'), payload, {
     preserveScroll: true,
-    onSuccess: () => {
+    preserveState: true,
+    onSuccess: (page) => {
       isEditingSeo.value = false
-      saveFeedback.value = { type: 'success', text: 'Сохранено' }
+      const saved = page?.props?.categories || []
+      const savedMaterials = page?.props?.materials || []
+      if (saved.length) {
+        form.categories = saved.map((category) => ({ ...category, link_url: category.link_url || '' }))
+      }
+      if (Array.isArray(savedMaterials)) {
+        form.materials = normalizeMaterials(savedMaterials)
+      }
+      const missing = categoriesPayload.filter((category) => {
+        if (!category.link_url) return false
+        const match = saved.find((row) => row.id === category.id)
+        return !match || !(match.link_url || '').trim()
+      })
+      saveFeedback.value = missing.length
+        ? { type: 'error', text: 'Сервер не записал ссылку категории. Обновите страницу и сохраните ещё раз.' }
+        : { type: 'success', text: 'Сохранено' }
     },
     onError: (errors) => {
       const first = Object.values(errors || {})[0]

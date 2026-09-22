@@ -36,6 +36,8 @@ class DoctorMaterialsController extends Controller
             'categories.*.slug' => 'nullable|string|max:255',
             'categories.*.description' => 'nullable|string|max:500',
             'categories.*.link_url' => 'nullable|string|max:1000',
+            'category_links' => 'nullable|array',
+            'category_links.*' => 'nullable|string|max:1000',
             'materials' => 'present|array',
             'materials.*.id' => 'nullable|string|max:64',
             'materials.*.title' => 'required|string|max:255',
@@ -79,7 +81,8 @@ class DoctorMaterialsController extends Controller
         }
 
         $usedSlugs = [];
-        $categories = array_map(function (array $row, int $index) use (&$usedSlugs) {
+        $categoryLinks = $validated['category_links'] ?? [];
+        $categories = array_map(function (array $row, int $index) use (&$usedSlugs, $categoryLinks) {
             $name = trim($row['name']);
             $id = trim((string) ($row['id'] ?? '')) ?: (string) Str::uuid();
             $slug = Str::slug($row['slug'] ?: $name, '-', 'ru') ?: 'dokumenty';
@@ -91,7 +94,11 @@ class DoctorMaterialsController extends Controller
             }
             $usedSlugs[] = $slug;
 
-            $link = DoctorMaterialsStore::normalizeCategoryLink((string) ($row['link_url'] ?? ''));
+            $rawLink = (string) ($row['link_url'] ?? '');
+            if ($rawLink === '' && $id !== '' && array_key_exists($id, $categoryLinks)) {
+                $rawLink = (string) $categoryLinks[$id];
+            }
+            $link = DoctorMaterialsStore::normalizeCategoryLink($rawLink);
             if ($link === null) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     "categories.{$index}.link_url" => 'Укажите корректный URL (https://…) или путь на сайте (/…).',

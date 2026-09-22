@@ -69,16 +69,14 @@ apply() {
   fi
   php artisan view:cache
 
+  # Prod php-fpm has opcache.validate_timestamps=0 — new PHP never loads until FPM reload.
+  echo "==> Reloading php-fpm so opcache picks up new PHP"
+  if command -v systemctl >/dev/null 2>&1; then
+    sudo -n systemctl reload php8.2-fpm 2>/dev/null         || sudo -n systemctl reload php8.3-fpm 2>/dev/null         || sudo -n systemctl reload php-fpm 2>/dev/null         || echo "==> WARN: could not reload php-fpm via systemctl (need passwordless sudo or manual reload)"
+  fi
+  php artisan inertia:stop-ssr 2>/dev/null || true
   if [[ "${RESTART_SERVICES}" == "true" ]]; then
-    echo "==> RESTART_SERVICES=true — reload php-fpm so opcache picks up new PHP"
-    if command -v systemctl >/dev/null 2>&1; then
-      sudo -n systemctl reload php8.2-fpm 2>/dev/null         || sudo -n systemctl reload php8.3-fpm 2>/dev/null         || sudo -n systemctl reload php-fpm 2>/dev/null         || echo "==> WARN: could not reload php-fpm via systemctl (need passwordless sudo or manual reload)"
-    fi
-    if command -v php >/dev/null 2>&1; then
-      php -r 'if (function_exists("opcache_reset")) { opcache_reset(); echo "==> opcache_reset via CLI\n"; }' 2>/dev/null || true
-    fi
-  else
-    echo "==> Leaving php-fpm and Inertia SSR untouched. Restart them manually if the new SSR bundle must load."
+    echo "==> RESTART_SERVICES=true — extra reload requested"
   fi
 
   echo "==> apply finished in ${APP_ROOT}"
