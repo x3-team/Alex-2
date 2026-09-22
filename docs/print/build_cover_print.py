@@ -16,7 +16,10 @@ Applies the prepress corrections requested by the publisher (18.09.2026):
 from __future__ import annotations
 
 import hashlib
+import io
 import json
+import re
+import subprocess
 from pathlib import Path
 
 import numpy as np
@@ -32,6 +35,8 @@ CMYK_ICC = HERE / "FOGRA39L.icc"
 
 OUT_TIF = HERE / "alex-cover-165x240-bleed20-cmyk-300dpi.tif"
 OUT_PDF = HERE / "alex-cover-165x240-bleed20-300dpi.pdf"
+OUT_EPS = HERE / "alex-cover-165x240-bleed20-cmyk-vector.eps"
+OUT_EPS_PDF = HERE / "src" / "_vector-corrected.pdf"
 OUT_PREVIEW = HERE / "alex-cover-165x240-preview.jpg"
 OUT_REPORT = HERE / "print-check-report.json"
 
@@ -366,6 +371,435 @@ def verify(cmyk_image: Image.Image, rgb_sheet: Image.Image, payload_digest: str)
     }
 
 
+MM_PER_SRC_PT = PAGE_W_MM / 1291.0
+FLAT_SRC = HERE / "src" / "_opaque-source.pdf"
+
+# pdftocairo rounds the EPS BoundingBox to whole points and clips to it, so the
+# EPS sheet is laid out on exact points. The trim stays 165x240 dead centre;
+# only the bleed differs from 20 mm by a hair (19.98 / 20.03).
+EPS_SHEET_W_PT, EPS_SHEET_H_PT = 581, 794
+EPS_SHEET_W_MM = EPS_SHEET_W_PT / 72 * 25.4
+EPS_SHEET_H_MM = EPS_SHEET_H_PT / 72 * 25.4
+
+
+def flatten_transparency() -> dict[str, int]:
+    """Resolve the artwork's transparency so EPS can stay vector.
+
+    Ghostscript rasterises a whole page rather than emit transparent EPS, which
+    is why the first EPS we sent arrived as one flat bitmap. Everything here
+    sits on white, so a constant-alpha fill is exactly equal to an opaque fill
+    of the composited colour, and the two group masks are plain rectangles the
+    size of the trim - the clip we apply ourselves already does that job.
+    """
+    doc = pymupdf.open(SRC_PDF)
+    stats = {"alpha_fills": 0, "masks_dropped": 0, "images_baked": 0}
+
+    # Image alpha: composite onto white and drop the soft mask.
+    for xref in range(1, doc.xref_length()):
+        try:
+            obj = doc.xref_object(xref)
+        except Exception:
+            continue
+        if "/Subtype /Image" not in obj and "/Subtype/Image" not in obj:
+            continue
+        smask = doc.xref_get_key(xref, "SMask")
+        if not smask or smask[0] == "null":
+            continue
+        base = doc.extract_image(xref)
+        mask_xref = int(smask[1].split()[0].lstrip("["))
+        alpha = doc.extract_image(mask_xref)
+        rgb = Image.open(io.BytesIO(base["image"])).convert("RGB")
+        a = Image.open(io.BytesIO(alpha["image"])).convert("L").resize(rgb.size)
+        flat = Image.new("RGB", rgb.size, (255, 255, 255))
+        flat.paste(rgb, mask=a)
+        buf = io.BytesIO()
+        flat.save(buf, format="PNG")
+        doc.update_stream(xref, buf.getvalue(), new=True)
+        doc.xref_set_key(xref, "SMask", "null")
+        doc.xref_set_key(xref, "Filter", "/FlateDecode")
+        doc.xref_set_key(xref, "ColorSpace", "/DeviceRGB")
+        doc.xref_set_key(xref, "BitsPerComponent", "8")
+        # PNG carries its own filtering, so hand Ghostscript raw samples.
+        doc.update_stream(xref, np.array(flat).tobytes(), compress=True)
+        stats["images_baked"] += 1
+
+    gs_token = re.compile(rb"/([A-Za-z0-9]+)\s+gs\b")
+    colour = re.compile(rb"((?:[-\d.]+\s+){3})scn\b")
+    entry = re.compile(r"/([A-Za-z0-9]+)\s*<<(.*?)>>", re.S)
+
+    def ext_g_states(source: str) -> tuple[dict[bytes, float], set[bytes]]:
+        """Read `name -> fill alpha` and the names that carry a soft mask."""
+        if "/ExtGState" not in source:
+            return {}, set()
+        tail = source.split("/ExtGState", 1)[1]
+        alphas: dict[bytes, float] = {}
+        masked: set[bytes] = set()
+        for name, body in entry.findall(tail):
+            if "/SMask" in body and "/None" not in body:
+                masked.add(name.encode())
+            found = re.search(r"/ca\s+([\d.]+)", body)
+            if found:
+                alphas[name.encode()] = float(found.group(1))
+        return alphas, masked
+
+    def rewrite(stream_xref: int, alphas: dict[bytes, float], masked: set[bytes]):
+        data = doc.xref_stream(stream_xref)
+        out, cursor = bytearray(), 0
+        for token in gs_token.finditer(data):
+            name = token.group(1)
+            if name in masked:
+                # The mask only clips to the trim; our own clip already does it.
+                out += data[cursor : token.start()]
+                cursor = token.end()
+                stats["masks_dropped"] += 1
+                continue
+            out += data[cursor : token.end()]
+            cursor = token.end()
+            alpha = alphas.get(name, 1.0)
+            if alpha >= 1.0:
+                continue
+            nxt = colour.search(data, cursor)
+            if not nxt:
+                continue
+            rgb = [float(v) for v in nxt.group(1).split()]
+            mixed = [1.0 - alpha * (1.0 - v) for v in rgb]
+            out += data[cursor : nxt.start()]
+            out += f"{mixed[0]:.6f} {mixed[1]:.6f} {mixed[2]:.6f} scn".encode()
+            cursor = nxt.end()
+            stats["alpha_fills"] += 1
+        out += data[cursor:]
+        doc.update_stream(stream_xref, bytes(out))
+
+    for xref in range(1, doc.xref_length()):
+        try:
+            obj = doc.xref_object(xref)
+        except Exception:
+            continue
+        if not doc.xref_is_stream(xref) or "/ExtGState" not in obj:
+            continue
+        alphas, masked = ext_g_states(obj)
+        if alphas or masked:
+            rewrite(xref, alphas, masked)
+
+    # The page keeps its resources in a separate dictionary.
+    page_xref = doc[0].xref
+    resources = doc.xref_get_key(page_xref, "Resources")
+    if resources and resources[0] == "xref":
+        res_xref = int(resources[1].split()[0])
+        alphas, masked = ext_g_states(doc.xref_object(res_xref))
+        contents = doc.xref_get_key(page_xref, "Contents")
+        if (alphas or masked) and contents and contents[0] == "xref":
+            rewrite(int(contents[1].split()[0]), alphas, masked)
+
+    # Editing stream dictionaries by hand detaches them from their data, so the
+    # group flags go through the key API and stay as harmless nulls.
+    for xref in range(1, doc.xref_length()):
+        try:
+            if "/Group" in doc.xref_object(xref):
+                doc.xref_set_key(xref, "Group", "null")
+        except Exception:
+            continue
+
+    doc.save(FLAT_SRC, garbage=3, deflate=True)
+    doc.close()
+    return stats
+
+
+def mm_to_pt(value: float) -> float:
+    return value / 25.4 * 72.0
+
+
+def qr_matrix() -> tuple[np.ndarray, str]:
+    """Rebuild the QR from the artwork and prove it still encodes the same link."""
+    import cv2
+
+    doc = pymupdf.open(SRC_PDF)
+    bitmap = None
+    for xref, *_ in doc[0].get_images(full=True):
+        info = doc.extract_image(xref)
+        if info["width"] >= 400:
+            bitmap = cv2.imdecode(
+                np.frombuffer(info["image"], np.uint8), cv2.IMREAD_GRAYSCALE
+            )
+            break
+    if bitmap is None:
+        raise RuntimeError("QR image not found in the source PDF")
+
+    payload, _, _ = cv2.QRCodeDetector().detectAndDecode(bitmap)
+    if not payload:
+        raise RuntimeError("could not decode the original QR")
+
+    code = qrcode.QRCode(error_correction=QR_ECC, border=0, box_size=1)
+    code.add_data(payload)
+    code.make(fit=True)
+    matrix = np.array(code.get_matrix(), dtype=bool)
+
+    mask = bitmap < 128
+    ys, xs = np.where(mask)
+    tight = mask[ys.min() : ys.max() + 1, xs.min() : xs.max() + 1].astype(np.float32)
+    n = matrix.shape[0]
+    resampled = cv2.resize(tight, (n, n), interpolation=cv2.INTER_AREA) > 0.5
+    if not (resampled == matrix).all():
+        raise RuntimeError("regenerated QR does not match the original modules")
+    return matrix, hashlib.sha256(payload.encode()).hexdigest()
+
+
+def recolour_streams(doc: pymupdf.Document, greens: dict) -> dict[str, int]:
+    """Neutrals to DeviceGray, brand greens to DeviceCMYK.
+
+    Everything downstream then separates the way Geotar asked for: grey and
+    black ride on K alone, so solid black is 0/0/0/100 instead of a
+    four-colour build, and Ghostscript has nothing left to guess at.
+    """
+    mixes = {name: info["cmyk"] for name, info in greens.items()}
+    pattern = re.compile(rb"((?:[-\d.]+\s+){3})(scn|rg)\b")
+    counts = {"gray": 0, "cmyk": 0}
+
+    def replace(match: re.Match) -> bytes:
+        rgb = [float(v) for v in match.group(1).split()]
+        if max(rgb) - min(rgb) <= 0.02:
+            counts["gray"] += 1
+            return f"{sum(rgb) / 3:.4f} g".encode()
+        nearest, best = None, 1e9
+        for name, target in BRAND_GREENS.items():
+            d = sum((rgb[i] * 255 - target[i]) ** 2 for i in range(3))
+            if d < best:
+                nearest, best = name, d
+        c, m, y, k = (v / 255 for v in mixes[nearest])
+        counts["cmyk"] += 1
+        return f"{c:.4f} {m:.4f} {y:.4f} {k:.4f} k".encode()
+
+    for xref in range(1, doc.xref_length()):
+        if not doc.xref_is_stream(xref):
+            continue
+        try:
+            data = doc.xref_stream(xref)
+        except Exception:
+            continue
+        patched, n = pattern.subn(replace, data)
+        if n:
+            doc.update_stream(xref, patched)
+    return counts
+
+
+def build_vector_eps(greens: dict) -> dict:
+    """Vector EPS for the publisher, fonts flattened to curves.
+
+    The previous EPS was a single flattened bitmap, which they could not check.
+    """
+    flat_stats = flatten_transparency()
+    src = pymupdf.open(FLAT_SRC)
+    out = pymupdf.open()
+    page = out.new_page(width=EPS_SHEET_W_PT, height=EPS_SHEET_H_PT)
+
+    # Source coordinates are relative to the trim centre, which sits at the
+    # centre of either sheet, so the mapping carries over unchanged.
+    cx, cy = EPS_SHEET_W_MM / 2, EPS_SHEET_H_MM / 2
+    src_cx, src_cy = PAGE_W_MM / 2, PAGE_H_MM / 2
+    lo_x, hi_x = BLEED_MM + CROP_INSET_MM, BLEED_MM + TRIM_W_MM - CROP_INSET_MM
+    lo_y, hi_y = BLEED_MM + CROP_INSET_MM, BLEED_MM + TRIM_H_MM - CROP_INSET_MM
+
+    def place_x(value_mm: float) -> float:
+        return mm_to_pt(cx + (value_mm - src_cx) * CONTENT_SCALE)
+
+    def place_y(value_mm: float) -> float:
+        return mm_to_pt(cy + (value_mm - src_cy) * CONTENT_SCALE)
+
+    # pdftocairo derives the EPS BoundingBox from the inked area, so the sheet
+    # needs an explicit white ground or the empty foot of the page is cropped.
+    page.draw_rect(
+        pymupdf.Rect(0, 0, EPS_SHEET_W_PT, EPS_SHEET_H_PT),
+        color=None,
+        fill=(1, 1, 1),
+    )
+    page.show_pdf_page(
+        pymupdf.Rect(place_x(lo_x), place_y(lo_y), place_x(hi_x), place_y(hi_y)),
+        src,
+        0,
+        clip=pymupdf.Rect(
+            lo_x / MM_PER_SRC_PT,
+            lo_y / MM_PER_SRC_PT,
+            hi_x / MM_PER_SRC_PT,
+            hi_y / MM_PER_SRC_PT,
+        ),
+    )
+
+    # Overshoot the sheet so the rules are unambiguously trimmed off, not
+    # stopped a fraction short of the edge.
+    rule_grey = (0.7865, 0.7865, 0.7865)
+    for rule in RULES["horizontal"]:
+        page.draw_rect(
+            pymupdf.Rect(
+                0,
+                place_y(rule["y0"]),
+                EPS_SHEET_W_PT,
+                place_y(rule["y1"]),
+            ),
+            color=None,
+            fill=rule_grey,
+        )
+    for rule in RULES["vertical"]:
+        page.draw_rect(
+            pymupdf.Rect(
+                place_x(rule["x0"]),
+                0,
+                place_x(rule["x1"]),
+                place_y(238.346),
+            ),
+            color=None,
+            fill=rule_grey,
+        )
+
+    matrix, digest = qr_matrix()
+    n = matrix.shape[0]
+    x0, x1 = place_x(QR_RECT_MM["x0"]), place_x(QR_RECT_MM["x1"])
+    y0, y1 = place_y(QR_RECT_MM["y0"]), place_y(QR_RECT_MM["y1"])
+    page.draw_rect(pymupdf.Rect(x0, y0, x1, y1), color=None, fill=(1, 1, 1))
+    step_x, step_y = (x1 - x0) / n, (y1 - y0) / n
+    for row in range(n):
+        for col in range(n):
+            if not matrix[row, col]:
+                continue
+            page.draw_rect(
+                pymupdf.Rect(
+                    x0 + col * step_x,
+                    y0 + row * step_y,
+                    x0 + (col + 1) * step_x,
+                    y0 + (row + 1) * step_y,
+                ),
+                color=None,
+                fill=(0, 0, 0),
+            )
+
+    out.save(OUT_EPS_PDF, garbage=3)
+    out.close()
+
+    patched = pymupdf.open(OUT_EPS_PDF)
+    counts = recolour_streams(patched, greens)
+    trim = pymupdf.Rect(
+        (EPS_SHEET_W_PT - mm_to_pt(TRIM_W_MM)) / 2,
+        (EPS_SHEET_H_PT - mm_to_pt(TRIM_H_MM)) / 2,
+        (EPS_SHEET_W_PT + mm_to_pt(TRIM_W_MM)) / 2,
+        (EPS_SHEET_H_PT + mm_to_pt(TRIM_H_MM)) / 2,
+    )
+    box = f"[{trim.x0:.4f} {trim.y0:.4f} {trim.x1:.4f} {trim.y1:.4f}]"
+    patched.xref_set_key(patched[0].xref, "TrimBox", box)
+    patched.xref_set_key(
+        patched[0].xref, "BleedBox", f"[0 0 {EPS_SHEET_W_PT} {EPS_SHEET_H_PT}]"
+    )
+    patched.save(OUT_EPS_PDF, incremental=True, encryption=pymupdf.PDF_ENCRYPT_KEEP)
+    patched.close()
+
+    # Ghostscript's eps2write rasterises this artwork wholesale, which is how the
+    # first EPS ended up as a single bitmap. pdftocairo keeps the vectors.
+    subprocess.run(
+        [
+            "pdftocairo",
+            "-eps",
+            "-level3",
+            str(OUT_EPS_PDF),
+            str(OUT_EPS),
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+    # The sheet is whole points, so cairo's rounded box must already be exact -
+    # anything else would mean the artwork shifted inside the box.
+    found = re.search(rb"%%BoundingBox:([^\r\n]*)", OUT_EPS.read_bytes())
+    box_pt = [int(float(v)) for v in found.group(1).split()]
+    if box_pt != [0, 0, EPS_SHEET_W_PT, EPS_SHEET_H_PT]:
+        raise RuntimeError(f"unexpected EPS BoundingBox: {box_pt}")
+
+    for scratch in (FLAT_SRC, OUT_EPS_PDF):
+        scratch.unlink(missing_ok=True)
+
+    return {
+        "sheet_mm": [round(EPS_SHEET_W_MM, 2), round(EPS_SHEET_H_MM, 2)],
+        "trim_mm": [TRIM_W_MM, TRIM_H_MM],
+        "bleed_mm": [
+            round((EPS_SHEET_W_MM - TRIM_W_MM) / 2, 2),
+            round((EPS_SHEET_H_MM - TRIM_H_MM) / 2, 2),
+        ],
+        "recoloured_ops": counts,
+        "flattened": flat_stats,
+        "qr_payload_sha256": digest,
+        **verify_eps(),
+    }
+
+
+def verify_eps() -> dict:
+    """Run the publisher's checklist against the EPS itself, not its source."""
+    import cv2
+
+    raster = HERE / "_tmp_eps_check.tif"
+    subprocess.run(
+        [
+            "gs",
+            "-q",
+            "-dBATCH",
+            "-dNOPAUSE",
+            "-dSAFER",
+            "-dEPSCrop",
+            "-sDEVICE=tiff32nc",
+            f"-r{DPI}",
+            f"-sOutputFile={raster}",
+            str(OUT_EPS),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    arr = np.array(Image.open(raster)).astype(np.int16)
+    raster.unlink()
+
+    h, w, _ = arr.shape
+    s = w / EPS_SHEET_W_MM
+    ink = arr.sum(axis=2)
+    bleed_x = (EPS_SHEET_W_MM - TRIM_W_MM) / 2
+    bleed_y = (EPS_SHEET_H_MM - TRIM_H_MM) / 2
+    cx, cy = EPS_SHEET_W_MM / 2, EPS_SHEET_H_MM / 2
+
+    pad = round(px(0.7, DPI))
+    mask = ink > 0
+    for rule in RULES["vertical"]:
+        c = px(cx + (rule["x0"] - PAGE_W_MM / 2) * CONTENT_SCALE, DPI)
+        mask[:, max(0, int(c) - pad) : int(c) + pad] = False
+    for rule in RULES["horizontal"]:
+        c = px(cy + (rule["y0"] - PAGE_H_MM / 2) * CONTENT_SCALE, DPI)
+        mask[max(0, int(c) - pad) : int(c) + pad, :] = False
+
+    def count(x0, y0, x1, y1):
+        return int(
+            mask[round(y0 * s) : round(y1 * s), round(x0 * s) : round(x1 * s)].sum()
+        )
+
+    tx1, ty1 = bleed_x + TRIM_W_MM, bleed_y + TRIM_H_MM
+    solid = arr[arr[..., 3] > 240]
+    grey = (255 - np.clip(ink / 4, 0, 255)).astype(np.uint8)
+    return {
+        "eps_solid_black_cmy_percent": [
+            round(float(v) / 2.55, 1) for v in solid[:, :3].max(axis=0)
+        ],
+        "eps_max_total_ink_percent": round(float(ink.max()) / 2.55, 1),
+        "eps_bleed_tint_px": count(0, 0, EPS_SHEET_W_MM, bleed_y)
+        + count(0, ty1, EPS_SHEET_W_MM, EPS_SHEET_H_MM)
+        + count(0, 0, bleed_x, EPS_SHEET_H_MM)
+        + count(tx1, 0, EPS_SHEET_W_MM, EPS_SHEET_H_MM),
+        "eps_type_area_intrusions_px": {
+            "top": count(bleed_x, bleed_y, tx1, bleed_y + SAFE_MM),
+            "bottom": count(bleed_x, ty1 - SAFE_MM, tx1, ty1),
+            "left": count(bleed_x, bleed_y, bleed_x + SAFE_MM, ty1),
+            "right": count(tx1 - SAFE_MM, bleed_y, tx1, ty1),
+        },
+        "eps_rules_reach_sheet_edge": {
+            "left": bool((ink[:, 0] > 0).any()),
+            "right": bool((ink[:, -1] > 0).any()),
+            "top": bool((ink[0, :] > 0).any()),
+        },
+        "eps_qr_scans": bool(cv2.QRCodeDetector().detectAndDecode(grey)[0]),
+    }
+
+
 def write_pdf(cmyk_image: Image.Image) -> None:
     """Sheet-sized PDF with TrimBox/BleedBox so the trim is unambiguous."""
     doc = pymupdf.open()
@@ -411,9 +845,11 @@ def main() -> None:
     ).save(OUT_PREVIEW, quality=92)
 
     write_pdf(cmyk_image)
+    eps_info = build_vector_eps(locked)
 
     report = verify(cmyk_image, sheet, payload_digest)
     report["brand_greens"] = locked
+    report["vector_eps"] = eps_info
     OUT_REPORT.write_text(json.dumps(report, indent=2, ensure_ascii=False))
     print(json.dumps(report, indent=2, ensure_ascii=False))
 

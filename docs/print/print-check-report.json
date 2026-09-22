@@ -74,5 +74,48 @@
       ],
       "pixels": 10198
     }
+  },
+  "vector_eps": {
+    "sheet_mm": [
+      204.96,
+      280.11
+    ],
+    "trim_mm": [
+      165.0,
+      240.0
+    ],
+    "bleed_mm": [
+      19.98,
+      20.05
+    ],
+    "recoloured_ops": {
+      "gray": 1213,
+      "cmyk": 14
+    },
+    "flattened": {
+      "alpha_fills": 290,
+      "masks_dropped": 2,
+      "images_baked": 17
+    },
+    "qr_payload_sha256": "119d2470edda65e71e34125d19e9058ab42cfc5434fec9f075ae9a511be53d2e",
+    "eps_solid_black_cmy_percent": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "eps_max_total_ink_percent": 129.8,
+    "eps_bleed_tint_px": 0,
+    "eps_type_area_intrusions_px": {
+      "top": 0,
+      "bottom": 0,
+      "left": 0,
+      "right": 0
+    },
+    "eps_rules_reach_sheet_edge": {
+      "left": true,
+      "right": true,
+      "top": true
+    },
+    "eps_qr_scans": true
   }
 }
