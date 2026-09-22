@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
+import { SITE_VERSION } from '@/siteVersion.js'
 
 const page = usePage()
 const currentUser = computed(() => page.props.auth?.user)
@@ -318,6 +319,7 @@ const sidebarOpen = ref(false)
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium truncate">{{ currentUser?.name }}</p>
             <p class="text-xs text-gray-400 truncate">{{ currentUser?.email }}</p>
+            <p class="text-xs text-gray-500 mt-1 tabular-nums" title="Версия фронта на сайте">v{{ SITE_VERSION }}</p>
           </div>
         </div>
         <Link
