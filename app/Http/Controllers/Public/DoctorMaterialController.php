@@ -44,6 +44,15 @@ class DoctorMaterialController extends Controller
             abort(404);
         }
 
+        $categoryLink = trim((string) ($category['link_url'] ?? ''));
+        if ($categoryLink !== '') {
+            if (str_starts_with($categoryLink, '/') && ! str_starts_with($categoryLink, '//')) {
+                return redirect()->to($categoryLink);
+            }
+
+            return redirect()->away($categoryLink);
+        }
+
         $files = $store->filesForCategory($category['id']);
         $others = array_values(array_filter(
             $store->publicCategories(),

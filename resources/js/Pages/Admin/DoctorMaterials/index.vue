@@ -223,28 +223,32 @@ const submit = () => {
       return
     }
   }
-  // Explicit transform so nested link_url always goes in the PUT body
   form.materials = rows
   const materialsPayload = rows.map(({ source_type, ...row }) => row)
-  form.transform(() => ({
-    categories: form.categories.map((category) => {
-      const raw = (category.link_url || '').trim()
-      const link_url = !raw || raw.startsWith('/') ? raw : normalizeLinkUrl(raw)
-      return { ...category, link_url }
-    }),
+  const categoriesPayload = form.categories.map((category) => {
+    const raw = (category.link_url || '').trim()
+    const link_url = !raw || raw.startsWith('/') ? raw : normalizeLinkUrl(raw)
+    return {
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      description: category.description || '',
+      link_url,
+    }
+  })
+
+  router.put(route('admin.doctor-materials.update'), {
+    categories: categoriesPayload,
     materials: materialsPayload,
     meta_title: form.meta_title,
     meta_description: form.meta_description,
     meta_keywords: form.meta_keywords,
-  })).put(route('admin.doctor-materials.update'), {
+  }, {
     preserveScroll: true,
     onSuccess: () => { isEditingSeo.value = false },
     onError: (errors) => {
       const first = Object.values(errors || {})[0]
       alert(Array.isArray(first) ? first[0] : (first || 'Не удалось сохранить. Проверьте файл/ссылку у каждого документа.'))
-    },
-    onFinish: () => {
-      form.transform((data) => data)
     },
   })
 }
