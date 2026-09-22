@@ -542,12 +542,12 @@ const ogImage = computed(() => {
           >
             <Link
                 :href="itemHref(blog)"
-                class="block h-[250px] sm:h-[350px] xl:h-[494px] overflow-hidden relative"
+                class="blog-feed-cover"
             >
               <img v-if="itemCover(blog)"
                    :src="itemCover(blog)"
                    :alt="blog.title"
-                   class="w-full h-full object-cover" style="background-color: rgb(247, 247, 247);"
+                   class="w-full h-full"
                    :loading="blogIdx === 0 ? 'eager' : 'lazy'"
                    decoding="async" />
               <div v-else class="w-full h-full bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center"></div>
