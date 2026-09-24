@@ -1,12 +1,14 @@
 <script setup>
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, usePage } from '@inertiajs/vue3'
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
+import AudienceSwitch from '@/Components/AudienceSwitch.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 
 const { isDoctorMode, articleUrl, blogBreadcrumbLabel } = useDoctorMode()
+const pageSwitchVisible = computed(() => usePage().props.site?.switch?.visible === true)
 const listingHref = computed(() => (isDoctorMode.value ? '/materials' : '/blog'))
 // 🔹 Принимаем готовые JSON-LD строки с бэкенда (это самый надежный способ для SEO)
 const props = defineProps({
@@ -753,6 +755,11 @@ const toggleFaq = (index) => {
             </svg>
           </Link>
 
+
+          <div v-if="pageSwitchVisible" class="sidebar-audience-row">
+            <span class="sidebar-audience-row__caption">Версия сайта</span>
+            <AudienceSwitch variant="row" />
+          </div>
 
           <button @click="closeMobileMenu" class="mobile-menu-close-button">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

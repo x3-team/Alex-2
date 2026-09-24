@@ -10,11 +10,10 @@ const props = defineProps({
     type: Boolean,
     default: null
   },
-  // Дубль переключателя версий в мобильном меню. Пока только на главной,
-  // где эта шапка есть; на остальных страницах меню не меняется.
+  // Строка «Версия сайта» в мобильном меню. Сервер гасит её на служебных страницах.
   showAudienceSwitch: {
     type: Boolean,
-    default: false
+    default: true
   }
 })
 
@@ -31,6 +30,7 @@ const isDoctor = computed(() => {
 
 const page = usePage()
 const isAuthenticated = computed(() => !!page.props.auth?.user)
+const audienceSwitchVisible = computed(() => page.props.site?.switch?.visible === true)
 
 // 2. Логика модальных окон
 const isRegisterModalOpen = ref(false)
@@ -282,7 +282,7 @@ const openAbout = () => {
       </Link>
     </div>
 
-    <div v-if="showAudienceSwitch" class="sidebar-audience-row">
+    <div v-if="showAudienceSwitch && audienceSwitchVisible" class="sidebar-audience-row">
       <span class="sidebar-audience-row__caption">Версия сайта</span>
       <AudienceSwitch variant="row" />
     </div>

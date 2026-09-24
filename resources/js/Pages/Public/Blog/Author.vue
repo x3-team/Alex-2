@@ -1,11 +1,13 @@
 <script setup>
-import { Head, Link, router } from '@inertiajs/vue3'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import { ref, computed,  watch } from 'vue'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
+import AudienceSwitch from '@/Components/AudienceSwitch.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 const { isDoctorMode, articleUrl, blogBreadcrumbLabel } = useDoctorMode()
+const pageSwitchVisible = computed(() => usePage().props.site?.switch?.visible === true)
 const props = defineProps({
   author: Object,
   blogs: Object,
@@ -1025,6 +1027,11 @@ const ogImage = computed(() => {
           </Link>
 
           
+          <div v-if="pageSwitchVisible" class="sidebar-audience-row">
+            <span class="sidebar-audience-row__caption">Версия сайта</span>
+            <AudienceSwitch variant="row" />
+          </div>
+
           <button @click="closeMobileMenu" class="mobile-menu-close-button">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18 6L6 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
