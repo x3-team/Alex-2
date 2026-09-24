@@ -23,7 +23,10 @@
     }
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"@if($cameFromSwitch) class="audience-switching"@endif@if($paintAudience) style="background-color: {{ $audienceColor }}"@endif>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    @if($cameFromSwitch) class="audience-switching" @endif
+    @if($paintAudience) style="background-color: {{ $audienceColor }}" @endif
+>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
