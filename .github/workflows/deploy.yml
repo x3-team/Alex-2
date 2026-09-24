@@ -80,6 +80,7 @@ jobs:
           SSH_USER: ${{ secrets.ALEX_SSH_USER }}
           DEPLOY_PATH: ${{ secrets.ALEX_APP_ROOT }}
         run: |
+          # No --delete: public/storage/ does not match the symlink, so --delete removes it.
           rsync -az \
             --exclude '.git/' \
             --exclude '.github/' \
@@ -91,7 +92,7 @@ jobs:
             --exclude 'bootstrap/cache/' \
             --exclude 'public/build/' \
             --exclude 'public/hot/' \
-            --exclude 'public/storage/' \
+            --exclude 'public/storage' \
             --exclude 'public/videos/' \
             --exclude 'tests/' \
             --exclude 'phpunit.xml' \

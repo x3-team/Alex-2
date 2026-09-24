@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Runs on the production VPS. Modes: backup | apply
 # Never overwrite .env, storage/, or public/videos (those are excluded by rsync).
+# Never pass --delete. The pattern public/storage/ does not match the
+# public/storage symlink, so --delete removes it and /storage/* 404s.
+# Uploaded files live in storage/app/public and must stay excluded too.
 # operator must bump SITE_VERSION in the release commit; script does not auto-bump
 set -euo pipefail
 
@@ -77,6 +80,17 @@ apply() {
   php artisan inertia:stop-ssr 2>/dev/null || true
   if [[ "${RESTART_SERVICES}" == "true" ]]; then
     echo "==> RESTART_SERVICES=true — extra reload requested"
+  fi
+
+  # public/storage is not in git. If a deploy dropped the symlink, put it back.
+  # A real directory is left alone so we never hide files that are already there.
+  if [[ -L public/storage ]]; then
+    echo "==> public/storage symlink already present"
+  elif [[ -e public/storage ]]; then
+    echo "ERROR: public/storage exists and is not a symlink. Refusing to replace it." >&2
+    exit 1
+  else
+    php artisan storage:link
   fi
 
   echo "==> apply finished in ${APP_ROOT}"

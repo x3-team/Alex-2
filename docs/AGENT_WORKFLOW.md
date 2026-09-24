@@ -58,6 +58,7 @@ Checklist:
 - `storage/`, `public/storage`
 - `public/videos`
 - полный слепой rsync без excludes
+- `rsync --delete`: шаблон `public/storage/` не защищает симлинк `public/storage`
 - `migrate --force` без явной просьбы / без миграций в релизе
 - правки nginx
 - ломать статьи, ссылки, SEO
