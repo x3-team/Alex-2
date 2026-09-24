@@ -94,6 +94,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Заявки
 
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/export', [OrderController::class, 'export'])->name('orders.export');
+        Route::put('/orders/mail-settings', [OrderController::class, 'updateMailSettings'])->name('orders.mail-settings');
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::put('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
 

@@ -1,10 +1,39 @@
 <script setup>
+import { computed, nextTick, ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 const props = defineProps({
   orders: Object,
-  filters: Object
+  filters: Object,
+  leadsMailTo: { type: String, default: '' },
+  leadsMailFallback: { type: String, default: 'info@alexallergotest.ru' },
+})
+
+const mailTo = ref(props.leadsMailTo || '')
+
+const applyFilters = async () => {
+  await nextTick()
+  router.get('/admin/orders', {
+    status: props.filters.status || '',
+    type: props.filters.type || '',
+    date_from: props.filters.date_from || '',
+    date_to: props.filters.date_to || '',
+  }, { preserveState: true })
+}
+
+const saveMail = () => {
+  router.put('/admin/orders/mail-settings', { leads_mail_to: mailTo.value }, { preserveScroll: true })
+}
+
+const exportHref = computed(() => {
+  const params = new URLSearchParams()
+  for (const key of ['status', 'type', 'date_from', 'date_to']) {
+    const value = props.filters?.[key]
+    if (value) params.set(key, value)
+  }
+  const query = params.toString()
+  return query ? `/admin/orders/export?${query}` : '/admin/orders/export'
 })
 
 const changeStatus = (orderId, status) => {
@@ -30,13 +59,37 @@ const formatDate = (date) => {
 
           <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold text-gray-800">Заявки</h2>
+            <a
+                :href="exportHref"
+                class="inline-flex items-center px-4 py-2 bg-gray-900 text-white text-sm rounded-md hover:bg-gray-700"
+            >Выгрузить в CSV</a>
+          </div>
 
-            <!-- Фильтр по статусу -->
-            <select
-                v-model="filters.status"
-                @change="router.get(route('admin.orders.index'), filters, { preserveState: true })"
-                class="border-gray-300 rounded-md shadow-sm"
-            >
+          <form class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg" @submit.prevent="saveMail">
+            <label for="leads-mail-to" class="block text-sm font-medium text-gray-800">Почта для заявок</label>
+            <p class="text-xs text-gray-500 mt-1 mb-2">Несколько адресов через запятую. Если поле пустое, письма идут на {{ leadsMailFallback }}.</p>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input
+                  id="leads-mail-to"
+                  v-model="mailTo"
+                  type="text"
+                  name="leads_mail_to"
+                  :placeholder="leadsMailFallback"
+                  class="flex-1 border-gray-300 rounded-md shadow-sm"
+              />
+              <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">Сохранить</button>
+            </div>
+          </form>
+
+          <div class="flex flex-wrap gap-3 mb-6">
+            <select v-model="filters.type" @change="applyFilters" class="border-gray-300 rounded-md shadow-sm">
+              <option value="">Все типы</option>
+              <option value="doctor_appointment">Запись к врачу</option>
+              <option value="test_order">Запись на тест</option>
+            </select>
+            <input v-model="filters.date_from" type="date" @change="applyFilters" class="border-gray-300 rounded-md shadow-sm" aria-label="Дата от" />
+            <input v-model="filters.date_to" type="date" @change="applyFilters" class="border-gray-300 rounded-md shadow-sm" aria-label="Дата до" />
+            <select v-model="filters.status" @change="applyFilters" class="border-gray-300 rounded-md shadow-sm">
               <option value="">Все статусы</option>
               <option value="new">Новые</option>
               <option value="processing">В работе</option>
@@ -76,6 +129,9 @@ const formatDate = (date) => {
                 <td class="px-6 py-4">
                   <div v-if="order.items && order.items.type === 'doctor_appointment'" class="text-sm text-indigo-600 font-semibold">
                     🩺 {{ order.items.title || 'Запись к врачу' }}
+                  </div>
+                  <div v-else-if="order.items && order.items.type === 'test_order'" class="text-sm text-emerald-700 font-semibold">
+                    {{ order.items.title || 'Запись на тест' }}
                   </div>
                   <ul v-else class="text-sm text-gray-700 space-y-1">
                     <li v-for="(item, index) in order.items" :key="index" class="flex justify-between">

@@ -15,6 +15,22 @@ class Order extends Model
         'total_amount' => 'decimal:2',
     ];
 
+    public function leadType(): ?string
+    {
+        $items = $this->items;
+
+        return is_array($items) && is_string($items['type'] ?? null) ? $items['type'] : null;
+    }
+
+    public function leadTypeLabel(): string
+    {
+        return match ($this->leadType()) {
+            'doctor_appointment' => 'Запись к врачу',
+            'test_order' => 'Запись на тест',
+            default => 'Заявка',
+        };
+    }
+
     // Геттеры для красивого вывода статуса
     public function getStatusLabelAttribute()
     {

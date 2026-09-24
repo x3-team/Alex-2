@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
-use App\Mail\DoctorAppointmentMail;
-use App\Support\QuizAnswerSheet;
+use App\Support\LeadMailer;
+use App\Support\LeadQuizPayload;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 
 class DoctorAppointmentController extends Controller
 {
@@ -24,33 +23,22 @@ class DoctorAppointmentController extends Controller
         $quizAnswers = $validated['quiz_answers'] ?? [];
         $resultId = $validated['quiz_result_id'] ?? null;
 
-        // Сохраняем заявку в БД
+        // Сначала запись в БД. Письмо не должно её откатывать.
         $order = Order::create([
             'customer_name' => $validated['full_name'],
             'customer_phone' => $validated['phone'],
             'customer_email' => null,
             'comment' => 'Город: ' . $validated['city'],
-            'items' => [
+            'items' => array_merge([
                 'type' => 'doctor_appointment',
                 'title' => 'Запись к врачу-аллергологу',
                 'city' => $validated['city'],
-                'quiz_answers' => $quizAnswers,
-                // Расшифровку кладём рядом с заявкой: формулировки в квизе
-                // потом меняются, а врачу нужен смысл на момент обращения.
-                'quiz_answers_readable' => QuizAnswerSheet::fromRaw($quizAnswers),
-                'quiz_result_id' => $resultId,
-                'quiz_result_title' => QuizAnswerSheet::resultTitle($resultId),
-            ],
+            ], LeadQuizPayload::store($quizAnswers, $resultId)),
             'total_amount' => 0,
             'status' => 'new',
         ]);
 
-        // Отправка письма
-        try {
-            Mail::to('info@alexallergotest.ru')->send(new DoctorAppointmentMail($order));
-        } catch (\Exception $e) {
-            \Log::error('Ошибка отправки почты записи к врачу: ' . $e->getMessage());
-        }
+        LeadMailer::notify($order);
 
         return response()->json(['success' => true, 'order_id' => $order->id]);
     }

@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import HomeBackLink from '@/Components/HomeBackLink.vue'
+import { readQuizLead } from '@/quizLead'
 
 const props = defineProps({
   mainProduct: {
@@ -187,8 +188,52 @@ const applyPromo = () => {
   // Логика промокода
 }
 
-const handleContinue = () => {
-  router.visit('/login')
+const handleContinue = async () => {
+  if (!consent.value) return
+
+  const name = fullName.value.trim()
+  const tel = phone.value.trim()
+  if (!name || !tel) {
+    alert('Укажите ФИО и телефон, чтобы заявка сохранилась.')
+    return
+  }
+
+  const quiz = readQuizLead()
+  const lines = [{ title: props.mainProduct.title, price: Number(props.mainProduct.price) || 0 }]
+  props.additionalServices.forEach((service) => {
+    if (isServiceSelected(service.id)) {
+      lines.push({ title: service.title, price: Number(service.price) || 0 })
+    }
+  })
+
+  try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+    const response = await fetch('/api/test-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken || '',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: JSON.stringify({
+        full_name: name,
+        phone: tel,
+        email: email.value.trim() || null,
+        birth_date: birthDate.value.trim() || null,
+        lab: selectedLab.value?.name || null,
+        agreed_to_terms: true,
+        lines,
+        quiz_answers: quiz?.quiz_answers || null,
+        quiz_result_id: quiz?.quiz_result_id || null,
+        quiz_result_title: quiz?.quiz_result_title || null,
+      }),
+    })
+    if (!response.ok) throw new Error('save failed')
+    router.visit('/login')
+  } catch (error) {
+    console.error(error)
+    alert('Не удалось сохранить заявку. Попробуйте ещё раз.')
+  }
 }
 
 // -------------------------------------------------------------
