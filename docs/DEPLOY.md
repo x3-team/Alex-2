@@ -74,6 +74,8 @@ rsync -az \
 
 # 5) build + migrate on VPS
 ssh ... "cd $ALEX_APP_ROOT && RUN_MIGRATIONS=true bash scripts/deploy-vps.sh apply"
+# apply в конце сам смоукает главные (200 + SITE_VERSION) и /storage
+# (аллерген, блог, автор) на обоих доменах. Не 200/206 или HTML — скрипт падает.
 # при ошибке route:cache (duplicate route names): php artisan route:clear && config:cache && view:cache
 ```
 
