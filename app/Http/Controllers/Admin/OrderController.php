@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Support\QuizAnswerSheet;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -37,8 +38,13 @@ class OrderController extends Controller
     }
     public function show(Order $order)
     {
+        $items = is_array($order->items) ? $order->items : [];
+
         return Inertia::render('Admin/Orders/Show', [
             'order' => $order,
+            // Заявки, созданные до появления расшифровки, разбираются на лету.
+            'quizSheet' => QuizAnswerSheet::forOrderItems($items),
+            'quizResult' => QuizAnswerSheet::resultTitleForOrderItems($items),
         ]);
     }
 }

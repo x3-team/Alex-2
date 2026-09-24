@@ -350,7 +350,8 @@ const submitDoctorAppointment = async () => {
         phone: doctorForm.value.phone,
         city: doctorForm.value.city,
         agreed_to_terms: doctorForm.value.agreedToTerms,
-        quiz_answers: userAnswers.value
+        quiz_answers: userAnswers.value,
+        quiz_result_id: resultData.value?.id ?? null
       })
     })
 
