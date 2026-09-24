@@ -3097,10 +3097,18 @@ body:has(.home-page-container.doctor-mode) {
 }
 
 .audience-switch--floating {
-    position: fixed;
+    /* absolute, не fixed: плашка стоит у верха страницы и уходит со скроллом.
+       На главной документ не скроллится, поэтому она остаётся на первом экране. */
+    position: absolute;
     top: 16px;
     right: 16px;
     z-index: 110;
+}
+
+/* Над заливкой только пока на html висит класс перехода. В покое 110,
+   чтобы меню и модалки оставались выше чипа. */
+html.audience-switching .audience-switch--floating {
+    z-index: 2147483001;
 }
 
 /* Подсветка активной половины едет отдельным слоем — иначе при переключении
@@ -3112,6 +3120,10 @@ body:has(.home-page-container.doctor-mode) {
     bottom: 0;
     z-index: 0;
     background: #ffffff;
+    transition: none;
+}
+
+.audience-switch.is-ready .audience-switch__thumb {
     transition: left 220ms cubic-bezier(0.4, 0, 0.2, 1),
                 width 220ms cubic-bezier(0.4, 0, 0.2, 1),
                 border-radius 220ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -3220,6 +3232,7 @@ body:has(.home-page-container.doctor-mode) {
 
 @media (prefers-reduced-motion: reduce) {
     .audience-switch__thumb,
+    .audience-switch.is-ready .audience-switch__thumb,
     #audience-veil,
     #audience-arrival-veil {
         transition: none;

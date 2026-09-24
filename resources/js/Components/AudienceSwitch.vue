@@ -35,8 +35,10 @@ const current = computed(() => (isDoctorMode.value ? 'doctor' : 'patient'))
 
 const root = ref(null)
 // До монтирования подсветку рисует сама половина: разметка из SSR должна
-// выглядеть правильно и без JS. Бегунок включается только после замера.
+// выглядеть правильно и без JS. Бегунок вставляется уже на замеренное место.
 const animated = ref(false)
+// Переход left/width только после первого кадра и только по клику.
+const ready = ref(false)
 const highlighted = ref(null)
 const thumb = ref({ left: 0, width: 0 })
 const leaving = ref(false)
@@ -48,14 +50,35 @@ const prefersReducedMotion = () =>
   typeof window !== 'undefined'
   && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-const measure = () => {
-  const el = root.value?.querySelector(`[data-audience="${shown.value}"]`)
-  if (el) {
-    thumb.value = { left: el.offsetLeft, width: el.offsetWidth }
-  }
+let motionFrame = 0
+
+const armMotion = () => {
+  window.cancelAnimationFrame(motionFrame)
+  motionFrame = window.requestAnimationFrame(() => {
+    motionFrame = window.requestAnimationFrame(() => {
+      ready.value = true
+    })
+  })
 }
 
-const onResize = () => measure()
+// animate=false ставит бегунок сразу, без проезда. Так гидрация и ресайз
+// не повторяют анимацию клика.
+const measure = (animate = false) => {
+  const el = root.value?.querySelector(`[data-audience="${shown.value}"]`)
+  if (!el || el.offsetWidth <= 0) return
+  const next = { left: el.offsetLeft, width: el.offsetWidth }
+  if (next.left === thumb.value.left && next.width === thumb.value.width && animated.value) return
+  if (!animate) {
+    ready.value = false
+    thumb.value = next
+    animated.value = true
+    armMotion()
+    return
+  }
+  thumb.value = next
+}
+
+const onResize = () => measure(false)
 let resizeObserver = null
 
 // Возврат по «назад» отдаёт страницу из bfcache вместе с залитым экраном.
@@ -64,24 +87,24 @@ const onPageShow = (event) => {
   leaving.value = false
   highlighted.value = current.value
   hideAudienceVeil()
-  nextTick(measure)
+  nextTick(() => measure(false))
 }
 
 onMounted(async () => {
   highlighted.value = current.value
-  animated.value = true
   await nextTick()
-  measure()
+  measure(false)
   window.addEventListener('resize', onResize)
   window.addEventListener('pageshow', onPageShow)
   // Строка в меню до открытия имеет нулевую ширину: замеряем, когда её покажут.
   if (typeof ResizeObserver !== 'undefined' && root.value) {
-    resizeObserver = new ResizeObserver(() => measure())
+    resizeObserver = new ResizeObserver(() => measure(false))
     resizeObserver.observe(root.value)
   }
 })
 
 onBeforeUnmount(() => {
+  window.cancelAnimationFrame(motionFrame)
   window.removeEventListener('resize', onResize)
   window.removeEventListener('pageshow', onPageShow)
   resizeObserver?.disconnect()
@@ -106,7 +129,8 @@ const navigate = (event, audience, href) => {
 
   leaving.value = true
   highlighted.value = audience
-  nextTick(measure)
+  ready.value = true
+  nextTick(() => measure(true))
   showAudienceVeil(AUDIENCE_COLOR[audience])
   window.setTimeout(() => window.location.assign(withFlag(href)), 340)
 }
@@ -116,7 +140,7 @@ const navigate = (event, audience, href) => {
   <div
       ref="root"
       class="audience-switch"
-      :class="[`audience-switch--${variant}`, { 'is-animated': animated }]"
+      :class="[`audience-switch--${variant}`, { 'is-animated': animated, 'is-ready': ready }]"
       role="group"
       aria-label="Версия сайта"
   >

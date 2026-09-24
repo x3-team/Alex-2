@@ -16,8 +16,13 @@ export const SWITCH_FLAG = 'from=switch'
 
 const VEIL_ID = 'audience-veil'
 
+/** Только на время заливки: чип поднимается над ней и не перекрывает меню в покое. */
+const SWITCHING_CLASS = 'audience-switching'
+
 export function showAudienceVeil(color) {
   if (typeof document === 'undefined') return null
+
+  document.documentElement.classList.add(SWITCHING_CLASS)
 
   let veil = document.getElementById(VEIL_ID)
   if (!veil) {
@@ -38,4 +43,11 @@ export function hideAudienceVeil() {
   if (veil) {
     veil.classList.remove('is-visible')
   }
+  // Класс снимаем после затухания, иначе чип нырнёт под ещё видимую заливку.
+  window.setTimeout(() => {
+    if (!document.getElementById(VEIL_ID)?.classList.contains('is-visible')
+      && !document.getElementById('audience-arrival-veil')) {
+      document.documentElement.classList.remove(SWITCHING_CLASS)
+    }
+  }, 420)
 }
