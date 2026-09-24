@@ -19,7 +19,9 @@ class HomeSetting extends Model
         'meta_keywords',
         'hero_title',
         'hero_subtitle',
+        'why_title',
         'why_subtitle',
+        'results_intro_title',
         'cta_text',
         'cta_url',
     ];

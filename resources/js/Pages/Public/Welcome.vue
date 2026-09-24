@@ -312,15 +312,31 @@ const hasSlideVideo = (slide) => Boolean(getSlideVideo(slide) || slide?.holdVide
 const openMobileMenu = () => { ensureSidebarMounted(); mobileMenuOpen.value = true }
 const closeMobileMenu = () => { mobileMenuOpen.value = false }
 
+// Показываем, пока соответствующее поле в админке пустое. Тексты совпадают с
+// App\Support\HomeSlideCopy — тем, что миграция кладёт в базу.
+const SLIDE_COPY_FALLBACK = Object.freeze({
+  patient: {
+    'slide-1': 'Тест на аллергию ALEX² — один анализ, который даёт ответы',
+    'slide-2': 'Почему ALEX2?',
+    'slide-8': 'Что вы получите по итогам теста на аллергию',
+  },
+  doctor: {
+    'slide-1': 'Аллергочип ALEX² — расширенный анализ на аллергию. 300+ аллергенов',
+    'slide-2': 'ALEX² — лучший тест на аллергию, что есть на рынке.',
+    'slide-8': 'Как назначать тест пациентам',
+  },
+})
+
 const slides = computed(() => {
   const advs = activeSettings.value?.advantages || []
   const res = activeSettings.value?.results || []
   const htp = activeSettings.value?.how_to_pass || []
   const advantageTotal = String(advantageStepTotal(isDoctorMode.value))
+  const copy = (field, id) => (activeSettings.value?.[field] || '').trim() || SLIDE_COPY_FALLBACK[isDoctorMode.value ? 'doctor' : 'patient'][id]
 
   const deck = [
-    { id: 'slide-1', label: '', title: (activeSettings.value?.hero_title || '').trim() || 'Тест на аллергию ALEX² — один анализ, который даёт ответы', subtitle: (activeSettings.value?.hero_subtitle || '').trim(), direction: 'down', video: '/videos/scroll/forward/scr1.webm', reverseVideo: '/videos/scroll/reverse/scrr1.webm', mobileVideo: phoneVideo(1), mobileReverseVideo: phoneReverseVideo(1) },
-    { id: 'slide-2', label: '', title: 'Почему ALEX2?', subtitle: (activeSettings.value?.why_subtitle || '').trim(), direction: 'down', video: '/videos/scroll/forward/scr2.webm', reverseVideo: '/videos/scroll/reverse/scrr2.webm', mobileVideo: phoneVideo(2), mobileReverseVideo: phoneReverseVideo(2) },
+    { id: 'slide-1', label: '', title: copy('hero_title', 'slide-1'), subtitle: (activeSettings.value?.hero_subtitle || '').trim(), direction: 'down', video: '/videos/scroll/forward/scr1.webm', reverseVideo: '/videos/scroll/reverse/scrr1.webm', mobileVideo: phoneVideo(1), mobileReverseVideo: phoneReverseVideo(1) },
+    { id: 'slide-2', label: '', title: copy('why_title', 'slide-2'), subtitle: (activeSettings.value?.why_subtitle || '').trim(), direction: 'down', video: '/videos/scroll/forward/scr2.webm', reverseVideo: '/videos/scroll/reverse/scrr2.webm', mobileVideo: phoneVideo(2), mobileReverseVideo: phoneReverseVideo(2) },
     { id: 'slide-3', step: '1', totalSteps: advantageTotal, label: 'Преимущества', title: advs[0]?.title || 'Всё за один сеанс', subtitle: advs[0]?.description || 'За одно исследование аллергочип проверяет реакцию организма сразу на 300 различных веществ...', direction: 'down', video: '/videos/scroll/forward/scr3.webm', reverseVideo: '/videos/scroll/reverse/scrr3-fixed.webm', mobileVideo: phoneVideo(3), mobileReverseVideo: phoneReverseVideo(3) },
     { id: 'slide-4', step: '2', totalSteps: advantageTotal, label: 'Преимущества', title: advs[1]?.title || 'Точечный результат', subtitle: advs[1]?.description || 'В природе многие растения и продукты содержат похожие белки...', direction: 'right', video: '/videos/PC/s4.webm', reverseVideo: '/videos/PC/s4r.webm', mobileVideo: phoneVideo(4), mobileReverseVideo: phoneReverseVideo(4) },
     { id: 'slide-5', step: '3', totalSteps: advantageTotal, label: 'Преимущества', title: advs[2]?.title || 'Отчёт и консультация', subtitle: advs[2]?.description || 'Мы не бросаем человека с непонятными результатами...', direction: 'right', video: '/videos/PC/s4.5-v19.webm', reverseVideo: '/videos/PC/s4.5r-v19.webm', mobileVideo: phoneVideo(5), mobileReverseVideo: phoneReverseVideo(5) },
@@ -344,7 +360,7 @@ const slides = computed(() => {
   }
 
   deck.push(
-    { id: 'slide-8', label: 'О результатах', title: 'Что вы получите по итогам теста на аллергию', subtitle: '', direction: 'down', video: '/videos/PC/s7-v21.webm', reverseVideo: '/videos/PC/s7r-v21.webm', mobileVideo: phoneVideo(8), mobileReverseVideo: phoneReverseVideo(8), holdVideo: true },
+    { id: 'slide-8', label: 'О результатах', title: copy('results_intro_title', 'slide-8'), subtitle: '', direction: 'down', video: '/videos/PC/s7-v21.webm', reverseVideo: '/videos/PC/s7r-v21.webm', mobileVideo: phoneVideo(8), mobileReverseVideo: phoneReverseVideo(8), holdVideo: true },
     { id: 'slide-9', step: '1', totalSteps: '3', label: 'О результатах', title: res[0]?.title || 'Аллерго-паспорт', subtitle: res[0]?.description || 'Список из 300 аллергенов...', direction: 'down', video: '/videos/PC/s8-v22.webm', reverseVideo: '/videos/PC/s8r-v22.webm', mobileVideo: phoneVideo(9), mobileReverseVideo: phoneReverseVideo(9) },
     { id: 'slide-10', step: '2', totalSteps: '3', label: 'О результатах', title: res[1]?.title || 'Рекомендации по аллергенам', subtitle: res[1]?.description || 'Список из 300 аллергенов...', direction: 'right', video: '/videos/scroll/forward/s9.webm', reverseVideo: '/videos/scroll/reverse/s9r.webm', mobileVideo: phoneVideo(10), mobileReverseVideo: phoneReverseVideo(10) },
     { id: 'slide-11', step: '3', totalSteps: '3', label: 'О результатах', title: res[2]?.title || 'Консультация', subtitle: res[2]?.description || 'Список из 300 аллергенов...', direction: 'right', video: '/videos/scroll/forward/s10.webm', reverseVideo: '/videos/scroll/reverse/s10r.webm', mobileVideo: phoneVideo(11), mobileReverseVideo: phoneReverseVideo(11), badge: 'Опционально' },
@@ -361,43 +377,9 @@ const slides = computed(() => {
 
 const slideDeckRanges = computed(() => getSlideDeckRanges(slides.value, isDoctorMode.value))
 
-const doctorSlideCopy = Object.freeze({
-  'slide-1': { title: 'Аллергочип ALEX² — расширенный анализ на аллергию. 300+ аллергенов' },
-  'slide-2': { title: 'ALEX² — лучший тест на аллергию, что есть на рынке.' },
-  'slide-6': {
-    title: 'CCD-ингибиция',
-    subtitle: 'Блокирует перекрёстную реакцию на углеводные детерминанты — точнее различает истинную сенсибилизацию.'
-  },
-  'slide-8': { title: 'Как назначать тест пациентам' },
-  'slide-9': {
-    title: 'Профиль сенсибилизации',
-    subtitle: 'Структурированный отчёт с результатами определения специфических IgE к 300 экстрактам и молекулярным аллергенам.'
-  }
-})
+const getSlideTitle = (slide) => slide.title
 
-const getSlideTitle = (slide) => {
-  if (slide.id === 'slide-1') {
-    const cms = (activeSettings.value?.hero_title || '').trim()
-    if (cms) return cms
-  }
-  if (isDoctorMode.value && doctorSlideCopy[slide.id]?.title) {
-    return doctorSlideCopy[slide.id].title
-  }
-  return slide.title
-}
-
-const getSlideSubtitle = (slide) => {
-  if (slide.id === 'slide-1') {
-    return (activeSettings.value?.hero_subtitle || '').trim()
-  }
-  if (slide.id === 'slide-2') {
-    return (activeSettings.value?.why_subtitle || '').trim()
-  }
-  if (isDoctorMode.value && doctorSlideCopy[slide.id]?.subtitle !== undefined) {
-    return doctorSlideCopy[slide.id].subtitle
-  }
-  return slide.subtitle
-}
+const getSlideSubtitle = (slide) => slide.subtitle
 
 const showMobileInfoBackground = computed(() => (
     isMobileViewport.value && currentSlideIndex.value >= slideDeckRanges.value.faq

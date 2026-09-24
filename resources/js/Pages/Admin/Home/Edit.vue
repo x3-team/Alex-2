@@ -51,7 +51,9 @@ const buildFormData = (settings, meta, type) => {
     meta_keywords: meta?.keywords || settings?.meta_keywords || '',
     hero_title: settings?.hero_title || '',
     hero_subtitle: settings?.hero_subtitle || '',
+    why_title: settings?.why_title || '',
     why_subtitle: settings?.why_subtitle || '',
+    results_intro_title: settings?.results_intro_title || '',
     cta_text: settings?.cta_text || '',
     cta_url: settings?.cta_url || '',
   }
@@ -259,8 +261,18 @@ const handleImageUpload = (form, index, event) => {
                   <TextInput v-model="patientForm.hero_subtitle" placeholder="Необязательно" class="w-full" />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Подзаголовок блока «Почему ALEX2?»</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Заголовок второго экрана</label>
+                  <TextInput v-model="patientForm.why_title" placeholder="Почему ALEX2?" class="w-full" />
+                  <p class="text-xs text-gray-500 mt-1">Экран сразу после первого. Пусто — вернётся «Почему ALEX2?».</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Подзаголовок второго экрана</label>
                   <TextInput v-model="patientForm.why_subtitle" placeholder="Почему Alex" class="w-full" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Заголовок блока «О результатах»</label>
+                  <TextInput v-model="patientForm.results_intro_title" placeholder="Что вы получите по итогам теста на аллергию" class="w-full" />
+                  <p class="text-xs text-gray-500 mt-1">Экран перед списком результатов.</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Текст кнопки записи</label>
@@ -518,8 +530,18 @@ const handleImageUpload = (form, index, event) => {
                   <TextInput v-model="doctorForm.hero_subtitle" placeholder="Необязательно" class="w-full" />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Подзаголовок блока «Почему ALEX2?»</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Заголовок второго экрана</label>
+                  <TextInput v-model="doctorForm.why_title" placeholder="ALEX² — лучший тест на аллергию, что есть на рынке." class="w-full" />
+                  <p class="text-xs text-gray-500 mt-1">Экран сразу после первого на doc.alexallergotest.ru.</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Подзаголовок второго экрана</label>
                   <TextInput v-model="doctorForm.why_subtitle" placeholder="Почему ALEX2?" class="w-full" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Заголовок блока «О результатах»</label>
+                  <TextInput v-model="doctorForm.results_intro_title" placeholder="Как назначать тест пациентам" class="w-full" />
+                  <p class="text-xs text-gray-500 mt-1">Экран перед списком результатов.</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Текст кнопки записи</label>
