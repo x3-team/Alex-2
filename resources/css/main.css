@@ -3244,6 +3244,39 @@ body:has(.mobile-menu-open) .audience-switch--floating {
     display: none;
 }
 
+/* Полоса «На главную» на блоге и материалах была ~57px, а плашка 46px
+   стояла с top: 16px и вылезала за нижнюю границу. Высота плашки та же,
+   что на главной (46px вместе с рамкой, top: 16px), чтобы при переходе
+   она не прыгала. Полосу поднимаем до 78px: 16px сверху, 46px плашка,
+   16px снизу — центр совпадает с «На главную». */
+@media (min-width: 1280px) {
+    body:has(.audience-switch--floating):not(:has(.home-page-container)) header.sticky {
+        /* flex-колонка страницы иначе сжимает шапку до высоты текста. */
+        height: 78px;
+        min-height: 78px;
+        flex-shrink: 0;
+        box-sizing: border-box;
+    }
+
+    body:has(.audience-switch--floating):not(:has(.home-page-container)) header.sticky > div {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+}
+
+@media (min-width: 1025px) {
+    body:has(.audience-switch--floating):not(:has(.home-page-container)) .header-bar,
+    body:has(.audience-switch--floating):not(:has(.home-page-container)) .search-back-row,
+    body:has(.audience-switch--floating):not(:has(.home-page-container)) .back-link-wrapper {
+        height: 78px;
+        flex-basis: 78px;
+        box-sizing: border-box;
+    }
+}
+
 /* На внутренних страницах плашка не должна накрывать шапку, крошки и кнопки. */
 body:has(.audience-switch--floating):not(:has(.home-page-container)) .home-back-area,
 body:has(.audience-switch--floating):not(:has(.home-page-container)) .search-back-row,
