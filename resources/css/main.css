@@ -3105,6 +3105,34 @@ body:has(.home-page-container.doctor-mode) {
     z-index: 110;
 }
 
+/* Десктоп: та же высота и тот же top на главной и на внутренних страницах,
+   чтобы плашка не прыгала. Полоса «На главную» — 57px; внешняя высота
+   плашки 36px (34px + рамка), top 10.5px — по 10.5px сверху и снизу,
+   центр на одной линии с «На главную». Внутренний радиус на 1px меньше
+   внешнего, иначе заливка торчит из скругления. */
+@media (min-width: 1025px) {
+    .audience-switch--floating {
+        top: 10.5px;
+        border-radius: 6px;
+    }
+
+    .audience-switch--floating .audience-switch__option {
+        height: 34px;
+        padding: 0 18px;
+        font-size: 14px;
+    }
+
+    .audience-switch--floating .audience-switch__option:first-child,
+    .audience-switch--floating .audience-switch__thumb.is-left {
+        border-radius: 5px 0 0 5px;
+    }
+
+    .audience-switch--floating .audience-switch__option:last-child,
+    .audience-switch--floating .audience-switch__thumb.is-right {
+        border-radius: 0 5px 5px 0;
+    }
+}
+
 /* Над заливкой только пока на html висит класс перехода. В покое 110,
    чтобы меню и модалки оставались выше чипа. */
 html.audience-switching .audience-switch--floating {
@@ -3242,39 +3270,6 @@ html.audience-switching .audience-switch--floating {
 /* Открытое мобильное меню само содержит строку переключателя. */
 body:has(.mobile-menu-open) .audience-switch--floating {
     display: none;
-}
-
-/* Полоса «На главную» на блоге и материалах была ~57px, а плашка 46px
-   стояла с top: 16px и вылезала за нижнюю границу. Высота плашки та же,
-   что на главной (46px вместе с рамкой, top: 16px), чтобы при переходе
-   она не прыгала. Полосу поднимаем до 78px: 16px сверху, 46px плашка,
-   16px снизу — центр совпадает с «На главную». */
-@media (min-width: 1280px) {
-    body:has(.audience-switch--floating):not(:has(.home-page-container)) header.sticky {
-        /* flex-колонка страницы иначе сжимает шапку до высоты текста. */
-        height: 78px;
-        min-height: 78px;
-        flex-shrink: 0;
-        box-sizing: border-box;
-    }
-
-    body:has(.audience-switch--floating):not(:has(.home-page-container)) header.sticky > div {
-        height: 100%;
-        display: flex;
-        align-items: center;
-        padding-top: 0;
-        padding-bottom: 0;
-    }
-}
-
-@media (min-width: 1025px) {
-    body:has(.audience-switch--floating):not(:has(.home-page-container)) .header-bar,
-    body:has(.audience-switch--floating):not(:has(.home-page-container)) .search-back-row,
-    body:has(.audience-switch--floating):not(:has(.home-page-container)) .back-link-wrapper {
-        height: 78px;
-        flex-basis: 78px;
-        box-sizing: border-box;
-    }
 }
 
 /* На внутренних страницах плашка не должна накрывать шапку, крошки и кнопки. */

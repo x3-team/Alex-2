@@ -60,9 +60,10 @@ ssh ... "cd $ALEX_APP_ROOT && bash scripts/deploy-vps.sh backup"
 # или: ~/backups/alexallergotest.ru/<UTC-stamp>/ (build, siteVersion.js, manifest.json)
 
 # 4) rsync (from repo root on agent VM)
-# Без --delete. Хвост «/» у public/storage/ не совпадает с симлинком,
-# и --delete его стирает: файлы в storage/app/public целы, а /storage/* отдаёт 404.
+# Без --delete. Исключение public/storage без хвостового слэша.
+# --filter 'P public/storage' дополнительно запрещает удалить симлинк.
 rsync -az \
+  --filter 'P public/storage' \
   --exclude '.git/' --exclude '.github/' --exclude 'node_modules/' --exclude 'vendor/' \
   --exclude '.env' --exclude '.env.*' --exclude 'storage/' --exclude 'bootstrap/cache/' \
   --exclude 'public/build/' --exclude 'public/hot/' --exclude 'public/storage' \

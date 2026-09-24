@@ -80,8 +80,10 @@ jobs:
           SSH_USER: ${{ secrets.ALEX_SSH_USER }}
           DEPLOY_PATH: ${{ secrets.ALEX_APP_ROOT }}
         run: |
-          # No --delete: public/storage/ does not match the symlink, so --delete removes it.
+          # No --delete. Exclude public/storage without a trailing slash, and
+          # protect the symlink so a future --delete cannot remove it.
           rsync -az \
+            --filter 'P public/storage' \
             --exclude '.git/' \
             --exclude '.github/' \
             --exclude 'node_modules/' \
