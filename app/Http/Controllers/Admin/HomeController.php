@@ -62,7 +62,9 @@ class HomeController extends Controller
 
             'hero_title'    => 'nullable|string|max:255',
             'hero_subtitle' => 'nullable|string|max:500',
+            'why_title'     => 'nullable|string|max:255',
             'why_subtitle'  => 'nullable|string|max:500',
+            'results_intro_title' => 'nullable|string|max:255',
             'cta_text'      => 'nullable|string|max:255',
             'cta_url'       => 'nullable|string|max:500',
         ]);
