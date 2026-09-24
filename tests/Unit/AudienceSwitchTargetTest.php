@@ -44,15 +44,48 @@ class AudienceSwitchTargetTest extends TestCase
         $this->assertSame('/', AudienceSwitchTarget::pathFor('/', 'doctors', $none));
     }
 
-    public function test_patient_only_blog_falls_back_to_the_doctor_home(): void
+    public function test_blog_listings_point_at_each_other(): void
     {
         $none = $this->noArticles();
 
-        $this->assertSame('/', AudienceSwitchTarget::pathFor('/blog', 'doctors', $none));
-        $this->assertSame('/', AudienceSwitchTarget::pathFor('/blog/authors', 'doctors', $none));
-        $this->assertSame('/', AudienceSwitchTarget::pathFor('/blog/author/4', 'doctors', $none));
-        $this->assertSame('/', AudienceSwitchTarget::pathFor('/blog/pollen', 'doctors', $none));
-        $this->assertSame('/blog/pollen', AudienceSwitchTarget::pathFor('/blog/pollen', 'patients', $none));
+        $this->assertSame('/materials', AudienceSwitchTarget::pathFor('/blog', 'doctors', $none));
+        $this->assertSame('/blog', AudienceSwitchTarget::pathFor('/materials', 'patients', $none));
+        $this->assertSame('/blog', AudienceSwitchTarget::pathFor('/blog', 'patients', $none));
+        $this->assertSame('/materials', AudienceSwitchTarget::pathFor('/materials', 'doctors', $none));
+        $this->assertSame('/materials', AudienceSwitchTarget::pathFor('/doctor-materials', 'doctors', $none));
+        $this->assertSame('/blog', AudienceSwitchTarget::pathFor('/doctor-materials', 'patients', $none));
+    }
+
+    public function test_blog_categories_use_the_other_list_or_the_same_category(): void
+    {
+        $none = $this->noArticles();
+        $pollen = fn (string $slug): bool => $slug === 'pollen';
+
+        // У врачей нет разводящей категории: /blog/{slug} на их домене уходит на список.
+        $this->assertSame('/materials', AudienceSwitchTarget::pathFor('/blog/pollen', 'doctors', $none, $pollen));
+        $this->assertSame('/blog/pollen', AudienceSwitchTarget::pathFor('/blog/pollen', 'patients', $none, $pollen));
+        $this->assertSame('/blog/pollen', AudienceSwitchTarget::pathFor('/materials/pollen', 'patients', $none, $pollen));
+        $this->assertSame('/blog', AudienceSwitchTarget::pathFor('/materials/licenses', 'patients', $none, $pollen));
+    }
+
+    public function test_authors_keep_the_same_page(): void
+    {
+        $none = $this->noArticles();
+
+        $this->assertSame('/blog/authors', AudienceSwitchTarget::pathFor('/blog/authors', 'doctors', $none));
+        $this->assertSame('/blog/authors', AudienceSwitchTarget::pathFor('/blog/authors', 'patients', $none));
+        $this->assertSame('/blog/author/4', AudienceSwitchTarget::pathFor('/blog/author/4', 'doctors', $none));
+        $this->assertSame('/blog/author/4', AudienceSwitchTarget::pathFor('/blog/author/4', 'patients', $none));
+    }
+
+    public function test_article_without_a_twin_opens_the_other_blog_list(): void
+    {
+        $none = $this->noArticles();
+
+        $this->assertSame('/materials', AudienceSwitchTarget::pathFor('/blog/kak-rabotaet-alex2', 'doctors', $none));
+        $this->assertSame('/materials', AudienceSwitchTarget::pathFor('/blog/vidy-allergii/allergiya-na-kozhe', 'doctors', $none));
+        $this->assertSame('/blog', AudienceSwitchTarget::pathFor('/materials/history-ige', 'patients', $none));
+        $this->assertSame('/blog', AudienceSwitchTarget::pathFor('/materials/documents', 'patients', $none));
     }
 
     public function test_article_with_the_other_audience_keeps_its_slug(): void
@@ -61,19 +94,29 @@ class AudienceSwitchTargetTest extends TestCase
 
         $this->assertSame('/materials/ccd', AudienceSwitchTarget::pathFor('/blog/ccd', 'doctors', $both));
         $this->assertSame('/blog/ccd', AudienceSwitchTarget::pathFor('/materials/ccd', 'patients', $both));
+        // Слаг со слэшем маршрут /materials/{category} не откроет — список, не 404.
+        $slashed = fn (string $audience, string $slug): bool => $slug === 'vidy/post';
+        $this->assertSame('/materials', AudienceSwitchTarget::pathFor('/blog/vidy/post', 'doctors', $slashed));
     }
 
-    public function test_doctor_only_sections_fall_back_to_the_patient_home(): void
+    public function test_doctor_videos_and_documents_open_the_patient_blog(): void
     {
         $none = $this->noArticles();
 
-        $this->assertSame('/', AudienceSwitchTarget::pathFor('/materials', 'patients', $none));
-        $this->assertSame('/', AudienceSwitchTarget::pathFor('/materials/documents', 'patients', $none));
-        $this->assertSame('/', AudienceSwitchTarget::pathFor('/materials/licenses', 'patients', $none));
-        $this->assertSame('/', AudienceSwitchTarget::pathFor('/video', 'patients', $none));
-        $this->assertSame('/', AudienceSwitchTarget::pathFor('/video/ige', 'patients', $none));
-        $this->assertSame('/materials', AudienceSwitchTarget::pathFor('/materials', 'doctors', $none));
+        $this->assertSame('/blog', AudienceSwitchTarget::pathFor('/video', 'patients', $none));
+        $this->assertSame('/blog', AudienceSwitchTarget::pathFor('/video/ige', 'patients', $none));
         $this->assertSame('/video/ige', AudienceSwitchTarget::pathFor('/video/ige', 'doctors', $none));
-        $this->assertSame('/materials', AudienceSwitchTarget::pathFor('/doctor-materials', 'doctors', $none));
+    }
+
+    public function test_doctor_feed_type_is_not_carried_to_the_patient_blog(): void
+    {
+        $query = ['type' => 'videos', 'page' => '2', 'q' => 'ige'];
+
+        $this->assertSame(
+            ['page' => '2', 'q' => 'ige'],
+            AudienceSwitchTarget::queryFor('/blog', $query),
+        );
+        $this->assertSame($query, AudienceSwitchTarget::queryFor('/materials', $query));
+        $this->assertSame([], AudienceSwitchTarget::queryFor('/', $query));
     }
 }
