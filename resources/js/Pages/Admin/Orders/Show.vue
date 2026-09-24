@@ -60,9 +60,18 @@ const formatDate = (date) => {
             <div>
               <h3 class="font-semibold text-gray-700 text-lg mb-3">Детали заказа</h3>
 
-              <div v-if="order.items && order.items.type === 'doctor_appointment'">
-                <p class="text-indigo-600 font-medium">🩺 {{ order.items.title }}</p>
+              <div v-if="order.items && (order.items.type === 'doctor_appointment' || order.items.type === 'test_order')">
+                <p class="text-indigo-600 font-medium">{{ order.items.title }}</p>
                 <p v-if="order.items.city"><strong>Город:</strong> {{ order.items.city }}</p>
+                <p v-if="order.items.lab"><strong>Лаборатория:</strong> {{ order.items.lab }}</p>
+                <p v-if="order.items.birth_date"><strong>Дата рождения:</strong> {{ order.items.birth_date }}</p>
+
+                <ul v-if="order.items.lines && order.items.lines.length" class="mt-3 divide-y divide-gray-100">
+                  <li v-for="(item, idx) in order.items.lines" :key="idx" class="py-2 flex justify-between">
+                    <span>{{ item.title }}</span>
+                    <span class="font-medium">{{ item.price }} ₽</span>
+                  </li>
+                </ul>
 
                 <div v-if="quizResult" class="mt-4 bg-emerald-50 border-l-4 border-emerald-300 p-3 rounded">
                   <div class="text-xs text-gray-500">Результат квиза</div>

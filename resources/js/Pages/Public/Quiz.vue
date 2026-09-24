@@ -5,6 +5,7 @@ import { router, Head } from '@inertiajs/vue3'
 import HomeBackLink from '@/Components/HomeBackLink.vue'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import QuizIntroAnimation from '@/Components/QuizIntroAnimation.vue'
+import { saveQuizLead } from '@/quizLead'
 
 const props = defineProps({
   questions: { type: Array, default: () => [] },
@@ -304,6 +305,11 @@ const calculateResult = async () => {
     const data = await response.json()
     resultData.value = data.result
     step.value = 'result'
+    saveQuizLead({
+      quiz_answers: userAnswers.value,
+      quiz_result_id: data.result?.id ?? null,
+      quiz_result_title: data.result?.title ?? null,
+    })
   } catch (error) {
     console.error('Error calculating result:', error)
     alert('Произошла ошибка при расчете результата. Пожалуйста, попробуйте еще раз.')
