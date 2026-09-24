@@ -23,7 +23,10 @@
     }
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"@if($paintAudience) style="background-color: {{ $audienceColor }}"@endif>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    @if($cameFromSwitch) class="audience-switching" @endif
+    @if($paintAudience) style="background-color: {{ $audienceColor }}" @endif
+>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -45,6 +48,9 @@
             .home-page-container .hero-poster { position: absolute; inset: 0; z-index: 0; margin: 0; pointer-events: none; }
             .home-page-container .hero-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
             .home-page-container .bg-video { opacity: 0; }
+            /* До загрузки бандла чип уже над встречающей заливкой. Специфичность
+               выше, чем у .audience-switch--floating { z-index: 110 }. */
+            html.audience-switching .audience-switch--floating { z-index: 2147483001; }
             @media (max-width: 1024px) {
                 .page-container:not(.home-page-container) { overflow: visible; height: auto; min-height: 100dvh; }
                 .home-page-container .site-sidebar { display: none !important; }
@@ -374,7 +380,10 @@
                 url.searchParams.delete('from');
                 window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
 
-                var done = function () { if (veil && veil.parentNode) veil.parentNode.removeChild(veil); };
+                var done = function () {
+                    document.documentElement.classList.remove('audience-switching');
+                    if (veil && veil.parentNode) veil.parentNode.removeChild(veil);
+                };
                 if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { done(); return; }
 
                 var fading = false;
