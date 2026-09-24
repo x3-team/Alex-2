@@ -3,7 +3,9 @@ import { router, Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 const props = defineProps({
-  order: Object
+  order: Object,
+  quizSheet: { type: Array, default: () => [] },
+  quizResult: { type: String, default: null }
 })
 
 const changeStatus = (status) => {
@@ -62,9 +64,24 @@ const formatDate = (date) => {
                 <p class="text-indigo-600 font-medium">🩺 {{ order.items.title }}</p>
                 <p v-if="order.items.city"><strong>Город:</strong> {{ order.items.city }}</p>
 
-                <div v-if="order.items.quiz_answers" class="mt-4 bg-gray-50 p-4 rounded-lg">
-                  <h4 class="font-medium text-gray-700 mb-2">Ответы на квиз:</h4>
-                  <pre class="text-xs bg-gray-100 p-2 rounded overflow-x-auto">{{ JSON.stringify(order.items.quiz_answers, null, 2) }}</pre>
+                <div v-if="quizResult" class="mt-4 bg-emerald-50 border-l-4 border-emerald-300 p-3 rounded">
+                  <div class="text-xs text-gray-500">Результат квиза</div>
+                  <div class="font-medium text-gray-800">{{ quizResult }}</div>
+                </div>
+
+                <div v-if="quizSheet.length" class="mt-4 bg-gray-50 p-4 rounded-lg">
+                  <h4 class="font-medium text-gray-700 mb-2">Ответы на квиз</h4>
+                  <dl class="divide-y divide-gray-200">
+                    <div v-for="(row, idx) in quizSheet" :key="idx" class="py-2">
+                      <dt class="text-sm text-gray-500">{{ row.question }}</dt>
+                      <dd class="text-sm font-medium text-gray-800">{{ row.answers.join(', ') }}</dd>
+                    </div>
+                  </dl>
+
+                  <details v-if="order.items.quiz_answers" class="mt-3">
+                    <summary class="text-xs text-gray-400 cursor-pointer">Исходные id ответов</summary>
+                    <pre class="mt-2 text-xs bg-gray-100 p-2 rounded overflow-x-auto">{{ JSON.stringify(order.items.quiz_answers, null, 2) }}</pre>
+                  </details>
                 </div>
               </div>
 
