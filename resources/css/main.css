@@ -255,6 +255,14 @@ body:has(.home-page-container.doctor-mode) {
             border-radius: 0 5px 5px 0;
         }
 
+        .audience-switch--floating .audience-switch__thumb.is-left {
+            border-radius: 5px 0 0 5px;
+        }
+
+        .audience-switch--floating .audience-switch__thumb.is-right {
+            border-radius: 0 5px 5px 0;
+        }
+
         .figma-scroll-icon {
             left: calc(16 * var(--mobile-unit));
             top: calc(100dvh - 367 * var(--mobile-fixed-unit));
@@ -2447,6 +2455,23 @@ body:has(.home-page-container.doctor-mode) {
         color: #ffffff;
     }
 
+    .sidebar-audience-row .audience-switch.is-animated .audience-switch__option.is-active,
+    .sidebar-audience-row .audience-switch.is-animated .audience-switch__option.is-active:hover {
+        background: transparent;
+    }
+
+    .sidebar-audience-row .audience-switch__thumb {
+        background: #111111;
+    }
+
+    .sidebar-audience-row .audience-switch__thumb.is-left {
+        border-radius: 5px 0 0 5px;
+    }
+
+    .sidebar-audience-row .audience-switch__thumb.is-right {
+        border-radius: 0 5px 5px 0;
+    }
+
     .site-sidebar #row-profile {
         order: 5;
         grid-column: 1 / -1;
@@ -3040,6 +3065,7 @@ body:has(.home-page-container.doctor-mode) {
    ========================================================================== */
 
 .audience-switch {
+    position: relative;
     display: inline-flex;
     align-items: stretch;
     overflow: hidden;
@@ -3059,7 +3085,36 @@ body:has(.home-page-container.doctor-mode) {
     z-index: 11;
 }
 
+/* Подсветка активной половины едет отдельным слоем — иначе при переключении
+   она мигала бы, а не переезжала. До монтирования её рисует сама половина,
+   чтобы разметка из SSR выглядела правильно и без JS. */
+.audience-switch__thumb {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 0;
+    background: #ffffff;
+    transition: left 220ms cubic-bezier(0.4, 0, 0.2, 1),
+                width 220ms cubic-bezier(0.4, 0, 0.2, 1),
+                border-radius 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.audience-switch__thumb.is-left {
+    border-radius: 6px 0 0 6px;
+}
+
+.audience-switch__thumb.is-right {
+    border-radius: 0 6px 6px 0;
+}
+
+.audience-switch.is-animated .audience-switch__option.is-active,
+.audience-switch.is-animated .audience-switch__option.is-active:hover {
+    background: transparent;
+}
+
 .audience-switch__option {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3115,6 +3170,42 @@ body:has(.home-page-container.doctor-mode) {
 
 .doctor-mode .audience-switch__dot {
     background: #cba98e;
+}
+
+/* Заливка цветом той версии, куда уходим: без неё смена домена выглядит
+   как вспышка. Тот же слой встречает нас на новой странице и проявляет её. */
+#audience-veil {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 300ms ease;
+}
+
+#audience-veil.is-visible {
+    opacity: 1;
+}
+
+#audience-arrival-veil {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;
+    opacity: 1;
+    pointer-events: none;
+    transition: opacity 360ms ease;
+}
+
+#audience-arrival-veil.is-gone {
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .audience-switch__thumb,
+    #audience-veil,
+    #audience-arrival-veil {
+        transition: none;
+    }
 }
 
 /* Строка-дубль в мобильном меню: тут фон плотный, поэтому светлая схема. */

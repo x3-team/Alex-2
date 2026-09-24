@@ -1,8 +1,32 @@
+@php
+    // Главная заливается фоном своей версии ещё до загрузки CSS, иначе смена
+    // домена через переключатель даёт белую вспышку. Цвета те же, что в main.css.
+    $isHome = ($page['component'] ?? '') === 'Public/Welcome';
+    $audienceColor = \App\Services\DetectSite::make()->isDoctorsSite() ? '#cba98e' : '#cac9bf';
+    // Метку ставит только переключатель; при обычном заходе ничего не меняется.
+    $cameFromSwitch = $isHome && request()->query('from') === 'switch';
+    // Inertia при старте записывает page.url в адрес. Убираем метку оттуда,
+    // иначе replaceState в разметке перебивается и ?from=switch остаётся в канонике вкладки.
+    if ($cameFromSwitch && isset($page['url'])) {
+        $switchUrl = parse_url($page['url']) ?: [];
+        $switchQuery = [];
+        if (! empty($switchUrl['query'])) {
+            parse_str($switchUrl['query'], $switchQuery);
+            unset($switchQuery['from']);
+        }
+        $page['url'] = ($switchUrl['path'] ?? '/')
+            .($switchQuery ? '?'.http_build_query($switchQuery) : '')
+            .(isset($switchUrl['fragment']) ? '#'.$switchUrl['fragment'] : '');
+    }
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"@if($isHome) style="background-color: {{ $audienceColor }}"@endif>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        @if($isHome)
+        <meta name="theme-color" content="{{ $audienceColor }}">
+        @endif
         @if(($page['component'] ?? '') === 'Public/Welcome')
         <link rel="preload" as="image" type="image/webp" href="/videos/posters/hero-mobile.webp" media="(max-width: 1024px)" fetchpriority="high">
         <link rel="preload" as="image" type="image/webp" href="/videos/posters/hero-desktop.webp" media="(min-width: 1025px)" fetchpriority="high">
@@ -333,8 +357,44 @@
 
 
     </head>
-    <body class="font-sans antialiased">
+    <body class="font-sans antialiased"@if($isHome) style="background-color: {{ $audienceColor }}"@endif>
         {{-- SSR article H1 removed in 1.0.57: Inertia SSR already renders visible H1 --}}
+        @if($cameFromSwitch)
+        {{-- Встречаем тем же цветом, каким уходила прошлая страница, и проявляем контент.
+             Разметка и скрипт инлайном: ждать бандл нельзя, иначе будет видно стык. --}}
+        <div id="audience-arrival-veil" style="position:fixed;inset:0;z-index:2147483000;pointer-events:none;opacity:1;transition:opacity 360ms ease;background-color:{{ $audienceColor }}"></div>
+        <script>
+            (function () {
+                var veil = document.getElementById('audience-arrival-veil');
+                if (!veil) return;
+                var url = new URL(window.location.href);
+                url.searchParams.delete('from');
+                window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+
+                var done = function () { if (veil && veil.parentNode) veil.parentNode.removeChild(veil); };
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { done(); return; }
+
+                var fading = false;
+                var fade = function () {
+                    if (fading || !veil.parentNode) return;
+                    fading = true;
+                    veil.style.opacity = '0';
+                    window.setTimeout(done, 420);
+                };
+                // Разметка страницы идёт следом за скриптом. Проявляем её сразу после
+                // разбора документа, не дожидаясь видео: иначе заливка висит секундами.
+                var reveal = function () {
+                    requestAnimationFrame(function () { requestAnimationFrame(fade); });
+                };
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', reveal, { once: true });
+                } else {
+                    reveal();
+                }
+                window.setTimeout(fade, 2500);
+            })();
+        </script>
+        @endif
         @inertia
         <script>
             (function () {
