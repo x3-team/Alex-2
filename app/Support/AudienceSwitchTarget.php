@@ -3,13 +3,15 @@
 namespace App\Support;
 
 use App\Models\Blog;
+use App\Models\Category;
 use App\Services\DetectSite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 
 /**
  * Куда ведёт переключатель аудитории и на каких страницах он виден.
- * Ссылка — та же страница другого домена, если она там есть; иначе главная.
+ * Ссылка — та же страница, если она открывается у другой аудитории,
+ * иначе ближайший раздел (список блога). Главная — только если аналога нет.
  */
 class AudienceSwitchTarget
 {
@@ -49,9 +51,10 @@ class AudienceSwitchTarget
 
     /**
      * @param  callable(string, string): bool|null  $articleFor  audience, slug → published for that audience
+     * @param  callable(string): bool|null  $categoryFor  slug → категория блога существует
      * @return array{visible: bool, patient: string, doctor: string}
      */
-    public function share(Request $request, ?callable $articleFor = null): array
+    public function share(Request $request, ?callable $articleFor = null, ?callable $categoryFor = null): array
     {
         $detect = DetectSite::make($request);
         $logical = $this->logicalPath($request, $detect);
@@ -61,12 +64,13 @@ class AudienceSwitchTarget
         }
 
         $articleFor ??= fn (string $audience, string $slug): bool => $this->articleExists($audience, $slug);
+        $categoryFor ??= fn (string $slug): bool => $this->categoryExists($slug);
         $query = $this->safeQuery($request);
 
         return [
             'visible' => true,
-            'patient' => $this->href('patients', self::pathFor($logical, 'patients', $articleFor), $query, $detect),
-            'doctor' => $this->href('doctors', self::pathFor($logical, 'doctors', $articleFor), $query, $detect),
+            'patient' => $this->href('patients', self::pathFor($logical, 'patients', $articleFor, $categoryFor), $query, $detect),
+            'doctor' => $this->href('doctors', self::pathFor($logical, 'doctors', $articleFor, $categoryFor), $query, $detect),
         ];
     }
 
@@ -91,9 +95,14 @@ class AudienceSwitchTarget
      * Путь на сайте целевой аудитории. null из внутренних правил значит «главная».
      *
      * @param  callable(string, string): bool  $articleFor
+     * @param  callable(string): bool|null  $categoryFor
      */
-    public static function pathFor(string $logicalPath, string $targetAudience, callable $articleFor): string
-    {
+    public static function pathFor(
+        string $logicalPath,
+        string $targetAudience,
+        callable $articleFor,
+        ?callable $categoryFor = null,
+    ): string {
         $path = '/'.trim($logicalPath, '/');
         if ($path === '//') {
             $path = '/';
@@ -103,14 +112,39 @@ class AudienceSwitchTarget
             return $path;
         }
 
+        $categoryFor ??= fn (string $slug): bool => false;
+
         if ($targetAudience === DetectSite::MODE_DOCTORS) {
             return self::forDoctors($path, $articleFor) ?? '/';
         }
 
-        return self::forPatients($path, $articleFor) ?? '/';
+        return self::forPatients($path, $articleFor, $categoryFor) ?? '/';
     }
 
     /**
+     * Фильтр ленты врачей (`type`) имеет смысл только на /materials.
+     * На главной query не переносится.
+     *
+     * @param  array<string, mixed>  $query
+     * @return array<string, mixed>
+     */
+    public static function queryFor(string $path, array $query): array
+    {
+        if ($path === '/' || $path === '') {
+            return [];
+        }
+
+        if (! str_starts_with($path, '/materials')) {
+            unset($query['type']);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Список статей врачей — /materials (страница «Блог про аллергию»).
+     * /blog/{категория} на врачебном домене не остаётся: контроллер отдаёт 301 на /materials.
+     *
      * @param  callable(string, string): bool  $articleFor
      */
     private static function forDoctors(string $path, callable $articleFor): ?string
@@ -119,21 +153,22 @@ class AudienceSwitchTarget
             return $path;
         }
 
-        if ($path === '/doctor-materials') {
+        if ($path === '/doctor-materials' || $path === '/blog') {
             return '/materials';
         }
 
-        if (preg_match('#^/blog/([^/]+)$#', $path, $matches) === 1) {
+        if ($path === '/blog/authors' || preg_match('#^/blog/author/([^/]+)$#', $path) === 1) {
+            return $path;
+        }
+
+        if (preg_match('#^/blog/(.+)$#', $path, $matches) === 1) {
             $slug = $matches[1];
-            if (! in_array($slug, ['authors', 'author'], true) && $articleFor(DetectSite::MODE_DOCTORS, $slug)) {
+            // Маршрут /materials/{category} — один сегмент. Слаг со слэшем там не откроется.
+            if (! str_contains($slug, '/') && $articleFor(DetectSite::MODE_DOCTORS, $slug)) {
                 return '/materials/'.$slug;
             }
 
-            return null;
-        }
-
-        if (str_starts_with($path, '/blog')) {
-            return null;
+            return '/materials';
         }
 
         return $path;
@@ -141,25 +176,33 @@ class AudienceSwitchTarget
 
     /**
      * @param  callable(string, string): bool  $articleFor
+     * @param  callable(string): bool  $categoryFor
      */
-    private static function forPatients(string $path, callable $articleFor): ?string
+    private static function forPatients(string $path, callable $articleFor, callable $categoryFor): ?string
     {
         if ($path === '/' || str_starts_with($path, '/blog')) {
             return $path;
         }
 
-        if (preg_match('#^/materials/([^/]+)$#', $path, $matches) === 1 && $matches[1] !== 'documents') {
-            return $articleFor(DetectSite::MODE_PATIENTS, $matches[1])
-                ? '/blog/'.$matches[1]
-                : null;
+        if ($path === '/doctor-materials' || $path === '/materials' || $path === '/materials/documents') {
+            return '/blog';
         }
 
-        if (
-            $path === '/doctor-materials'
-            || str_starts_with($path, '/materials')
-            || str_starts_with($path, '/video')
-        ) {
-            return null;
+        if (preg_match('#^/materials/([^/]+)$#', $path, $matches) === 1) {
+            $slug = $matches[1];
+            if ($articleFor(DetectSite::MODE_PATIENTS, $slug)) {
+                return '/blog/'.$slug;
+            }
+
+            if (! str_contains($slug, '/') && $categoryFor($slug)) {
+                return '/blog/'.$slug;
+            }
+
+            return '/blog';
+        }
+
+        if (str_starts_with($path, '/video')) {
+            return '/blog';
         }
 
         return $path;
@@ -187,9 +230,7 @@ class AudienceSwitchTarget
     public function href(string $audience, string $path, array $query, DetectSite $detect): string
     {
         $path = $path === '' ? '/' : $path;
-        if ($path === '/') {
-            $query = [];
-        }
+        $query = self::queryFor($path, $query);
 
         $suffix = $query === [] ? '' : '?'.http_build_query($query);
         $subdomain = $detect->usesDoctorsSubdomain();
@@ -250,5 +291,14 @@ class AudienceSwitchTarget
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now())
             ->exists();
+    }
+
+    private function categoryExists(string $slug): bool
+    {
+        if ($slug === '' || str_contains($slug, '/') || ! Schema::hasTable('categories')) {
+            return false;
+        }
+
+        return Category::query()->where('slug', $slug)->exists();
     }
 }

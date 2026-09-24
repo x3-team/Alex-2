@@ -3105,6 +3105,34 @@ body:has(.home-page-container.doctor-mode) {
     z-index: 110;
 }
 
+/* Десктоп: та же высота и тот же top на главной и на внутренних страницах,
+   чтобы плашка не прыгала. Полоса «На главную» — 57px; внешняя высота
+   плашки 36px (34px + рамка), top 10.5px — по 10.5px сверху и снизу,
+   центр на одной линии с «На главную». Внутренний радиус на 1px меньше
+   внешнего, иначе заливка торчит из скругления. */
+@media (min-width: 1025px) {
+    .audience-switch--floating {
+        top: 10.5px;
+        border-radius: 6px;
+    }
+
+    .audience-switch--floating .audience-switch__option {
+        height: 34px;
+        padding: 0 18px;
+        font-size: 14px;
+    }
+
+    .audience-switch--floating .audience-switch__option:first-child,
+    .audience-switch--floating .audience-switch__thumb.is-left {
+        border-radius: 5px 0 0 5px;
+    }
+
+    .audience-switch--floating .audience-switch__option:last-child,
+    .audience-switch--floating .audience-switch__thumb.is-right {
+        border-radius: 0 5px 5px 0;
+    }
+}
+
 /* Над заливкой только пока на html висит класс перехода. В покое 110,
    чтобы меню и модалки оставались выше чипа. */
 html.audience-switching .audience-switch--floating {

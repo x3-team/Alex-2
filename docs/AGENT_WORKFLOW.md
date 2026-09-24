@@ -26,7 +26,7 @@
 4. **Только потом** деплой на VPS по явной команде Виталия («залей», «деплой»).
 5. **Запрещено:** деплоить, а потом отдельным PR догонять `siteVersion.js`.
 6. **Запрещено:** `git push` напрямую в `production`.
-7. После деплоя smoke: live `siteVersion-*.js` == значение из смерженного PR.
+7. После деплоя smoke входит в `scripts/deploy-vps.sh apply`: главные обоих доменов (пациентский `APP_URL` и `doc.`) отдают 200 и живую `SITE_VERSION`, плюс по одному реальному файлу из `storage/app/public/{allergens,blog,authors}` по `/storage/...` (200/206, не HTML). Если нет — скрипт делает `storage:link` и проверяет ещё раз, иначе падает.
 
 Checklist:
 
@@ -35,6 +35,7 @@ Checklist:
 - [ ] merged to production
 - [ ] then deploy (по «залей»)
 - [ ] live chunk matches
+- [ ] apply smoke: главные 200 + версия, `/storage` 200/206 не-HTML на обоих доменах
 
 ## Деплой (основной путь — cloud-агент по SSH)
 
@@ -46,7 +47,7 @@ Checklist:
 4. **Rsync/scp** с VM агента (excludes как в [DEPLOY.md](./DEPLOY.md)): не трогать `.env`, `storage/`, `public/videos`, `public/build` до сборки на сервере.
 5. На VPS: `RUN_MIGRATIONS=true` (только если релиз с миграциями) и `bash scripts/deploy-vps.sh apply` → `composer install --no-dev`, `npm ci`, `npm run build`, `migrate --force` при флаге, `optimize:clear`, `config:cache`, `view:cache`. **`route:cache`** — только если нет дубликатов имён маршрутов; иначе `route:clear`.
 6. **Restart** php-fpm / Inertia SSR — по необходимости (существующий process manager на VPS); флаг `RESTART_SERVICES=true` в скрипте — напоминание оператору.
-7. Smoke: patient + doctor (`/up` или главные), `/admin/doctor-videos`, live chunk `SITE_VERSION`.
+7. Smoke делает сам `apply`: главные (200 + `SITE_VERSION`) и `/storage` (аллерген, блог, автор) на обоих доменах. Дополнительно при ручной проверке: `/admin/doctor-videos`.
 
 **Запасной путь:** GitHub Actions `Deploy to VPS (manual)` — для человека в UI. Агент **не полагается** на `workflow_dispatch` (у integration token часто **403**).
 
@@ -58,6 +59,7 @@ Checklist:
 - `storage/`, `public/storage`
 - `public/videos`
 - полный слепой rsync без excludes
+- `rsync --delete`. Если rsync всё же с `--delete`, обязательны `--exclude 'public/storage'` (без хвостового слэша) и `--filter 'P public/storage'`, иначе симлинк удаляется и `/storage/*` отдаёт 404
 - `migrate --force` без явной просьбы / без миграций в релизе
 - правки nginx
 - ломать статьи, ссылки, SEO

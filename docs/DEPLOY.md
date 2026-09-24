@@ -60,10 +60,13 @@ ssh ... "cd $ALEX_APP_ROOT && bash scripts/deploy-vps.sh backup"
 # или: ~/backups/alexallergotest.ru/<UTC-stamp>/ (build, siteVersion.js, manifest.json)
 
 # 4) rsync (from repo root on agent VM)
+# Без --delete. Исключение public/storage без хвостового слэша.
+# --filter 'P public/storage' дополнительно запрещает удалить симлинк.
 rsync -az \
+  --filter 'P public/storage' \
   --exclude '.git/' --exclude '.github/' --exclude 'node_modules/' --exclude 'vendor/' \
   --exclude '.env' --exclude '.env.*' --exclude 'storage/' --exclude 'bootstrap/cache/' \
-  --exclude 'public/build/' --exclude 'public/hot/' --exclude 'public/storage/' \
+  --exclude 'public/build/' --exclude 'public/hot/' --exclude 'public/storage' \
   --exclude 'public/videos/' --exclude 'tests/' --exclude 'phpunit.xml' \
   --exclude '.phpunit.cache/' --exclude 'docs/' \
   -e "ssh -i ~/.ssh/alexadmin -o BatchMode=yes" \
@@ -71,6 +74,8 @@ rsync -az \
 
 # 5) build + migrate on VPS
 ssh ... "cd $ALEX_APP_ROOT && RUN_MIGRATIONS=true bash scripts/deploy-vps.sh apply"
+# apply в конце сам смоукает главные (200 + SITE_VERSION) и /storage
+# (аллерген, блог, автор) на обоих доменах. Не 200/206 или HTML — скрипт падает.
 # при ошибке route:cache (duplicate route names): php artisan route:clear && config:cache && view:cache
 ```
 
