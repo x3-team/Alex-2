@@ -3,11 +3,18 @@ import { Link, router, usePage } from '@inertiajs/vue3'
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import { SITE_VERSION } from '@/siteVersion'
+import AudienceSwitch from '@/Components/AudienceSwitch.vue'
 
 const props = defineProps({
   doctorMode: {
     type: Boolean,
     default: null
+  },
+  // Дубль переключателя версий в мобильном меню. Пока только на главной,
+  // где эта шапка есть; на остальных страницах меню не меняется.
+  showAudienceSwitch: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -273,6 +280,11 @@ const openAbout = () => {
           <p class="card-subtitle">Объясняем результаты<br />на человеческом языке</p>
         </div>
       </Link>
+    </div>
+
+    <div v-if="showAudienceSwitch" class="sidebar-audience-row">
+      <span class="sidebar-audience-row__caption">Версия сайта</span>
+      <AudienceSwitch variant="row" />
     </div>
 
     <div
