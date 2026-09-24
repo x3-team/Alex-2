@@ -263,6 +263,24 @@ body:has(.home-page-container.doctor-mode) {
             border-radius: 0 5px 5px 0;
         }
 
+        /* До ~390px длинный пункт меню секции («Блог про аллергию»)
+           доезжает до плашки. Ужимаем только её: меньше поля, шрифт и точка.
+           Скругления остаются 6 снаружи и 5 внутри. */
+        @media (max-width: 389px) {
+            .audience-switch--floating .audience-switch__option {
+                height: 32px;
+                padding: 0 6px;
+                font-size: 12px;
+            }
+
+            .audience-switch--floating .audience-switch__dot {
+                width: 4px;
+                height: 4px;
+                flex: 0 0 4px;
+                margin-right: 4px;
+            }
+        }
+
         .figma-scroll-icon {
             left: calc(16 * var(--mobile-unit));
             top: calc(100dvh - 367 * var(--mobile-fixed-unit));
