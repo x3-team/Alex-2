@@ -238,12 +238,21 @@ body:has(.home-page-container.doctor-mode) {
         .audience-switch--floating {
             top: 10px;
             right: 10px;
+            border-radius: 6px;
         }
 
         .audience-switch--floating .audience-switch__option {
             height: 38px;
             padding: 0 16px;
             font-size: 14px;
+        }
+
+        .audience-switch--floating .audience-switch__option:first-child {
+            border-radius: 5px 0 0 5px;
+        }
+
+        .audience-switch--floating .audience-switch__option:last-child {
+            border-radius: 0 5px 5px 0;
         }
 
         .figma-scroll-icon {
@@ -2403,11 +2412,20 @@ body:has(.home-page-container.doctor-mode) {
     .sidebar-audience-row .audience-switch {
         display: flex;
         width: 100%;
+        border-radius: 6px;
         border-color: rgba(0, 0, 0, 0.14);
         background: rgba(0, 0, 0, 0.06);
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
         box-shadow: none;
+    }
+
+    .sidebar-audience-row .audience-switch__option:first-child {
+        border-radius: 5px 0 0 5px;
+    }
+
+    .sidebar-audience-row .audience-switch__option:last-child {
+        border-radius: 0 5px 5px 0;
     }
 
     .sidebar-audience-row .audience-switch__option {
@@ -3026,7 +3044,7 @@ body:has(.home-page-container.doctor-mode) {
     align-items: stretch;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
+    border-radius: 7px;
     background: rgba(17, 17, 17, 0.34);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -3058,6 +3076,16 @@ body:has(.home-page-container.doctor-mode) {
 
 .audience-switch__option + .audience-switch__option {
     border-left: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+/* Внутренний радиус на единицу меньше внешнего — на толщину рамки, иначе
+   заливка активной половины выступает уголками за скругление плашки. */
+.audience-switch__option:first-child {
+    border-radius: 6px 0 0 6px;
+}
+
+.audience-switch__option:last-child {
+    border-radius: 0 6px 6px 0;
 }
 
 .audience-switch__option:hover {
