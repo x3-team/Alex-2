@@ -4,6 +4,7 @@ import { renderToString } from '@vue/server-renderer'
 import { createSSRApp, h } from 'vue'
 import { ZiggyVue } from '../../vendor/tightenco/ziggy'
 import { Ziggy } from './ziggy'
+import AudienceSwitchHost from './Components/AudienceSwitchHost.vue'
 
 createServer((page) =>
     createInertiaApp({
@@ -19,7 +20,7 @@ createServer((page) =>
                 ...Ziggy,
                 location: new URL(page.url || '/', Ziggy.url || 'https://alexallergotest.ru'),
             }
-            return createSSRApp({ render: () => h(App, props) })
+            return createSSRApp({ render: () => [h(App, props), h(AudienceSwitchHost)] })
                 .use(plugin)
                 .use(ZiggyVue, ziggyConfig)
         },

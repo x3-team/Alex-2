@@ -4,7 +4,10 @@
     $isHome = ($page['component'] ?? '') === 'Public/Welcome';
     $audienceColor = \App\Services\DetectSite::make()->isDoctorsSite() ? '#cba98e' : '#cac9bf';
     // Метку ставит только переключатель; при обычном заходе ничего не меняется.
-    $cameFromSwitch = $isHome && request()->query('from') === 'switch';
+    $cameFromSwitch = request()->query('from') === 'switch';
+    // На главной фон версии стоит всегда. На остальных страницах — только в момент перехода,
+    // чтобы обычный заход не перекрашивал документ.
+    $paintAudience = $isHome || $cameFromSwitch;
     // Inertia при старте записывает page.url в адрес. Убираем метку оттуда,
     // иначе replaceState в разметке перебивается и ?from=switch остаётся в канонике вкладки.
     if ($cameFromSwitch && isset($page['url'])) {
@@ -20,11 +23,11 @@
     }
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"@if($isHome) style="background-color: {{ $audienceColor }}"@endif>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"@if($paintAudience) style="background-color: {{ $audienceColor }}"@endif>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-        @if($isHome)
+        @if($paintAudience)
         <meta name="theme-color" content="{{ $audienceColor }}">
         @endif
         @if(($page['component'] ?? '') === 'Public/Welcome')
@@ -357,7 +360,7 @@
 
 
     </head>
-    <body class="font-sans antialiased"@if($isHome) style="background-color: {{ $audienceColor }}"@endif>
+    <body class="font-sans antialiased"@if($paintAudience) style="background-color: {{ $audienceColor }}"@endif>
         {{-- SSR article H1 removed in 1.0.57: Inertia SSR already renders visible H1 --}}
         @if($cameFromSwitch)
         {{-- Встречаем тем же цветом, каким уходила прошлая страница, и проявляем контент.

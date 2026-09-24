@@ -3,6 +3,7 @@ import './bootstrap';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
+import AudienceSwitchHost from './Components/AudienceSwitchHost.vue';
 import { ZiggyVue, route } from '../../vendor/tightenco/ziggy';
 
 // Breeze Auth pages call route() inside <script setup>. skip-route-function
@@ -32,7 +33,9 @@ if (errorAppEl) {
                 import.meta.glob('./Pages/**/*.vue'),
             ),
         setup({ el, App, props, plugin }) {
-            const app = createApp({ render: () => h(App, props) });
+            const app = createApp({
+                render: () => [h(App, props), h(AudienceSwitchHost)],
+            });
 
             app.config.errorHandler = (err) => {
                 console.error('Inertia error:', err);

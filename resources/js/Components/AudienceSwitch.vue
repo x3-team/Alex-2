@@ -18,11 +18,15 @@ const doctorsOrigin = computed(
   () => String(page.props.site?.doctorsOrigin || '').replace(/\/+$/, '')
 )
 
-const doctorsHome = computed(
-  () => (doctorsOrigin.value ? `${doctorsOrigin.value}/` : doctorsUrl('/'))
-)
+const switchTargets = computed(() => page.props.site?.switch || null)
+
+const doctorsHome = computed(() => {
+  if (switchTargets.value?.doctor) return switchTargets.value.doctor
+  return doctorsOrigin.value ? `${doctorsOrigin.value}/` : doctorsUrl('/')
+})
 
 const patientsHome = computed(() => {
+  if (switchTargets.value?.patient) return switchTargets.value.patient
   const origin = doctorsOrigin.value
   return origin ? `${origin.replace(/\/\/doc\./i, '//')}/` : '/'
 })

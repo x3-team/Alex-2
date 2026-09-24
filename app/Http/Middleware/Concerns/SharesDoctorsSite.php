@@ -3,6 +3,7 @@
 namespace App\Http\Middleware\Concerns;
 
 use App\Services\DetectSite;
+use App\Support\AudienceSwitchTarget;
 use Illuminate\Http\Request;
 
 /**
@@ -16,8 +17,12 @@ trait SharesDoctorsSite
 {
     protected function doctorsSiteShare(Request $request): array
     {
+        $detect = DetectSite::make($request);
+
         return [
-            'site' => DetectSite::make($request)->sharePayload(),
+            'site' => $detect->sharePayload() + [
+                'switch' => app(AudienceSwitchTarget::class)->share($request),
+            ],
         ];
     }
 }

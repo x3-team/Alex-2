@@ -21,9 +21,6 @@ import {
 // How-to is part of the doctor/patient menu jump path — keep it sync so
 // «Как сдать тест» cannot land on editorial beige while the chunk loads.
 import FigmaInfoSlide from '@/Components/FigmaInfoSlide.vue'
-// Переключатель версий сидит поверх первого экрана и не должен ждать загрузки чанка.
-import AudienceSwitch from '@/Components/AudienceSwitch.vue'
-
 // Асинхронные компоненты для оптимизации первоначальной загрузки (Code Splitting)
 const HomeBackLink = defineAsyncComponent(() => import('@/Components/HomeBackLink.vue'))
 const SiteSidebar = defineAsyncComponent(() => import('@/Components/SiteSidebar.vue'))
@@ -1761,8 +1758,6 @@ onUnmounted(() => {
         ref="scrollContainer"
         :data-active-slide="slides[currentSlideIndex]?.id"
     >
-      <AudienceSwitch />
-
       <div
           class="figma-right-menu"
           :class="{
