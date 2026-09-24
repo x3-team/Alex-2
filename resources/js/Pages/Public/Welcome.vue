@@ -21,6 +21,8 @@ import {
 // How-to is part of the doctor/patient menu jump path — keep it sync so
 // «Как сдать тест» cannot land on editorial beige while the chunk loads.
 import FigmaInfoSlide from '@/Components/FigmaInfoSlide.vue'
+// Переключатель версий сидит поверх первого экрана и не должен ждать загрузки чанка.
+import AudienceSwitch from '@/Components/AudienceSwitch.vue'
 
 // Асинхронные компоненты для оптимизации первоначальной загрузки (Code Splitting)
 const HomeBackLink = defineAsyncComponent(() => import('@/Components/HomeBackLink.vue'))
@@ -48,15 +50,6 @@ const props = defineProps({
 })
 
 const { isDoctorMode, toggleAudienceMode, doctorsUrl } = useDoctorMode()
-const patientHomeUrl = 'https://alexallergotest.ru/'
-
-const goAudienceHome = () => {
-  if (isDoctorMode.value) {
-    window.location.href = patientHomeUrl
-    return
-  }
-  window.location.href = doctorsUrl('/')
-}
 
 onMounted(() => {
   if (props.isDoctorRoute && !isDoctorMode.value) {
@@ -1750,6 +1743,7 @@ onUnmounted(() => {
         v-if="mountSidebar"
         ref="siteSidebarRef"
         :doctor-mode="isDoctorMode"
+        show-audience-switch
         @register="openCart"
         @home="goToSlideById('slide-1')"
         @about="goToSlideById('slide-1')"
@@ -1767,14 +1761,7 @@ onUnmounted(() => {
         ref="scrollContainer"
         :data-active-slide="slides[currentSlideIndex]?.id"
     >
-      <button
-          class="figma-doctors-button"
-          type="button"
-          @click.prevent="goAudienceHome()"
-      >
-        <span>{{ isDoctorMode ? 'Для пациентов' : 'Для врачей' }}</span>
-        <img src="/assets/figma-doctors-icon.svg" alt="" width="20" height="20" />
-      </button>
+      <AudienceSwitch />
 
       <div
           class="figma-right-menu"

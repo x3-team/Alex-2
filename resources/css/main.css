@@ -126,10 +126,6 @@ body:has(.home-page-container.doctor-mode) {
 .mobile-info-background {
     display: none;
 }
-.figma-doctors-button{
-    display: none!important;
-}
-
 /* ==========================================================================
    FIGMA MOBILE HOME — content frames 121:99–121:665 (420 × 750)
    Width scales proportionally; vertical groups stay anchored above the
@@ -237,22 +233,17 @@ body:has(.home-page-container.doctor-mode) {
             flex: 0 0 calc(24 * var(--mobile-unit));
         }
 
-        .figma-doctors-button {
-            right: max(calc(16 * var(--mobile-unit)), 16px);
-            width: calc(215 * var(--mobile-unit));
-            max-width: 215px;
-            height: calc(72 * var(--mobile-fixed-unit));
-            gap: calc(12 * var(--mobile-fixed-unit));
-            padding: calc(24 * var(--mobile-fixed-unit)) min(calc(32 * var(--mobile-unit)), 32px);
-            background: rgba(0, 0, 0, 0.2);
-            font-size: calc(21 * var(--mobile-fixed-unit));
-            line-height: calc(24 * var(--mobile-fixed-unit));
+        /* Прижимаем к правому краю: по центру плашка налезала бы на меню
+           секций, которое на внутренних слайдах стоит сверху слева. */
+        .audience-switch--floating {
+            top: 10px;
+            right: 10px;
         }
 
-        .figma-doctors-button img {
-            width: calc(24 * var(--mobile-unit));
-            height: calc(24 * var(--mobile-unit));
-            flex-basis: calc(24 * var(--mobile-unit));
+        .audience-switch--floating .audience-switch__option {
+            height: 38px;
+            padding: 0 16px;
+            font-size: 14px;
         }
 
         .figma-scroll-icon {
@@ -2042,7 +2033,8 @@ body:has(.home-page-container.doctor-mode) {
         display: none !important;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         /* Extra viewport height belongs to the visual hero, never to navigation. */
-        grid-template-rows: minmax(330px, 1fr) 156px 132px 66px 66px;
+        /* 4-я строка — переключатель версий сайта, дальше профиль и «Закрыть». */
+        grid-template-rows: minmax(330px, 1fr) 156px 132px 76px 66px 66px;
         width: 100%;
         height: 100dvh;
         min-height: 750px;
@@ -2389,14 +2381,62 @@ body:has(.home-page-container.doctor-mode) {
         flex: 0 0 24px;
     }
 
-    .site-sidebar #row-profile {
+    .site-sidebar .sidebar-audience-row {
         order: 4;
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 7px;
+        width: 100%;
+        height: 76px;
+        padding: 0 16px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        background: #ffffff;
+    }
+
+    .sidebar-audience-row__caption {
+        color: rgba(0, 0, 0, 0.45);
+        font: 400 13px/1 var(--font-family);
+    }
+
+    .sidebar-audience-row .audience-switch {
+        display: flex;
+        width: 100%;
+        border-color: rgba(0, 0, 0, 0.14);
+        background: rgba(0, 0, 0, 0.06);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        box-shadow: none;
+    }
+
+    .sidebar-audience-row .audience-switch__option {
+        flex: 1 1 0;
+        min-width: 0;
+        height: 40px;
+        padding: 0 10px;
+        color: #111111;
+        font-size: 15px;
+    }
+
+    .sidebar-audience-row .audience-switch__option + .audience-switch__option {
+        border-left-color: rgba(0, 0, 0, 0.12);
+    }
+
+    .sidebar-audience-row .audience-switch__option.is-active,
+    .sidebar-audience-row .audience-switch__option.is-active:hover {
+        background: #111111;
+        color: #ffffff;
+    }
+
+    .site-sidebar #row-profile {
+        order: 5;
         grid-column: 1 / -1;
         border-right: 0;
     }
 
     .site-sidebar .mobile-close-row {
-        order: 5;
+        order: 6;
         grid-column: 1 / -1;
         display: flex;
         width: 100%;
@@ -2975,35 +3015,83 @@ body:has(.home-page-container.doctor-mode) {
     transform: none;
 }
 
-.figma-doctors-button {
+/* ==========================================================================
+   AUDIENCE SWITCH — «Пациентам | Врачам»
+   Плашка живёт поверх видео сторителлинга, поэтому фон тёмный с блюром:
+   он одинаково читается на светлом пациентском и бежевом врачебном кадре.
+   ========================================================================== */
+
+.audience-switch {
+    display: inline-flex;
+    align-items: stretch;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    background: rgba(17, 17, 17, 0.34);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.18);
+    font-family: var(--font-family);
+}
+
+.audience-switch--floating {
     position: absolute;
-    top: 0;
+    top: 16px;
     right: 16px;
     z-index: 11;
+}
+
+.audience-switch__option {
     display: flex;
     align-items: center;
-    gap: 12px;
-    width: 215px;
-    height: 72px;
-    padding: 24px 32px;
-    border: 0;
-    border-radius: 0;
-    background: rgba(0, 0, 0, 0.2);
+    justify-content: center;
+    height: 44px;
+    padding: 0 22px;
     color: #ffffff;
-    font: 400 21px/24px var(--font-family);
-    text-align: left;
-    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    text-decoration: none;
     transition: background-color 180ms ease;
 }
 
-.figma-doctors-button:hover {
-    background: rgba(0, 0, 0, 0.32);
+.audience-switch__option + .audience-switch__option {
+    border-left: 1px solid rgba(255, 255, 255, 0.22);
 }
 
-.figma-doctors-button img {
-    width: 24px;
-    height: 24px;
-    flex: 0 0 24px;
+.audience-switch__option:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.audience-switch__option.is-active,
+.audience-switch__option.is-active:hover {
+    background: #ffffff;
+    color: #111111;
+    font-weight: 500;
+}
+
+.audience-switch__dot {
+    display: none;
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+    margin-right: 9px;
+    border-radius: 50%;
+    background: #97ae96;
+}
+
+.audience-switch__option.is-active .audience-switch__dot {
+    display: block;
+}
+
+.doctor-mode .audience-switch__dot {
+    background: #cba98e;
+}
+
+/* Строка-дубль в мобильном меню: тут фон плотный, поэтому светлая схема. */
+.sidebar-audience-row {
+    display: none;
 }
 
 /* ==========================================================================
@@ -5470,7 +5558,7 @@ body:has(.home-page-container.doctor-mode) {
 
 @media (max-width: 1024px) {
     .home-page-container.doctor-mode .site-sidebar {
-        grid-template-rows: minmax(330px, 1fr) 66px 132px 66px 66px;
+        grid-template-rows: minmax(330px, 1fr) 66px 132px 76px 66px 66px;
     }
 
     .home-page-container .site-sidebar #row-doctor-materials {
