@@ -14,14 +14,17 @@ class AdminHomeSaveFeedbackTest extends TestCase
 
     protected function setUp(): void
     {
-        // Inertia renders the root Blade view. The compiled-view directory is
-        // not in git, and CI does not create it before the unit suite.
+        // The Blade compiler is built during application boot and refuses to
+        // start if this directory is missing. It is not in git, and CI runs
+        // unit tests before `npm run build`.
         $views = dirname(__DIR__, 2).'/storage/framework/views';
         if (! is_dir($views)) {
             mkdir($views, 0777, true);
         }
 
         parent::setUp();
+
+        $this->withoutVite();
     }
 
     public function test_home_page_shares_empty_flash_until_something_is_saved(): void
