@@ -3577,7 +3577,7 @@ body:has(.audience-switch--floating):not(:has(.home-page-container)) header.stic
 }
 
 .home-page-container.doctor-mode .exact-faq-answer {
-    color: rgba(255, 255, 255, 0.68);
+    color: rgba(255, 255, 255, 0.92);
 }
 
 .home-page-container.doctor-mode .exact-blog-tags span {
@@ -5843,6 +5843,14 @@ body:has(.audience-switch--floating):not(:has(.home-page-container)) header.stic
         background: #cba98e url('/assets/doctor-faq-final.webp') center / cover no-repeat;
     }
 
+    .home-page-container.doctor-mode .mobile-info-background.is-doctor-faq::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: rgba(0, 0, 0, 0.32);
+    }
+
     .home-page-container.doctor-mode .figma-right-menu.visible.mobile-backdrop-visible::before {
         background: radial-gradient(
                 ellipse at 72% 66%,
@@ -7646,6 +7654,15 @@ button {
 }
 .home-page-container.doctor-mode .video-bg-container.doctor-editorial-background, .home-page-container.doctor-mode .video-bg-container.faq-fixed-background {
     background: #cba98e url(../../assets/doctor-faq-final.webp) 50% / cover no-repeat;
+}
+/* FAQ still is a light beige photo; a light scrim keeps white copy readable. */
+.home-page-container.doctor-mode .video-bg-container.faq-fixed-background::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.32);
 }
 .home-page-container .video-bg-container.faq-fixed-background:not(.faq-transition-active) .bg-video {
     opacity: 0 !important;

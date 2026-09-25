@@ -228,7 +228,7 @@
   transform: rotate(180deg);
 }
 .home-page-container.doctor-mode .exact-faq-answer {
-  color: #ffffffad;
+  color: rgba(255, 255, 255, 0.92);
 }
 @media (min-width: 1025px) {
   .exact-faq-answer {

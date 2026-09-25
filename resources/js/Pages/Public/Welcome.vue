@@ -1847,7 +1847,10 @@ onUnmounted(() => {
 
       <div
           class="mobile-info-background"
-          :class="{ visible: showMobileInfoBackground }"
+          :class="{
+            visible: showMobileInfoBackground,
+            'is-doctor-faq': isDoctorMode && (slides[currentSlideIndex]?.id === 'slide-16' || isFaqReverseTransitionActive)
+          }"
           aria-hidden="true"
       ></div>
 
