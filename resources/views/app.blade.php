@@ -209,10 +209,22 @@
                     'alex-lab' => 'Лаборатория ALEX LAB — тест на аллергию ALEX².',
                     'demo-result' => 'Пример результата теста на аллергию ALEX².',
                 ];
-                $documentDescription = $descriptionFallbacks[$seoPath]
-                    ?? (str_starts_with((string) $seoPath, 'blog')
-                        ? $descriptionFallbacks['blog']
-                        : 'Лаборатория ALEX LAB — тест на аллергию ALEX².');
+                if ($isDoctorsSite) {
+                    $doctorDescFallbacks = [
+                        '/' => 'Информация для врачей об аллергочипе ALEX²: диагностика, материалы для практики.',
+                        'materials' => trim((string) data_get($seoProps, 'blogMeta.description'))
+                            ?: 'Материалы для врачей: статьи, видео и документы лаборатории ALEX LAB.',
+                    ];
+                    $documentDescription = $doctorDescFallbacks[$seoPath]
+                        ?? (str_starts_with((string) $seoPath, 'materials')
+                            ? $doctorDescFallbacks['materials']
+                            : 'Материалы и информация для врачей — ALEX².');
+                } else {
+                    $documentDescription = $descriptionFallbacks[$seoPath]
+                        ?? (str_starts_with((string) $seoPath, 'blog')
+                            ? $descriptionFallbacks['blog']
+                            : 'Лаборатория ALEX LAB — тест на аллергию ALEX².');
+                }
             }
 
             if (is_string($documentTitle)) {
@@ -249,23 +261,28 @@
             $blog = data_get($seoProps, 'blog');
             $isArticle = is_array($blog) && !empty($blog['slug']) && !empty($blog['title']);
 
-            $appUrl = rtrim((string) config('app.url'), '/');
+            $siteBase = \App\Support\SeoOrigin::make()->siteBaseUrl();
+            $patientBase = rtrim((string) config('app.url'), '/');
             if ($isArticle) {
                 $articleCanonical = trim((string) ($blog['canonical_url'] ?? ''));
-                $canonicalUrl = $articleCanonical !== ''
-                    ? $articleCanonical
-                    : $appUrl.'/blog/'.ltrim((string) $blog['slug'], '/');
+                if ($articleCanonical !== '') {
+                    $canonicalUrl = $articleCanonical;
+                } elseif ($isDoctorsSite) {
+                    $canonicalUrl = $siteBase.'/materials/'.ltrim((string) $blog['slug'], '/');
+                } else {
+                    $canonicalUrl = $patientBase.'/blog/'.ltrim((string) $blog['slug'], '/');
+                }
             } elseif ($seoPath === '/' || $seoPath === '') {
-                $canonicalUrl = $appUrl;
+                $canonicalUrl = $siteBase;
             } else {
-                $canonicalUrl = $appUrl.'/'.ltrim((string) $seoPath, '/');
+                $canonicalUrl = $siteBase.'/'.ltrim((string) $seoPath, '/');
             }
 
-            // Пагинация блога/автора: canonical на саму страницу (?page=N при N>1)
             $pageNum = (int) request()->query('page', 1);
+            $canonicalQuery = [];
             if (
                 $pageNum > 1
-                && !$isArticle
+                && ! $isArticle
                 && (
                     $seoPath === 'blog'
                     || preg_match('#^blog/author/\d+$#', (string) $seoPath)
@@ -273,18 +290,19 @@
                         preg_match('#^blog/[A-Za-z0-9_-]+$#', (string) $seoPath)
                         && $seoPath !== 'blog/authors'
                     )
+                    || ($isDoctorsSite && (string) $seoPath === 'materials')
                 )
             ) {
-                $canonicalUrl .= '?page='.$pageNum;
+                $canonicalQuery['page'] = $pageNum;
             }
-
-            // Doctor-only URLs must not canonicalize to apex 404s (/video, /materials).
-            if ($isDoctorsSite && (str_starts_with((string) $seoPath, 'video') || str_starts_with((string) $seoPath, 'materials'))) {
-                $doctorOrigin = rtrim((string) data_get($seoProps, 'site.doctorsOrigin'), '/');
-                if ($doctorOrigin === '') {
-                    $doctorOrigin = rtrim((string) request()->getSchemeAndHttpHost(), '/');
+            if ($isDoctorsSite && (string) $seoPath === 'materials' && ! $isArticle) {
+                $materialType = (string) request()->query('type', '');
+                if (in_array($materialType, ['articles', 'videos', 'documents'], true)) {
+                    $canonicalQuery['type'] = $materialType;
                 }
-                $canonicalUrl = $doctorOrigin.'/'.ltrim((string) $seoPath, '/');
+            }
+            if ($canonicalQuery !== []) {
+                $canonicalUrl .= '?'.http_build_query($canonicalQuery);
             }
 
             $ogType = $isArticle ? 'article' : 'website';
@@ -305,7 +323,7 @@
             $ogImageWidth = null;
             $ogImageHeight = null;
             if ($isArticle && !empty($blog['preview_image'])) {
-                $ogImage = $appUrl.'/storage/'.ltrim((string) $blog['preview_image'], '/');
+                $ogImage = $siteBase.'/storage/'.ltrim((string) $blog['preview_image'], '/');
                 $localImage = public_path('storage/'.ltrim((string) $blog['preview_image'], '/'));
                 if (is_file($localImage)) {
                     $size = @getimagesize($localImage);
@@ -316,7 +334,7 @@
                 }
             }
             if (!$ogImage) {
-                $ogImage = $appUrl.'/og-image.png';
+                $ogImage = $siteBase.'/og-image.png';
                 $ogImageWidth = 1200;
                 $ogImageHeight = 630;
             }

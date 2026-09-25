@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Blog;
+use App\Models\DoctorVideo;
 use App\Models\User;
+use App\Services\DetectSite;
+use App\Support\DoctorMaterialsStore;
+use App\Support\SeoOrigin;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
@@ -12,9 +16,13 @@ class SitemapController extends Controller
 {
     public function index()
     {
-        // Кэшируем на 1 час для производительности
-        $sitemap = Cache::remember('sitemap_categories_v2', 3600, function () {
-            return $this->generateSitemap();
+        $isDoctorsHost = DetectSite::make()->isDoctorsHost();
+        $cacheKey = $isDoctorsHost ? 'sitemap_doctors_v1' : 'sitemap_categories_v2';
+
+        $sitemap = Cache::remember($cacheKey, 3600, function () use ($isDoctorsHost) {
+            return $isDoctorsHost
+                ? $this->generateDoctorsSitemap()
+                : $this->generatePatientSitemap();
         });
 
         return response($sitemap, 200, [
@@ -22,7 +30,87 @@ class SitemapController extends Controller
         ]);
     }
 
-    private function generateSitemap(): string
+    private function generateDoctorsSitemap(): string
+    {
+        $baseUrl = SeoOrigin::make()->siteBaseUrl();
+        $staticLastmod = '2026-09-25';
+
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . PHP_EOL;
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . PHP_EOL;
+
+        $xml .= $this->addUrl($baseUrl, $staticLastmod, 'weekly', '1.0');
+        $xml .= $this->addUrl($baseUrl . '/materials', $staticLastmod, 'daily', '0.9');
+
+        $blogs = Blog::query()
+            ->where('is_active', true)
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
+            ->when(Schema::hasColumn('blogs', 'noindex'), function ($q) {
+                $q->where(function ($inner) {
+                    $inner->where('noindex', false)->orWhereNull('noindex');
+                });
+            })
+            ->when(Schema::hasColumn('blogs', 'audience'), function ($q) {
+                $q->where('audience', 'doctors');
+            }, function ($q) {
+                $q->whereRaw('0 = 1');
+            })
+            ->select('slug', 'updated_at', 'published_at')
+            ->orderByDesc('published_at')
+            ->get();
+
+        $articleSlugs = [];
+        foreach ($blogs as $blog) {
+            $articleSlugs[$blog->slug] = true;
+            $lastmod = $blog->updated_at ?: $blog->published_at;
+            $xml .= $this->addUrl(
+                $baseUrl . '/materials/' . $blog->slug,
+                $lastmod ? $lastmod->toW3cString() : null,
+                'weekly',
+                '0.8'
+            );
+        }
+
+        $videos = DoctorVideo::query()
+            ->published()
+            ->orderByDesc('published_at')
+            ->get(['slug', 'updated_at', 'published_at']);
+
+        foreach ($videos as $video) {
+            $lastmod = $video->updated_at ?: $video->published_at;
+            $xml .= $this->addUrl(
+                $baseUrl . '/video/' . $video->slug,
+                $lastmod ? $lastmod->toW3cString() : null,
+                'weekly',
+                '0.7'
+            );
+        }
+
+        $store = new DoctorMaterialsStore();
+        $store->ensureDefaultCategory();
+        foreach ($store->publicCategories() as $category) {
+            $slug = (string) ($category['slug'] ?? '');
+            if ($slug === '' || isset($articleSlugs[$slug])) {
+                continue;
+            }
+            $link = trim((string) ($category['link_url'] ?? ''));
+            if ($link !== '') {
+                continue;
+            }
+            $xml .= $this->addUrl(
+                $baseUrl . '/materials/' . $slug,
+                $staticLastmod,
+                'monthly',
+                '0.6'
+            );
+        }
+
+        $xml .= '</urlset>';
+
+        return $xml;
+    }
+
+    private function generatePatientSitemap(): string
     {
         $baseUrl = rtrim((string) config('app.url'), '/');
 

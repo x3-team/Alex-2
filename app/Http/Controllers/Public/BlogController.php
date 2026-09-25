@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Blog;
 use App\Models\DoctorVideo;
+use App\Support\SeoOrigin;
 use App\Models\User;
 use App\Services\DetectSite;
 use App\Support\DoctorMaterialsStore;
@@ -176,9 +177,24 @@ class BlogController extends Controller
             $filterCategory = $category->slug;
         } else {
             $pageDescription = $blogIntroDescription;
-            $metaTitle = \App\Models\Setting::get('blog_page_meta_title', 'Блог — ALEX LAB');
-            $metaDescription = \App\Models\Setting::get('blog_page_meta_description', '');
-            $metaKeywords = \App\Models\Setting::get('blog_page_meta_keywords', '');
+            if ($isDoctors) {
+                $metaTitle = trim((string) \App\Models\Setting::get('doctor_materials_meta_title', ''));
+                $metaDescription = trim((string) \App\Models\Setting::get('doctor_materials_meta_description', ''));
+                $metaKeywords = trim((string) \App\Models\Setting::get('doctor_materials_meta_keywords', ''));
+                if ($metaTitle === '') {
+                    $metaTitle = \App\Models\Setting::get('blog_page_meta_title', 'Материалы для врачей — ALEX LAB');
+                }
+                if ($metaDescription === '') {
+                    $metaDescription = \App\Models\Setting::get('blog_page_meta_description', '');
+                }
+                if ($metaKeywords === '') {
+                    $metaKeywords = \App\Models\Setting::get('blog_page_meta_keywords', '');
+                }
+            } else {
+                $metaTitle = \App\Models\Setting::get('blog_page_meta_title', 'Блог — ALEX LAB');
+                $metaDescription = \App\Models\Setting::get('blog_page_meta_description', '');
+                $metaKeywords = \App\Models\Setting::get('blog_page_meta_keywords', '');
+            }
             $filterCategory = $request->category;
         }
 
@@ -525,8 +541,17 @@ class BlogController extends Controller
         $relatedPosts->each->hideNonPublicAuthor();
 
         // 🔹 ГЕНЕРАЦИЯ JSON-LD
+        $isDoctors = $this->isDoctorsSite();
+        $siteBase = SeoOrigin::make()->siteBaseUrl();
         $currentUrl = url()->current();
         $publicAuthor = $blog->publicAuthor();
+
+        $authorSchema = $publicAuthor
+            ? ['@type' => 'Person', 'name' => $publicAuthor->name]
+            : ['@type' => 'Organization', 'name' => 'ALEX LAB'];
+        if ($publicAuthor && ! $isDoctors) {
+            $authorSchema['url'] = url('/blog/author/'.$publicAuthor->id);
+        }
 
         $articleSchema = [
             '@context' => 'https://schema.org',
@@ -535,41 +560,32 @@ class BlogController extends Controller
             'description' => $blog->seo_description ?: $blog->excerpt,
             'datePublished' => $blog->published_at ? $blog->published_at->toIso8601String() : $blog->created_at->toIso8601String(),
             'dateModified' => $blog->updated_at->toIso8601String(),
-            'author' => $publicAuthor
-                ? [
-                    '@type' => 'Person',
-                    'name' => $publicAuthor->name,
-                    'url' => url('/blog/author/' . $publicAuthor->id),
-                ]
-                : [
-                    '@type' => 'Organization',
-                    'name' => 'ALEX LAB',
-                ],
+            'author' => $authorSchema,
             'publisher' => [
                 '@type' => 'Organization',
                 'name' => 'ALEX LAB',
                 'logo' => [
                     '@type' => 'ImageObject',
-                    'url' => rtrim((string) config('app.url'), '/') . '/og-favicon.png',
+                    'url' => $siteBase.'/og-favicon.png',
                     'width' => 512,
                     'height' => 512,
-                ]
+                ],
             ],
             'mainEntityOfPage' => [
                 '@type' => 'WebPage',
                 '@id' => $currentUrl,
-            ]
+            ],
         ];
 
-        if (!empty($blog->preview_image)) {
-            $articleSchema['image'] = asset('storage/' . $blog->preview_image);
+        if (! empty($blog->preview_image)) {
+            $articleSchema['image'] = $siteBase.'/storage/'.ltrim((string) $blog->preview_image, '/');
         }
 
-        if ($publicAuthor && $publicAuthor->name) {
+        if ($publicAuthor && $publicAuthor->name && ! $isDoctors) {
             $articleSchema['reviewedBy'] = [
                 '@type' => 'Person',
                 'name' => $publicAuthor->name,
-                'url' => url('/blog/author/' . $publicAuthor->id),
+                'url' => url('/blog/author/'.$publicAuthor->id),
             ];
         }
 
@@ -609,7 +625,6 @@ class BlogController extends Controller
             ];
         }
 
-        $isDoctors = $this->isDoctorsSite();
         $listingUrl = $isDoctors ? url('/materials') : url('/blog');
 
         $breadcrumbSchema = [

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\HomeSetting;
 use App\Models\Blog;
+use App\Support\SeoOrigin;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 
@@ -86,14 +87,16 @@ class HomeController extends Controller
             $cmsTitle = $fallbackTitle;
         }
 
+        $siteBase = SeoOrigin::make()->siteBaseUrl();
+
         $organizationData = [
             '@context' => 'https://schema.org',
             '@type' => 'Organization',
             'name' => 'ALEX²',
-            'url' => config('app.url'),
+            'url' => $siteBase,
             'logo' => [
                 '@type' => 'ImageObject',
-                'url' => rtrim((string) config('app.url'), '/') . '/og-favicon.png',
+                'url' => $siteBase . '/og-favicon.png',
                 'width' => 512,
                 'height' => 512,
             ],

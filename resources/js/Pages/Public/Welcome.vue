@@ -1723,7 +1723,6 @@ onUnmounted(() => {
   <Head>
     <meta name="description" :content="seoDescription" />
     <meta name="keywords" :content="seoKeywords" />
-    <link rel="canonical" href="https://alexallergotest.ru" />
     <link rel="preload" as="image" type="image/webp" href="/videos/posters/hero-mobile.webp" media="(max-width: 1024px)" fetchpriority="high" />
     <link rel="preload" as="image" type="image/webp" href="/videos/posters/hero-desktop.webp" media="(min-width: 1025px)" fetchpriority="high" />
   </Head>

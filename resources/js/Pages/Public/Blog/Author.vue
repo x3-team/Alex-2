@@ -4,6 +4,7 @@ import { ref, computed,  watch } from 'vue'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import AudienceSwitch from '@/Components/AudienceSwitch.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
+import { usePublicSiteUrl } from '@/Composables/usePublicSiteUrl'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 const { isDoctorMode, articleUrl, blogBreadcrumbLabel } = useDoctorMode()
@@ -301,11 +302,11 @@ const parseEducation = (jsonString) => {
     return []
   }
 }
-const siteUrl = 'https://alexallergotest.ru'
+const siteUrl = usePublicSiteUrl()
 
 // 🔹 Canonical URL для страницы автора
 const canonicalUrl = computed(() => {
-  const base = `${siteUrl}/blog/author/${props.author?.id}`
+  const base = `${siteUrl.value}/blog/author/${props.author?.id}`
   const page = props.blogs?.current_page || 1
   return page > 1 ? `${base}?page=${page}` : base
 })
@@ -329,7 +330,7 @@ const ogDescription = computed(() => {
 // 🔹 OG Image — аватар автора или дефолтная картинка
 const ogImage = computed(() => {
   if (props.author?.avatar) {
-    return `${siteUrl}/storage/${props.author.avatar}`
+    return `${siteUrl.value}/storage/${props.author.avatar}`
   }
   return ``
 })

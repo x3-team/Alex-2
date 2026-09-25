@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/vue3'
 import { ref, watch, computed } from 'vue'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
+import { usePublicSiteUrl } from '@/Composables/usePublicSiteUrl'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 
@@ -37,10 +38,10 @@ const pluralizeAuthors = (count) => {
   return 'авторов'
 }
 
-const siteUrl = 'https://alexallergotest.ru'
+const siteUrl = usePublicSiteUrl()
 
 // 🔹 Canonical URL
-const canonicalUrl = computed(() => `${siteUrl}/blog/authors`)
+const canonicalUrl = computed(() => `${siteUrl.value}/blog/authors`)
 
 // 🔹 OG Title
 const ogTitle = computed(() => {
@@ -68,7 +69,7 @@ const ogImage = computed(() => {
   const firstAuthorWithAvatar = props.authors?.find(author => author.avatar)
 
   if (firstAuthorWithAvatar?.avatar) {
-    return `${siteUrl}/storage/${firstAuthorWithAvatar.avatar}`
+    return `${siteUrl.value}/storage/${firstAuthorWithAvatar.avatar}`
   }
 
   return ``

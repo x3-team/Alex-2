@@ -4,6 +4,7 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import AudienceSwitch from '@/Components/AudienceSwitch.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
+import { usePublicSiteUrl } from '@/Composables/usePublicSiteUrl'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 
@@ -21,9 +22,9 @@ const props = defineProps({
 const { blog } = props
 
 // 🔹 Вспомогательные свойства только для обычных <meta> тегов (не для JSON-LD)
-const siteUrl = 'https://alexallergotest.ru'
+const siteUrl = usePublicSiteUrl()
 const articleDescription = computed(() => props.blog?.seo_description || props.blog?.excerpt || '')
-const articleImage = computed(() => props.blog?.preview_image ? `${siteUrl}/storage/${props.blog.preview_image}` : '')
+const articleImage = computed(() => props.blog?.preview_image ? `${siteUrl.value}/storage/${props.blog.preview_image}` : '')
 
 const transliterate = (text) => {
   const translitMap = {

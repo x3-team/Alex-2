@@ -69,9 +69,22 @@ class DoctorEmbedTest extends TestCase
         $src = file_get_contents(dirname(__DIR__, 2).'/app/Http/Controllers/SitemapController.php');
 
         $this->assertIsString($src);
-        $this->assertStringContainsString("'/blog'", $src);
-        $this->assertStringNotContainsString("'/video'", $src);
-        $this->assertStringNotContainsString("'/materials'", $src);
+        $this->assertStringContainsString('generatePatientSitemap', $src);
+        $this->assertStringContainsString('generateDoctorsSitemap', $src);
+
+        $patientBlock = $this->extractFunctionSource($src, 'generatePatientSitemap');
+        $this->assertStringContainsString("'/blog'", $patientBlock);
+        $this->assertStringNotContainsString("'/video/'", $patientBlock);
+        $this->assertStringNotContainsString("'/materials/'", $patientBlock);
+    }
+
+    private function extractFunctionSource(string $src, string $functionName): string
+    {
+        if (! preg_match('/function '.$functionName.'\(\).*?\n    \}/s', $src, $m)) {
+            return '';
+        }
+
+        return $m[0];
     }
 
     public function test_doctor_public_pages_are_not_forced_noindex_in_layout(): void
