@@ -6,6 +6,7 @@ import DoctorTypeChips from '@/Components/DoctorTypeChips.vue'
 import DoctorBreadcrumbIcon from '@/Components/DoctorBreadcrumbIcon.vue'
 import DoctorDocumentCategoryCard from '@/Components/DoctorDocumentCategoryCard.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
+import { usePublicSiteUrl } from '@/Composables/usePublicSiteUrl'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 const props = defineProps({
@@ -247,7 +248,26 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', closeDropdownIfOutside)
 })
 
-const siteUrl = 'https://alexallergotest.ru'
+const siteUrl = usePublicSiteUrl()
+
+const doctorMaterialsBreadcrumbJson = computed(() => JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Главная',
+      item: siteUrl.value,
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Материалы для врачей',
+      item: `${siteUrl.value}/materials`,
+    },
+  ],
+}, null, 2))
 
 const canonicalUrl = computed(() => {
   const params = new URLSearchParams()
@@ -271,7 +291,7 @@ const canonicalUrl = computed(() => {
 
   const queryString = params.toString()
   const path = listingPath()
-  return queryString ? `${siteUrl}${path}?${queryString}` : `${siteUrl}${path}`
+  return queryString ? `${siteUrl.value}${path}?${queryString}` : `${siteUrl.value}${path}`
 })
 
 const metaTitle = computed(() => {
@@ -306,7 +326,7 @@ const ogImage = computed(() => {
   const firstBlogWithImage = props.blogs?.data?.find(blog => blog.preview_image)
 
   if (firstBlogWithImage?.preview_image) {
-    return `${siteUrl}/storage/${firstBlogWithImage.preview_image}`
+    return `${siteUrl.value}/storage/${firstBlogWithImage.preview_image}`
   }
   return ``
 })
@@ -314,6 +334,7 @@ const ogImage = computed(() => {
 
 <template>
   <Head>
+    <script v-if="isDoctorMode" type="application/ld+json">{{ doctorMaterialsBreadcrumbJson }}</script>
     <script v-if="!isDoctorMode" type="application/ld+json">
       {
         "@context": "https://schema.org",

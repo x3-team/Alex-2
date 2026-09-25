@@ -4,6 +4,7 @@ namespace App\Http\Middleware\Concerns;
 
 use App\Services\DetectSite;
 use App\Support\AudienceSwitchTarget;
+use App\Support\SeoOrigin;
 use Illuminate\Http\Request;
 
 /**
@@ -21,6 +22,7 @@ trait SharesDoctorsSite
 
         return [
             'site' => $detect->sharePayload() + [
+                'publicOrigin' => SeoOrigin::make($request)->siteBaseUrl(),
                 'switch' => app(AudienceSwitchTarget::class)->share($request),
             ],
         ];

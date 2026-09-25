@@ -285,13 +285,19 @@ Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'ind
     ->name('sitemap');
 
 Route::get('/robots.txt', function () {
-    $content = \Illuminate\Support\Facades\Cache::remember('robots_txt', 3600, function () {
+    $detect = \App\Services\DetectSite::make();
+    $sitemapBase = $detect->isDoctorsHost()
+        ? rtrim(\App\Support\SeoOrigin::make()->siteBaseUrl(), '/')
+        : rtrim((string) config('app.url'), '/');
+    $cacheKey = 'robots_txt_' . md5($sitemapBase);
+
+    $content = \Illuminate\Support\Facades\Cache::remember($cacheKey, 3600, function () use ($sitemapBase) {
         $robots = \App\Models\Setting::get(
             \App\Http\Controllers\Admin\AdminRobotsController::ROBOTS_KEY,
-            "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin/\nDisallow: /login\nDisallow: /patient\nDisallow: /up\n\nSitemap: " . config('app.url') . "/sitemap.xml"
+            "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin/\nDisallow: /login\nDisallow: /patient\nDisallow: /up\n\nSitemap: {$sitemapBase}/sitemap.xml"
         );
 
-        return str_replace('{{sitemap_url}}', config('app.url') . '/sitemap.xml', $robots);
+        return str_replace('{{sitemap_url}}', $sitemapBase . '/sitemap.xml', $robots);
     });
 
     return response($content, 200, [
