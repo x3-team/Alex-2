@@ -515,9 +515,11 @@ const CONTENT_EXIT_DURATION = 850
 const CONTENT_EXIT_BACK_DURATION = 1400
 const VIDEO_CONTENT_REVEAL_TIME = 1.0
 const DOCTOR_MOBILE_S8_CONTENT_REVEAL_TIME = 2.5
-// Doctor advantages steps 2–4 of 4 (slide-4 panel, slide-5 IgE, slide-6 CCD): hold text during the shot
+// Doctor advantages steps 2–3 of 4 (slide-4 panel, slide-5 IgE): hold text during the shot.
+// Step 4 (slide-6, CCD-ингибиция) is a 5s zoom that is readable from the first frame,
+// so it uses the normal 1s reveal instead of waiting until the clip is almost over.
 const DOCTOR_ADVANTAGE_CONTENT_REVEAL_TIME = 2.5
-const DOCTOR_DELAYED_TEXT_SLIDE_IDS = new Set(['slide-4', 'slide-5', 'slide-6'])
+const DOCTOR_DELAYED_TEXT_SLIDE_IDS = new Set(['slide-4', 'slide-5'])
 const VIDEO_CONTAINER_FADE_DURATION = 300
 const WHEEL_THRESHOLD = 160
 const WHEEL_GESTURE_RESET_DURATION = 200
