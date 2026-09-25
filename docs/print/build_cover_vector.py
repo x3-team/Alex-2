@@ -352,21 +352,6 @@ class Draw:
             f"{c:.4f} {m:.4f} {y:.4f} {k:.4f} K\n{body}\nS"
         )
 
-    def clip_fill_group(self, clip_cmds, items):
-        body = emit_path(clip_cmds, "{x:.3f} {y:.3f} {op}")
-        inner = []
-        saved, self.chunks = self.chunks, inner
-        for kind, *rest in items:
-            if kind == "ellipse":
-                cx, cy, rx, ry, fill = rest
-                self.fill(fill, ellipse_path(cx, cy, rx, ry))
-            elif kind == "circle":
-                cx, cy, r, fill = rest
-                self.fill(fill, circle_path(cx, cy, r))
-        self.chunks = saved
-        self.chunks.append("q\n" + body + "\nW\nn\n" + "\n".join(inner) + "\nQ")
-
-
 def build_stream(paths: dict[str, str]) -> tuple[str, list[str]]:
     d = Draw()
     # Sheet is pure white. The frame's white rects are not painted.
@@ -382,8 +367,15 @@ def build_stream(paths: dict[str, str]) -> tuple[str, list[str]]:
                 d.fill("#C9C9C9", parse_path(path))
         d.fill(color, parse_path(paths[key]))
 
-    left = dot_marks()
-    d.clip_fill_group(rect_path(189, 947, 534, 442), left)
+    # Every left dot already sits inside the old clip rectangle, so the
+    # clip is not emitted. Illustrator's EPS reader rejects clip and rectclip.
+    for item in dot_marks():
+        if item[0] == "ellipse":
+            _, cx, cy, rx, ry, fill = item
+            d.fill(fill, ellipse_path(cx, cy, rx, ry))
+        else:
+            _, cx, cy, r, fill = item
+            d.fill(fill, circle_path(cx, cy, r))
     for kind, cx, cy, r, fill in right_dots():
         d.fill(fill, circle_path(cx, cy, r))
 
@@ -462,11 +454,17 @@ def write_eps(stream: str, dest: Path) -> None:
 %%LanguageLevel: 2
 %%DocumentProcessColors: Cyan Magenta Yellow Black
 %%Title: ALEX cover 165x240 mm, bleed 20 mm, vector CMYK
+%%DocumentData: Clean7Bit
 %%EndComments
+%%BeginProlog
+%%EndProlog
+%%BeginSetup
+%%EndSetup
 gsave
-0 0 {PAGE_W:.3f} {PAGE_H:.3f} rectclip
 """
-    dest.write_text(header + ps + "grestore\nshowpage\n%%EOF\n")
+    # No rectclip, clip or showpage: Illustrator (including the web app's
+    # importer, and the desktop EPS parser) stops on those operators.
+    dest.write_text(header + ps + "grestore\n%%EOF\n")
 
 
 def write_pdf(stream: str, dest: Path) -> None:

@@ -43,3 +43,5 @@ python3 docs/print/build_cover_vector.py
 ```
 
 Скрипт заново пишет EPS и PDF рядом с собой. Не прогоняйте EPS через Ghostscript `eps2write`: это сведение, а файл уже плоский вектор.
+
+Онлайн-иллюстратор EPS не открывает. Для просмотра и правки откройте PDF: это тот же макет, с TrimBox и BleedBox. EPS оставлен для типографии и собран только из команд, которые понимает десктопный Illustrator: без `rectclip`, `clip` и `showpage`.
