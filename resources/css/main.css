@@ -5848,7 +5848,7 @@ body:has(.audience-switch--floating):not(:has(.home-page-container)) header.stic
         position: absolute;
         inset: 0;
         pointer-events: none;
-        background: rgba(0, 0, 0, 0.32);
+        background: rgba(0, 0, 0, 0.16);
     }
 
     .home-page-container.doctor-mode .figma-right-menu.visible.mobile-backdrop-visible::before {
@@ -7662,7 +7662,7 @@ button {
     inset: 0;
     z-index: 3;
     pointer-events: none;
-    background: rgba(0, 0, 0, 0.32);
+    background: rgba(0, 0, 0, 0.16);
 }
 .home-page-container .video-bg-container.faq-fixed-background:not(.faq-transition-active) .bg-video {
     opacity: 0 !important;
