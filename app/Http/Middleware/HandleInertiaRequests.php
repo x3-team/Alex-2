@@ -49,6 +49,12 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // Сессионный flash иначе не попадает в $page.props, и админские
+            // «сохранено» / «ошибка» не показываются ни на одной Inertia-странице.
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
         ], $this->doctorsSiteShare($request));
     }
 }
