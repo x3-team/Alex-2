@@ -8065,6 +8065,7 @@ button {
         max-height: none !important;
         justify-content: flex-start !important;
         overflow-y: auto;
+        overscroll-behavior: contain;
         gap: calc(18 * var(--mobile-unit, 1px));
         padding-top: 0;
     }
