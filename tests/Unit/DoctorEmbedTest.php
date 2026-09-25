@@ -74,13 +74,12 @@ class DoctorEmbedTest extends TestCase
         $this->assertStringNotContainsString("'/materials'", $src);
     }
 
-    public function test_doctor_public_pages_are_forced_noindex_in_layout(): void
+    public function test_doctor_public_pages_are_not_forced_noindex_in_layout(): void
     {
         $src = file_get_contents(dirname(__DIR__, 2).'/resources/views/app.blade.php');
 
         $this->assertIsString($src);
-        $this->assertStringContainsString('site.isDoctorsSite', $src);
-        $this->assertStringContainsString('isDoctorsSite && $seoPath !== \'/\'', $src);
+        $this->assertStringNotContainsString('isDoctorsSite && $seoPath !== \'/\'', $src);
     }
 
     public function test_doctor_listing_lives_on_materials_without_blog_categories(): void
