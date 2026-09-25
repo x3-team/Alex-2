@@ -66,7 +66,7 @@ rsync -az \
   --filter 'P public/storage' \
   --exclude '.git/' --exclude '.github/' --exclude 'node_modules/' --exclude 'vendor/' \
   --exclude '.env' --exclude '.env.*' --exclude 'storage/' --exclude 'bootstrap/cache/' \
-  --exclude 'public/build/' --exclude 'public/hot/' --exclude 'public/storage' \
+  --exclude 'public/build/' --exclude 'public/hot' --exclude 'public/storage' \
   --exclude 'public/videos/' --exclude 'tests/' --exclude 'phpunit.xml' \
   --exclude '.phpunit.cache/' --exclude 'docs/' \
   -e "ssh -i ~/.ssh/alexadmin -o BatchMode=yes" \

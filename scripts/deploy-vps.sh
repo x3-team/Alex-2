@@ -36,6 +36,11 @@ backup() {
 }
 
 apply() {
+  # public/hot is a file, not a directory. A Vite dev server writes the dev
+  # URL there. If it is rsynced, Laravel serves JS/CSS from 127.0.0.1:5173
+  # and the public site renders without styles. Always drop it.
+  rm -f public/hot
+
   echo "==> operator must bump SITE_VERSION in the release commit; script does not auto-bump"
   if [[ -f resources/js/siteVersion.js ]]; then
     echo "==> SITE_VERSION on disk:"
