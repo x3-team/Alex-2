@@ -67,7 +67,6 @@ class DoctorMaterialController extends Controller
                 'title' => $category['name'].' — документы ALEX LAB',
                 'description' => $category['description'] ?: Setting::get('doctor_materials_meta_description', 'Регистрационные документы, инструкции и бланки лаборатории.'),
                 'keywords' => Setting::get('doctor_materials_meta_keywords', ''),
-                'noindex' => true,
             ],
         ]);
     }

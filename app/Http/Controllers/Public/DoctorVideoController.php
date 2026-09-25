@@ -61,7 +61,6 @@ class DoctorVideoController extends Controller
                 'keywords' => $video->seo_keywords,
                 'og_title' => $video->og_title,
                 'og_description' => $video->og_description,
-                'noindex' => true,
             ],
         ]);
     }
