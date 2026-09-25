@@ -84,8 +84,38 @@ const isRegisterModalOpen = ref(false)
 const isBlogTransitionActive = ref(false)
 const activeFaqIndex = ref(null)
 
+const revealOpenFaqItem = () => {
+  const item = document.querySelector('.exact-faq-slide .exact-faq-item.open')
+  const list = item?.closest('.exact-faq-list')
+  if (!item || !list) return
+  if (list.scrollHeight <= list.clientHeight + 1) return
+  const listRect = list.getBoundingClientRect()
+  const itemRect = item.getBoundingClientRect()
+  const overflow = itemRect.bottom - listRect.bottom
+  if (overflow <= 1) return
+  const questionOffset = itemRect.top - listRect.top
+  list.scrollTop += Math.min(overflow, Math.max(0, questionOffset))
+}
+
 const toggleFaq = (index) => {
-  activeFaqIndex.value = activeFaqIndex.value === index ? null : index
+  const opening = activeFaqIndex.value !== index
+  activeFaqIndex.value = opening ? index : null
+  if (!opening || !isMobileViewport.value) return
+  nextTick(() => {
+    const wrap = document.querySelector('.exact-faq-slide .exact-faq-item.open .exact-faq-answer-wrap')
+    let settled = false
+    const settle = () => {
+      if (settled) return
+      settled = true
+      revealOpenFaqItem()
+    }
+    if (wrap) {
+      wrap.addEventListener('transitionend', (event) => {
+        if (event.propertyName === 'grid-template-rows') settle()
+      }, { once: true })
+    }
+    window.setTimeout(settle, 260)
+  })
 }
 
 const goTo = (path) => {
@@ -635,13 +665,39 @@ const handleKeydown = (e) => {
 
 let touchStartY = 0
 let touchStartX = 0
+let touchLastY = 0
+let touchNestedScroller = null
+let touchNestedMoved = false
+
+const nestedScrollerFromTarget = (target) => {
+  const el = target?.closest?.('.exact-faq-list, .figma-faq-list, .card-container.question-layout')
+  if (!el || el.scrollHeight <= el.clientHeight + 1) return null
+  return el
+}
+
 const handleTouchStart = (e) => {
   if (!e.touches || !e.touches.length) return
   touchStartY = e.touches[0].clientY
+  touchLastY = touchStartY
   touchStartX = e.touches[0].clientX
+  touchNestedMoved = false
+  // The home canvas uses touch-action: none, so the FAQ list cannot pan on its own.
+  touchNestedScroller = nestedScrollerFromTarget(e.target)
 }
 
-const handleTouchMove = (e) => {}
+const handleTouchMove = (e) => {
+  const scroller = touchNestedScroller
+  if (!scroller || !e.touches?.length) return
+  const y = e.touches[0].clientY
+  const dy = touchLastY - y
+  touchLastY = y
+  if (!dy) return
+  const max = scroller.scrollHeight - scroller.clientHeight
+  const next = Math.min(max, Math.max(0, scroller.scrollTop + dy))
+  if (next === scroller.scrollTop) return
+  scroller.scrollTop = next
+  touchNestedMoved = true
+}
 
 const handleTouchEnd = (e) => {
   if (!e.changedTouches || !e.changedTouches.length) return
@@ -649,9 +705,19 @@ const handleTouchEnd = (e) => {
   const touchEndX = e.changedTouches[0].clientX
   const diffY = touchStartY - touchEndY
   const diffX = touchStartX - touchEndX
+  const scroller = touchNestedScroller
+  touchNestedScroller = null
 
   // Порог чувствительности свайпа (40px)
   if (Math.abs(diffY) > 40 && Math.abs(diffY) > Math.abs(diffX)) {
+    if (scroller) {
+      const atTop = scroller.scrollTop <= 1
+      const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1
+      // This gesture moved the FAQ list. A further swipe at the edge changes slides.
+      if (touchNestedMoved) return
+      if (diffY > 0 && !atBottom) return
+      if (diffY < 0 && !atTop) return
+    }
     if (diffY > 0) goNext()
     else goPrev()
   }
