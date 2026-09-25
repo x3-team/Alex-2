@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue'
-import { Head, useForm } from '@inertiajs/vue3'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { Head, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import TextInput from '@/Components/TextInput.vue'
 
@@ -89,9 +89,93 @@ const removeResult = (form, index) => form.results.splice(index, 1)
 const addFaq = (form) => form.faq.push({ question: '', answer: '' })
 const removeFaq = (form, index) => form.faq.splice(index, 1)
 
-// Отправка формы
-// Отправка формы (используем post c _method: 'put' для поддержки загрузки файлов)
+const saveNotice = ref(null)
+let saveNoticeTimer = null
+
+const fieldError = (form, key) => {
+  const message = form.errors?.[key]
+  if (Array.isArray(message)) return message[0] || ''
+  return message || ''
+}
+
+const showSaveNotice = (audience, type, text, autoHide = false) => {
+  saveNotice.value = { audience, type, text }
+  clearTimeout(saveNoticeTimer)
+  if (autoHide) {
+    saveNoticeTimer = setTimeout(() => {
+      if (saveNotice.value?.text === text && saveNotice.value?.audience === audience) {
+        saveNotice.value = null
+      }
+    }, 4000)
+  }
+}
+
+const failureText = (status) => {
+  if (!status) return 'Не сохранено: нет связи с сервером.'
+  if (status === 419) return 'Не сохранено: сессия истекла. Обновите страницу и попробуйте ещё раз.'
+  if (status === 403) return 'Не сохранено: нет прав на это действие.'
+  return 'Не сохранено: ошибка сервера. Попробуйте ещё раз.'
+}
+
+const activeSaveForm = () => (patientForm.processing ? 'patient' : doctorForm.processing ? 'doctor' : null)
+
+const onInvalidSave = (event) => {
+  const audience = activeSaveForm()
+  if (!audience) return
+  event.preventDefault()
+  showSaveNotice(audience, 'error', failureText(event.detail?.response?.status))
+}
+
+const onSaveException = (event) => {
+  const audience = activeSaveForm()
+  if (!audience) return
+  event.preventDefault()
+  showSaveNotice(audience, 'error', failureText(null))
+}
+
+const confirmLeave = (event) => {
+  const visit = event.detail?.visit
+  if (!visit) return
+  const url = String(visit.url ?? '')
+  const method = String(visit.method ?? 'get').toLowerCase()
+  if (method !== 'get' && url.includes('/admin/home')) return
+  if (!patientForm.isDirty && !doctorForm.isDirty) return
+  if (!window.confirm('Есть несохранённые изменения. Уйти со страницы без сохранения?')) {
+    event.preventDefault()
+  }
+}
+
+const onBeforeUnload = (event) => {
+  if (!patientForm.isDirty && !doctorForm.isDirty) return
+  event.preventDefault()
+  event.returnValue = ''
+}
+
+let removeInvalidListener = () => {}
+let removeExceptionListener = () => {}
+let removeBeforeListener = () => {}
+
+onMounted(() => {
+  removeInvalidListener = router.on('invalid', onInvalidSave)
+  removeExceptionListener = router.on('exception', onSaveException)
+  removeBeforeListener = router.on('before', confirmLeave)
+  window.addEventListener('beforeunload', onBeforeUnload)
+})
+
+onBeforeUnmount(() => {
+  removeInvalidListener()
+  removeExceptionListener()
+  removeBeforeListener()
+  window.removeEventListener('beforeunload', onBeforeUnload)
+  clearTimeout(saveNoticeTimer)
+})
+
+// Отправка формы (post + _method: put, чтобы уходили и файлы «Как сдать тест»)
 const submit = (form, isDoctor = false) => {
+  const audience = isDoctor ? 'doctor' : 'patient'
+  saveNotice.value = null
+  clearTimeout(saveNoticeTimer)
+
   form.transform((data) => ({
     ...data,
     _method: 'put',
@@ -108,7 +192,11 @@ const submit = (form, isDoctor = false) => {
         activeTab.value = 'patient'
         form.defaults(buildFormData(page.props.patientSettings, page.props.patientMeta, 'patient'))
       }
-    }
+      showSaveNotice(audience, 'success', 'Сохранено', true)
+    },
+    onError: () => {
+      showSaveNotice(audience, 'error', 'Не сохранено, исправьте ошибки')
+    },
   })
 }
 
@@ -128,9 +216,12 @@ const handleImageUpload = (form, index, event) => {
     <div class="py-12">
       <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
-        <!-- Флэш-сообщение об успехе -->
-        <div v-if="$page.props.flash?.success" class="p-4 bg-green-100 border border-green-300 text-green-700 rounded-lg">
+        <!-- Флэш с сервера: виден, если прокрутить к началу страницы -->
+        <div v-if="$page.props.flash?.success && !patientForm.isDirty && !doctorForm.isDirty" class="p-4 bg-green-100 border border-green-300 text-green-700 rounded-lg">
           {{ $page.props.flash.success }}
+        </div>
+        <div v-if="$page.props.flash?.error" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg" role="alert">
+          {{ $page.props.flash.error }}
         </div>
 
         <!-- 🔹 Вкладки (Tabs) -->
@@ -192,6 +283,7 @@ const handleImageUpload = (form, index, event) => {
                     placeholder="Главная страница — ALEX LAB"
                     maxlength="255"
                 />
+                <p v-if="fieldError(patientForm, 'meta_title')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, 'meta_title') }}</p>
                 <p class="text-xs text-gray-500 mt-1">{{ patientForm.meta_title?.length || 0 }}/255</p>
               </div>
               <div>
@@ -203,6 +295,7 @@ const handleImageUpload = (form, index, event) => {
                     placeholder="Описание главной страницы для поисковых систем..."
                     maxlength="500"
                 ></textarea>
+                <p v-if="fieldError(patientForm, 'meta_description')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, 'meta_description') }}</p>
                 <p class="text-xs text-gray-500 mt-1">{{ patientForm.meta_description?.length || 0 }}/500</p>
               </div>
               <div>
@@ -214,6 +307,7 @@ const handleImageUpload = (form, index, event) => {
                     placeholder="лаборатория, анализы, аллергия (через запятую)"
                     maxlength="500"
                 />
+                <p v-if="fieldError(patientForm, 'meta_keywords')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, 'meta_keywords') }}</p>
                 <p class="text-xs text-gray-500 mt-1">{{ patientForm.meta_keywords?.length || 0 }}/500</p>
               </div>
             </div>
@@ -255,32 +349,39 @@ const handleImageUpload = (form, index, event) => {
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Заголовок первого экрана</label>
                   <TextInput v-model="patientForm.hero_title" placeholder="Тест на аллергию ALEX² — один анализ, который даёт ответы" class="w-full" />
+                  <p v-if="fieldError(patientForm, 'hero_title')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, 'hero_title') }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Подзаголовок первого экрана</label>
                   <TextInput v-model="patientForm.hero_subtitle" placeholder="Необязательно" class="w-full" />
+                  <p v-if="fieldError(patientForm, 'hero_subtitle')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, 'hero_subtitle') }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Заголовок второго экрана</label>
                   <TextInput v-model="patientForm.why_title" placeholder="Почему ALEX2?" class="w-full" />
+                  <p v-if="fieldError(patientForm, 'why_title')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, 'why_title') }}</p>
                   <p class="text-xs text-gray-500 mt-1">Экран сразу после первого. Пусто — вернётся «Почему ALEX2?».</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Подзаголовок второго экрана</label>
                   <TextInput v-model="patientForm.why_subtitle" placeholder="Почему Alex" class="w-full" />
+                  <p v-if="fieldError(patientForm, 'why_subtitle')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, 'why_subtitle') }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Заголовок блока «О результатах»</label>
                   <TextInput v-model="patientForm.results_intro_title" placeholder="Что вы получите по итогам теста на аллергию" class="w-full" />
+                  <p v-if="fieldError(patientForm, 'results_intro_title')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, 'results_intro_title') }}</p>
                   <p class="text-xs text-gray-500 mt-1">Экран перед списком результатов.</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Текст кнопки записи</label>
                   <TextInput v-model="patientForm.cta_text" placeholder="Записаться на тест на аллергию" class="w-full" />
+                  <p v-if="fieldError(patientForm, 'cta_text')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, 'cta_text') }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Ссылка кнопки записи</label>
                   <TextInput v-model="patientForm.cta_url" placeholder="Пусто = открыть форму записи" class="w-full" />
+                  <p v-if="fieldError(patientForm, 'cta_url')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, 'cta_url') }}</p>
                   <p class="text-xs text-gray-500 mt-1">Если пусто, кнопка открывает текущую форму записи.</p>
                 </div>
               </div>
@@ -298,7 +399,9 @@ const handleImageUpload = (form, index, event) => {
                 </p>
                 <div v-for="(item, index) in patientForm.advantages" :key="index" class="mb-4 p-3 bg-gray-50 rounded border">
                   <TextInput v-model="patientForm.advantages[index].title" placeholder="Название преимущества (Тег H2)" class="w-full mb-2" />
+                  <p v-if="fieldError(patientForm, `advantages.${index}.title`)" class="mb-2 text-xs text-red-600" role="alert">{{ fieldError(patientForm, `advantages.${index}.title`) }}</p>
                   <textarea v-model="patientForm.advantages[index].description" placeholder="Описание" rows="2" class="w-full border-gray-300 rounded-md shadow-sm" />
+                  <p v-if="fieldError(patientForm, `advantages.${index}.description`)" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, `advantages.${index}.description`) }}</p>
                   <button type="button" @click="removeAdvantage(patientForm, index)" class="mt-2 text-xs text-red-500 hover:text-red-700">Удалить</button>
                 </div>
               </div>
@@ -316,7 +419,9 @@ const handleImageUpload = (form, index, event) => {
                 </p>
                 <div v-for="(item, index) in patientForm.results" :key="index" class="mb-4 p-3 bg-gray-50 rounded border">
                   <TextInput v-model="patientForm.results[index].title" placeholder="Название результата (Тег H2)" class="w-full mb-2" />
+                  <p v-if="fieldError(patientForm, `results.${index}.title`)" class="mb-2 text-xs text-red-600" role="alert">{{ fieldError(patientForm, `results.${index}.title`) }}</p>
                   <textarea v-model="patientForm.results[index].description" placeholder="Описание" rows="2" class="w-full border-gray-300 rounded-md shadow-sm" />
+                  <p v-if="fieldError(patientForm, `results.${index}.description`)" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, `results.${index}.description`) }}</p>
                   <button type="button" @click="removeResult(patientForm, index)" class="mt-2 text-xs text-red-500 hover:text-red-700">Удалить</button>
                 </div>
               </div>
@@ -349,16 +454,19 @@ const handleImageUpload = (form, index, event) => {
                           @change="handleImageUpload(patientForm, index, $event)"
                           class="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
                       />
+                      <p v-if="fieldError(patientForm, `how_to_pass.${index}.image`)" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, `how_to_pass.${index}.image`) }}</p>
                     </div>
 
                     <div>
                       <label class="block text-xs font-medium text-gray-600 mb-1">Заголовок</label>
                       <TextInput v-model="patientForm.how_to_pass[index].title" placeholder="Заголовок шага" class="w-full text-xs" />
+                      <p v-if="fieldError(patientForm, `how_to_pass.${index}.title`)" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, `how_to_pass.${index}.title`) }}</p>
                     </div>
 
                     <div>
                       <label class="block text-xs font-medium text-gray-600 mb-1">Описание</label>
                       <textarea v-model="patientForm.how_to_pass[index].description" placeholder="Текст описания..." rows="3" class="w-full border-gray-300 rounded-md shadow-sm text-xs" />
+                      <p v-if="fieldError(patientForm, `how_to_pass.${index}.description`)" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, `how_to_pass.${index}.description`) }}</p>
                     </div>
                   </div>
                 </div>
@@ -377,7 +485,9 @@ const handleImageUpload = (form, index, event) => {
                 </p>
                 <div v-for="(item, index) in patientForm.faq" :key="index" class="mb-4 p-3 bg-gray-50 rounded border">
                   <TextInput v-model="patientForm.faq[index].question" placeholder="Вопрос" class="w-full mb-2" />
+                  <p v-if="fieldError(patientForm, `faq.${index}.question`)" class="mb-2 text-xs text-red-600" role="alert">{{ fieldError(patientForm, `faq.${index}.question`) }}</p>
                   <textarea v-model="patientForm.faq[index].answer" placeholder="Ответ" rows="3" class="w-full border-gray-300 rounded-md shadow-sm" />
+                  <p v-if="fieldError(patientForm, `faq.${index}.answer`)" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(patientForm, `faq.${index}.answer`) }}</p>
                   <button type="button" @click="removeFaq(patientForm, index)" class="mt-2 text-xs text-red-500 hover:text-red-700">Удалить</button>
                 </div>
               </div>
@@ -414,16 +524,26 @@ const handleImageUpload = (form, index, event) => {
 
                   <p v-if="blogs.length === 0" class="text-sm text-gray-500">Нет опубликованных статей.</p>
                 </div>
+                <p v-if="fieldError(patientForm, 'featured_blog_ids')" class="mt-2 text-xs text-red-600" role="alert">{{ fieldError(patientForm, 'featured_blog_ids') }}</p>
               </div>
 
               <!-- Кнопка сохранения -->
-              <div class="flex justify-end pt-4">
+              <div class="flex items-center justify-end gap-4 pt-4">
+                <p
+                    v-if="saveNotice && saveNotice.audience === 'patient'"
+                    data-save-notice="patient"
+                    class="text-sm font-medium"
+                    :class="saveNotice.type === 'success' ? 'text-green-700' : 'text-red-700'"
+                    role="status"
+                >
+                  {{ saveNotice.text }}
+                </p>
                 <button
                     type="submit"
                     :disabled="patientForm.processing"
                     class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
-                  {{ patientForm.processing ? 'Сохранение...' : 'Сохранить настройки пациентов' }}
+                  {{ patientForm.processing ? 'Сохраняю…' : 'Сохранить настройки пациентов' }}
                 </button>
               </div>
 
@@ -471,6 +591,7 @@ const handleImageUpload = (form, index, event) => {
                     placeholder="Информация для врачей — ALEX LAB"
                     maxlength="255"
                 />
+                <p v-if="fieldError(doctorForm, 'meta_title')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, 'meta_title') }}</p>
                 <p class="text-xs text-gray-500 mt-1">{{ doctorForm.meta_title?.length || 0 }}/255</p>
               </div>
               <div>
@@ -482,6 +603,7 @@ const handleImageUpload = (form, index, event) => {
                     placeholder="Описание страницы для врачей..."
                     maxlength="500"
                 ></textarea>
+                <p v-if="fieldError(doctorForm, 'meta_description')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, 'meta_description') }}</p>
                 <p class="text-xs text-gray-500 mt-1">{{ doctorForm.meta_description?.length || 0 }}/500</p>
               </div>
               <div>
@@ -493,6 +615,7 @@ const handleImageUpload = (form, index, event) => {
                     placeholder="врачам, аллергодиагностика, alex lab"
                     maxlength="500"
                 />
+                <p v-if="fieldError(doctorForm, 'meta_keywords')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, 'meta_keywords') }}</p>
                 <p class="text-xs text-gray-500 mt-1">{{ doctorForm.meta_keywords?.length || 0 }}/500</p>
               </div>
             </div>
@@ -524,32 +647,39 @@ const handleImageUpload = (form, index, event) => {
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Заголовок первого экрана</label>
                   <TextInput v-model="doctorForm.hero_title" placeholder="Аллергочип ALEX² — расширенный анализ на аллергию. 300+ аллергенов" class="w-full" />
+                  <p v-if="fieldError(doctorForm, 'hero_title')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, 'hero_title') }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Подзаголовок первого экрана</label>
                   <TextInput v-model="doctorForm.hero_subtitle" placeholder="Необязательно" class="w-full" />
+                  <p v-if="fieldError(doctorForm, 'hero_subtitle')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, 'hero_subtitle') }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Заголовок второго экрана</label>
                   <TextInput v-model="doctorForm.why_title" placeholder="ALEX² — лучший тест на аллергию, что есть на рынке." class="w-full" />
+                  <p v-if="fieldError(doctorForm, 'why_title')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, 'why_title') }}</p>
                   <p class="text-xs text-gray-500 mt-1">Экран сразу после первого на doc.alexallergotest.ru.</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Подзаголовок второго экрана</label>
                   <TextInput v-model="doctorForm.why_subtitle" placeholder="Почему ALEX2?" class="w-full" />
+                  <p v-if="fieldError(doctorForm, 'why_subtitle')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, 'why_subtitle') }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Заголовок блока «О результатах»</label>
                   <TextInput v-model="doctorForm.results_intro_title" placeholder="Как назначать тест пациентам" class="w-full" />
+                  <p v-if="fieldError(doctorForm, 'results_intro_title')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, 'results_intro_title') }}</p>
                   <p class="text-xs text-gray-500 mt-1">Экран перед списком результатов.</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Текст кнопки записи</label>
                   <TextInput v-model="doctorForm.cta_text" placeholder="Записаться на тест на аллергию" class="w-full" />
+                  <p v-if="fieldError(doctorForm, 'cta_text')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, 'cta_text') }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Ссылка кнопки записи</label>
                   <TextInput v-model="doctorForm.cta_url" placeholder="Пусто = открыть форму записи" class="w-full" />
+                  <p v-if="fieldError(doctorForm, 'cta_url')" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, 'cta_url') }}</p>
                 </div>
               </div>
 
@@ -566,7 +696,9 @@ const handleImageUpload = (form, index, event) => {
                 </p>
                 <div v-for="(item, index) in doctorForm.advantages" :key="index" class="mb-4 p-3 bg-gray-50 rounded border">
                   <TextInput v-model="doctorForm.advantages[index].title" placeholder="Название преимущества (Тег H2)" class="w-full mb-2" />
+                  <p v-if="fieldError(doctorForm, `advantages.${index}.title`)" class="mb-2 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, `advantages.${index}.title`) }}</p>
                   <textarea v-model="doctorForm.advantages[index].description" placeholder="Описание" rows="2" class="w-full border-gray-300 rounded-md shadow-sm" />
+                  <p v-if="fieldError(doctorForm, `advantages.${index}.description`)" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, `advantages.${index}.description`) }}</p>
                   <button type="button" @click="removeAdvantage(doctorForm, index)" class="mt-2 text-xs text-red-500 hover:text-red-700">Удалить</button>
                 </div>
                 <p v-if="doctorForm.advantages.length === 0" class="text-xs text-gray-400 italic">Преимущества не добавлены.</p>
@@ -585,7 +717,9 @@ const handleImageUpload = (form, index, event) => {
                 </p>
                 <div v-for="(item, index) in doctorForm.results" :key="index" class="mb-4 p-3 bg-gray-50 rounded border">
                   <TextInput v-model="doctorForm.results[index].title" placeholder="Название результата (Тег H2)" class="w-full mb-2" />
+                  <p v-if="fieldError(doctorForm, `results.${index}.title`)" class="mb-2 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, `results.${index}.title`) }}</p>
                   <textarea v-model="doctorForm.results[index].description" placeholder="Описание" rows="2" class="w-full border-gray-300 rounded-md shadow-sm" />
+                  <p v-if="fieldError(doctorForm, `results.${index}.description`)" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, `results.${index}.description`) }}</p>
                   <button type="button" @click="removeResult(doctorForm, index)" class="mt-2 text-xs text-red-500 hover:text-red-700">Удалить</button>
                 </div>
                 <p v-if="doctorForm.results.length === 0" class="text-xs text-gray-400 italic">Информация о результатах не добавлена.</p>
@@ -620,16 +754,19 @@ const handleImageUpload = (form, index, event) => {
                           @change="handleImageUpload(doctorForm, index, $event)"
                           class="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
                       />
+                      <p v-if="fieldError(doctorForm, `how_to_pass.${index}.image`)" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, `how_to_pass.${index}.image`) }}</p>
                     </div>
 
                     <div>
                       <label class="block text-xs font-medium text-gray-600 mb-1">Заголовок</label>
                       <TextInput v-model="doctorForm.how_to_pass[index].title" placeholder="Заголовок шага" class="w-full text-xs" />
+                      <p v-if="fieldError(doctorForm, `how_to_pass.${index}.title`)" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, `how_to_pass.${index}.title`) }}</p>
                     </div>
 
                     <div>
                       <label class="block text-xs font-medium text-gray-600 mb-1">Описание</label>
                       <textarea v-model="doctorForm.how_to_pass[index].description" placeholder="Текст описания..." rows="3" class="w-full border-gray-300 rounded-md shadow-sm text-xs" />
+                      <p v-if="fieldError(doctorForm, `how_to_pass.${index}.description`)" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, `how_to_pass.${index}.description`) }}</p>
                     </div>
                   </div>
                 </div>
@@ -648,7 +785,9 @@ const handleImageUpload = (form, index, event) => {
                 </p>
                 <div v-for="(item, index) in doctorForm.faq" :key="index" class="mb-4 p-3 bg-gray-50 rounded border">
                   <TextInput v-model="doctorForm.faq[index].question" placeholder="Вопрос" class="w-full mb-2" />
+                  <p v-if="fieldError(doctorForm, `faq.${index}.question`)" class="mb-2 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, `faq.${index}.question`) }}</p>
                   <textarea v-model="doctorForm.faq[index].answer" placeholder="Ответ" rows="3" class="w-full border-gray-300 rounded-md shadow-sm" />
+                  <p v-if="fieldError(doctorForm, `faq.${index}.answer`)" class="mt-1 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, `faq.${index}.answer`) }}</p>
                   <button type="button" @click="removeFaq(doctorForm, index)" class="mt-2 text-xs text-red-500 hover:text-red-700">Удалить</button>
                 </div>
                 <p v-if="doctorForm.faq.length === 0" class="text-xs text-gray-400 italic">Вопросы не добавлены.</p>
@@ -686,16 +825,26 @@ const handleImageUpload = (form, index, event) => {
 
                   <p v-if="blogs.length === 0" class="text-sm text-gray-500">Нет опубликованных статей.</p>
                 </div>
+                <p v-if="fieldError(doctorForm, 'featured_blog_ids')" class="mt-2 text-xs text-red-600" role="alert">{{ fieldError(doctorForm, 'featured_blog_ids') }}</p>
               </div>
 
               <!-- Кнопка сохранения -->
-              <div class="flex justify-end pt-4">
+              <div class="flex items-center justify-end gap-4 pt-4">
+                <p
+                    v-if="saveNotice && saveNotice.audience === 'doctor'"
+                    data-save-notice="doctor"
+                    class="text-sm font-medium"
+                    :class="saveNotice.type === 'success' ? 'text-green-700' : 'text-red-700'"
+                    role="status"
+                >
+                  {{ saveNotice.text }}
+                </p>
                 <button
                     type="submit"
                     :disabled="doctorForm.processing"
                     class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
-                  {{ doctorForm.processing ? 'Сохранение...' : 'Сохранить настройки врачей' }}
+                  {{ doctorForm.processing ? 'Сохраняю…' : 'Сохранить настройки врачей' }}
                 </button>
               </div>
 
@@ -704,6 +853,16 @@ const handleImageUpload = (form, index, event) => {
         </div>
 
       </div>
+    </div>
+
+    <div
+        v-if="saveNotice"
+        data-save-toast
+        class="fixed bottom-6 right-6 z-50 max-w-sm rounded-lg border px-4 py-3 text-sm font-medium shadow-lg"
+        :class="saveNotice.type === 'success' ? 'border-green-300 bg-green-50 text-green-800' : 'border-red-300 bg-red-50 text-red-800'"
+        role="status"
+    >
+      {{ saveNotice.text }}
     </div>
   </AdminLayout>
 </template>
