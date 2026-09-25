@@ -12,6 +12,18 @@ class AdminHomeSaveFeedbackTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        // Inertia renders the root Blade view. The compiled-view directory is
+        // not in git, and CI does not create it before the unit suite.
+        $views = dirname(__DIR__, 2).'/storage/framework/views';
+        if (! is_dir($views)) {
+            mkdir($views, 0777, true);
+        }
+
+        parent::setUp();
+    }
+
     public function test_home_page_shares_empty_flash_until_something_is_saved(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
