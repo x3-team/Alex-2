@@ -68,7 +68,7 @@ rsync -az \
   --exclude '.env' --exclude '.env.*' --exclude 'storage/' --exclude 'bootstrap/cache/' \
   --exclude 'public/build/' --exclude 'public/hot' --exclude 'public/storage' \
   --exclude 'public/videos/' --exclude 'tests/' --exclude 'phpunit.xml' \
-  --exclude '.phpunit.cache/' --exclude 'docs/' \
+  --exclude '.phpunit.cache/' --exclude 'docs/' --exclude '.cursor/' --exclude 'AGENTS.md' \
   -e "ssh -i ~/.ssh/alexadmin -o BatchMode=yes" \
   ./ alexadmin@$ALEX_SSH_HOST:$ALEX_APP_ROOT/
 
