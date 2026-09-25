@@ -250,25 +250,6 @@ onBeforeUnmount(() => {
 
 const siteUrl = usePublicSiteUrl()
 
-const doctorMaterialsBreadcrumbJson = computed(() => JSON.stringify({
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  itemListElement: [
-    {
-      '@type': 'ListItem',
-      position: 1,
-      name: 'Главная',
-      item: siteUrl.value,
-    },
-    {
-      '@type': 'ListItem',
-      position: 2,
-      name: 'Материалы для врачей',
-      item: `${siteUrl.value}/materials`,
-    },
-  ],
-}, null, 2))
-
 const canonicalUrl = computed(() => {
   const params = new URLSearchParams()
   const currentPage = props.blogs?.current_page || 1
@@ -334,7 +315,6 @@ const ogImage = computed(() => {
 
 <template>
   <Head>
-    <script v-if="isDoctorMode" type="application/ld+json">{{ doctorMaterialsBreadcrumbJson }}</script>
     <script v-if="!isDoctorMode" type="application/ld+json">
       {
         "@context": "https://schema.org",

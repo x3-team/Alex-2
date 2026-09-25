@@ -198,7 +198,7 @@ class BlogController extends Controller
             $filterCategory = $request->category;
         }
 
-        return Inertia::render('Public/Blog/Index', [
+        $indexPayload = [
             'blogs' => $blogs,
             'authors' => $authors,
             'categories' => $categories,
@@ -227,7 +227,31 @@ class BlogController extends Controller
                 'description' => $metaDescription,
                 'keywords' => $metaKeywords,
             ],
-        ]);
+        ];
+
+        if ($isDoctors && ! $category) {
+            $siteBase = SeoOrigin::make()->siteBaseUrl();
+            $indexPayload['seoJsonLd'] = [[
+                '@context' => 'https://schema.org',
+                '@type' => 'BreadcrumbList',
+                'itemListElement' => [
+                    [
+                        '@type' => 'ListItem',
+                        'position' => 1,
+                        'name' => 'Главная',
+                        'item' => $siteBase,
+                    ],
+                    [
+                        '@type' => 'ListItem',
+                        'position' => 2,
+                        'name' => 'Материалы для врачей',
+                        'item' => $siteBase.'/materials',
+                    ],
+                ],
+            ]];
+        }
+
+        return Inertia::render('Public/Blog/Index', $indexPayload);
     }
 
     private function materialType(Request $request): string

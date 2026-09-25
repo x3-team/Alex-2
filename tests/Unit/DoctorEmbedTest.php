@@ -107,6 +107,9 @@ class DoctorEmbedTest extends TestCase
         $this->assertStringContainsString("return redirect()->to(\$this->doctorMaterialsUrl(\$request->query()), 301);", $blog);
         $this->assertStringContainsString("\$url = '/materials';", $blog);
         $this->assertStringContainsString("'path' => \$request->root().'/materials'", $blog);
+        $this->assertStringContainsString("'@type' => 'BreadcrumbList'", $blog);
+        $this->assertStringContainsString("'seoJsonLd'", $blog);
+        $this->assertStringContainsString("'Материалы для врачей'", $blog);
         $this->assertMatchesRegularExpression('/if \(\$isDoctors\) \{\s+\$category = null;/', $blog);
         $this->assertStringContainsString('publicCategories()', $blog);
 
@@ -134,6 +137,7 @@ class DoctorEmbedTest extends TestCase
         $this->assertIsString($index);
         $this->assertStringContainsString("return doctorsUrl('/materials')", $index);
         $this->assertStringContainsString('v-if="!isDoctorMode"', $index);
+        $this->assertStringNotContainsString('doctorMaterialsBreadcrumbJson', $index);
         $this->assertStringContainsString('Выберите категорию', $index);
         $this->assertStringContainsString('DoctorDocumentCategoryCard', $index);
         $this->assertStringContainsString('articleUrl(item.slug)', $index);
