@@ -1,0 +1,56 @@
+---
+description: Правила релиза и деплоя Alex-2
+alwaysApply: true
+---
+
+# Alex-2: релиз и деплой
+
+Перед **merge** или **деплоем** перечитай [docs/AGENT_WORKFLOW.md](../../docs/AGENT_WORKFLOW.md) и пройди его чек-лист. Общение с Виталием — **на русском**.
+
+## Git
+
+- Ветки: `cursor/<имя>-2397` **от `production`**. PR **только в `production`**.
+- В **`main` никогда** (не мержить, не открывать PR).
+- **Прямой `git push` в `production` запрещён.**
+- Перед merge: **rebase/merge на актуальный `production`**, если в нём уже есть другие PR.
+- **`Welcome.vue` и сторителлинг не откатывать** без явной просьбы.
+
+## Версия сайта
+
+- Любая правка, влияющая на сайт: bump **`SITE_VERSION`** в `resources/js/siteVersion.js` **в том же PR**, что и код.
+- **Запрещено** деплоить и потом догонять версию отдельным PR.
+- Только документация/правила агента без изменения сайта — bump **не нужен**.
+
+## Порядок релиза
+
+1. Код (+ `SITE_VERSION`, если нужен) → PR в `production`.
+2. **Зелёный CI** (`test-and-build`).
+3. Merge в `production`.
+4. **Деплой только** по явному «залей» / «деплой» от Виталия. Без команды — не деплоить.
+
+## Деплой (только SSH с VM агента)
+
+Секреты деплоя — **имена из [docs/AGENT_WORKFLOW.md](../../docs/AGENT_WORKFLOW.md)** (linked environment Alex-2). Legacy-префикс `SSH_` для деплоя **не использовать**.
+
+**Никогда:** `gh workflow run`, GitHub Actions `workflow_dispatch`, просьбы «нажми Deploy в Actions» (у integration token часто **403**).
+
+Порядок:
+
+1. `git fetch` / sync с `origin/production`.
+2. Проверка SSH (BatchMode), каталог `$ALEX_APP_ROOT`.
+3. На VPS: `bash scripts/deploy-vps.sh backup`.
+4. **Перед rsync:** локально **нет** `public/hot` (Vite dev его создаёт). Для проверок — **`npm run build`**, не `npm run dev`.
+5. **Rsync** с excludes из [docs/DEPLOY.md](../../docs/DEPLOY.md), **без `--delete`**.
+6. На VPS: `RUN_MIGRATIONS=true` **только** если в релизе есть миграции; иначе `false`. Затем `bash scripts/deploy-vps.sh apply`.
+7. Проверить **живую `SITE_VERSION`** на **обоих** доменах (пациент + `doc.`). Smoke в `apply` обязателен.
+
+## Никогда
+
+- `.env`, `storage/`, `public/storage`, `public/videos`
+- nginx, SEO/статьи/ссылки ломать без задачи
+- `migrate --force` без миграций в релизе / без явной просьбы
+- rsync `--delete` без защиты `public/storage` (см. DEPLOY.md)
+
+## Заявки с сайта
+
+Пока в админке не задан менеджер — **не слать** на `vitalynagay@gmail.com`. Только **`info@alexallergotest.ru`**.

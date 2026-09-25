@@ -100,6 +100,8 @@ jobs:
             --exclude 'phpunit.xml' \
             --exclude '.phpunit.cache/' \
             --exclude 'docs/' \
+            --exclude '.cursor/' \
+            --exclude 'AGENTS.md' \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new" \
             ./ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/"
 
