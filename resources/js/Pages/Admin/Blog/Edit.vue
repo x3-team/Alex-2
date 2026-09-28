@@ -94,14 +94,15 @@ const form = useForm({
   og_description: props.blog.og_description ?? '',
   faqs: props.blog.faqs || [],
   audience: props.blog.audience || 'patients',
-  published_at: toDatetimeLocalValue(props.blog.published_at),
+  // Уже опубликованная статья показывает свою дату. Черновик — нет: время создания
+  // не должно становиться временем выхода.
+  published_at: props.blog.is_active ? toDatetimeLocalValue(props.blog.published_at) : '',
 })
 
-watch(() => form.is_active, (active, prev) => {
-  if (active && !prev && !form.published_at) {
-    form.published_at = toDatetimeLocalValue(new Date().toISOString())
-  }
-})
+const publishedAtEdited = ref(false)
+const markPublishedAtEdited = () => {
+  publishedAtEdited.value = true
+}
 
 // 🔹 Исправлено: работаем строго с form.faqs
 const addFaq = () => {
@@ -309,7 +310,8 @@ const submit = () => {
     seo_description: form.seo_description || '',
     seo_keywords: form.seo_keywords || '',
     is_active: form.is_active ? 1 : 0,
-    published_at: form.is_active && form.published_at ? datetimeLocalToUtcIso(form.published_at) : '',
+    published_at: publishedAtEdited.value && form.published_at ? datetimeLocalToUtcIso(form.published_at) : '',
+    published_at_edited: publishedAtEdited.value ? 1 : 0,
     noindex: form.noindex ? 1 : 0,
     og_title: form.og_title || '',
     og_description: form.og_description || '',
@@ -464,7 +466,7 @@ const removeSource = (index) => {
                   </label>
                 </div>
                 <p class="text-xs text-gray-500">
-                  Черновик: снимите галочку. При первой публикации дата на сайте ставится автоматически (сегодня).
+                  Черновик: снимите галочку. С галочкой статья появляется на сайте сразу, в момент сохранения.
                 </p>
               </div>
 
@@ -477,9 +479,10 @@ const removeSource = (index) => {
                     v-model="form.published_at"
                     type="datetime-local"
                     class="w-full max-w-xs border-gray-300 rounded-md shadow-sm px-3 py-2 border text-sm"
+                    @input="markPublishedAtEdited"
                 />
                 <p class="text-xs text-gray-500">
-                  Можно поправить вручную. При включении «Активен» после черновика подставится текущее время.
+                  Если поле не менять, статья выходит в момент сохранения. Время создания черновика само не подставляется. Другую дату можно указать вручную.
                 </p>
               </div>
 

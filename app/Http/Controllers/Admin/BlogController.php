@@ -574,19 +574,24 @@ class BlogController extends Controller
         $validated['content'] = $result['content'];
         $validated['table_of_contents'] = json_encode($result['toc'], JSON_UNESCAPED_UNICODE);
         $wasActive = (bool) $blog->is_active;
+        $existingPublishedAt = $blog->published_at;
         $oldSlug = $blog->slug;
+
+        // Не даём fill затереть дату значением из формы: её решает forSave.
+        unset($validated['published_at']);
 
         // Заполняем модель новыми данными
         $blog->fill($validated);
 
-        // Дата на сайте = момент публикации (вкл. «Активен»), не дата создания в админке.
-        if ($blog->is_active) {
-            if ($request->filled('published_at')) {
-                $blog->published_at = AdminPublishedAt::parse($request->input('published_at'));
-            } elseif (! $wasActive || empty($blog->published_at)) {
-                $blog->published_at = now();
-            }
-        }
+        // Включение «Активен» публикует в момент сохранения. Старые часы черновика не переносятся,
+        // пока редактор сам не изменит поле даты.
+        $blog->published_at = AdminPublishedAt::forSave(
+            (bool) $blog->is_active,
+            $wasActive,
+            $existingPublishedAt,
+            $request->input('published_at'),
+            $request->boolean('published_at_edited'),
+        );
 
         // Сохраняем изменения
         $blog->save();

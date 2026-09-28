@@ -38,4 +38,49 @@ final class AdminPublishedAt
 
         return Carbon::parse($value, $tz)->utc();
     }
+
+    /**
+     * Instant stored when an admin saves a post.
+     *
+     * Turning a draft on publishes at the moment of that save. A clock carried
+     * over from the draft is ignored unless the editor changed the date field.
+     * An article that is already on the site keeps its date until that field changes.
+     *
+     * @param  Carbon|string|null  $existingPublishedAt
+     */
+    public static function forSave(
+        bool $willBeActive,
+        bool $wasActive,
+        mixed $existingPublishedAt,
+        ?string $postedValue,
+        bool $dateEdited,
+    ): ?Carbon {
+        if (! $willBeActive) {
+            return self::existingInstant($existingPublishedAt);
+        }
+
+        if ($dateEdited) {
+            return self::parse($postedValue) ?? now()->utc();
+        }
+
+        $existing = self::existingInstant($existingPublishedAt);
+        if (! $wasActive || $existing === null) {
+            return now()->utc();
+        }
+
+        return $existing;
+    }
+
+    private static function existingInstant(mixed $value): ?Carbon
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if ($value instanceof Carbon) {
+            return $value->copy()->utc();
+        }
+
+        return Carbon::parse((string) $value)->utc();
+    }
 }
