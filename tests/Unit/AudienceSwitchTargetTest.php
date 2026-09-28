@@ -76,6 +76,10 @@ class AudienceSwitchTargetTest extends TestCase
         $this->assertSame('/blog/authors', AudienceSwitchTarget::pathFor('/blog/authors', 'patients', $none));
         $this->assertSame('/blog/author/4', AudienceSwitchTarget::pathFor('/blog/author/4', 'doctors', $none));
         $this->assertSame('/blog/author/4', AudienceSwitchTarget::pathFor('/blog/author/4', 'patients', $none));
+        $this->assertSame(
+            '/blog/author/mokronosova-marina-adolfovna',
+            AudienceSwitchTarget::pathFor('/blog/author/mokronosova-marina-adolfovna', 'doctors', $none)
+        );
     }
 
     public function test_article_without_a_twin_opens_the_other_blog_list(): void

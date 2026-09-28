@@ -5,6 +5,7 @@ import SiteSidebar from '@/Components/SiteSidebar.vue'
 import AudienceSwitch from '@/Components/AudienceSwitch.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import { usePublicSiteUrl } from '@/Composables/usePublicSiteUrl'
+import { authorPublicPath } from '@/utils/authorPath'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 
@@ -334,7 +335,7 @@ const toggleFaq = (index) => {
 
           <div v-if="blog?.author?.id" class="flex items-center gap-3 xl:gap-4 mb-6">
             <Link
-                :href="`/blog/author/${blog.author.id}`"
+                :href="authorPublicPath(blog.author)"
                 class="flex items-center gap-3 xl:gap-4"
             >
               <div class="w-[45px] h-[45px] xl:w-[60px] xl:h-[60px] rounded-[8px] xl:rounded-[10px] overflow-hidden bg-white flex-shrink-0">
@@ -577,7 +578,7 @@ const toggleFaq = (index) => {
                   <div
                     v-if="related.author?.id"
                     class="flex items-center gap-3 cursor-pointer"
-                    @click.stop="$inertia.visit(`/blog/author/${related.author.id}`)"
+                    @click.stop="$inertia.visit(authorPublicPath(related.author))"
                   >
                     <div class="w-[40px] h-[40px] rounded-[8px] overflow-hidden bg-white flex-shrink-0">
                       <img v-if="related.author?.avatar"

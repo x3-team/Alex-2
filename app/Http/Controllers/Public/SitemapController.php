@@ -75,12 +75,12 @@ class SitemapController extends Controller
                 ->whereNotNull('published_at')
                 ->where('published_at', '<=', now());
         })
-            ->select('id', 'updated_at')
+            ->select('id', 'slug', 'updated_at')
             ->get();
 
         foreach ($authors as $author) {
             $xml .= $this->addUrl(
-                $baseUrl . '/blog/author/' . $author->id,
+                $baseUrl . \App\Support\AuthorSlug::publicPath($author->slug, $author->id),
                 $author->updated_at ? $author->updated_at->toW3cString() : null,
                 'monthly',
                 '0.6'

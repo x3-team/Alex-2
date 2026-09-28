@@ -5,6 +5,7 @@ import SiteSidebar from '@/Components/SiteSidebar.vue'
 import AudienceSwitch from '@/Components/AudienceSwitch.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import { usePublicSiteUrl } from '@/Composables/usePublicSiteUrl'
+import { authorPublicPath } from '@/utils/authorPath'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 const { isDoctorMode, articleUrl, blogBreadcrumbLabel } = useDoctorMode()
@@ -87,7 +88,7 @@ const applyFilters = () => {
 
   if (selectedTags.value.length) params.tags = selectedTags.value.join(',')
 
-  router.get(`/blog/author/${props.author.id}`, params, { preserveState: true, preserveScroll: true })
+  router.get(authorPublicPath(props.author), params, { preserveState: true, preserveScroll: true })
   showTagDropdown.value = false
 }
 // 🔹 🔥 Применение фильтра по тегам
@@ -95,14 +96,14 @@ const applyTagFilter = () => {
   const params = {}
   if (selectedCategory.value) params.category = selectedCategory.value
   if (selectedTags.value.length) params.tags = selectedTags.value.join(',')
-  router.get(`/blog/author/${props.author.id}`, params, { preserveState: true, preserveScroll: true })
+  router.get(authorPublicPath(props.author), params, { preserveState: true, preserveScroll: true })
   showTagDropdown.value = false
 }
 
 const resetFilters = () => {
   selectedCategories.value = [] // Было: selectedCategory.value = null
   selectedTags.value = []
-  router.get(`/blog/author/${props.author.id}`, {}, { preserveState: true, preserveScroll: true })
+  router.get(authorPublicPath(props.author), {}, { preserveState: true, preserveScroll: true })
 }
 
 // 🔹 🔥 Построение URL пагинации с сохранением фильтра
@@ -117,7 +118,7 @@ const buildPageUrl = (page) => {
   if (selectedTags.value.length) params.set('tags', selectedTags.value.join(','))
 
   const queryString = params.toString()
-  return `/blog/author/${props.author.id}?page=${page}${queryString ? '&' + queryString : ''}`
+  return `${authorPublicPath(props.author)}?page=${page}${queryString ? '&' + queryString : ''}`
 }
 
 // 🔹 🔥 Диапазон страниц для пагинации
@@ -306,7 +307,7 @@ const siteUrl = usePublicSiteUrl()
 
 // 🔹 Canonical URL для страницы автора
 const canonicalUrl = computed(() => {
-  const base = `${siteUrl.value}/blog/author/${props.author?.id}`
+  const base = `${siteUrl.value}${authorPublicPath(props.author)}`
   const page = props.blogs?.current_page || 1
   return page > 1 ? `${base}?page=${page}` : base
 })
@@ -365,7 +366,7 @@ const ogImage = computed(() => {
             "@type": "ListItem",
             "position": 4,
             "name": "{{ author?.name || 'Автор' }}",
-            "item": "https://alexallergotest.ru/blog/author/{{ author?.id }}"
+            "item": "{{ siteUrl }}/blog/author/{{ author?.slug || author?.id }}"
           }
         ]
       }

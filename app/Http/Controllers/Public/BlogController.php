@@ -163,7 +163,7 @@ class BlogController extends Controller
 
         $authors = User::where('is_admin', false)->whereHas('blogs', function($q) {
             $q->where('is_active', true)->whereNotNull('published_at')->where('published_at', '<=', now());
-        })->select('id', 'name', 'avatar')->get();
+        })->select('id', 'name', 'slug', 'avatar')->get();
 
         $categories = \App\Models\Category::select('id', 'name', 'slug')->orderBy('name')->get();
         $tags = \App\Models\BlogTag::select('id', 'name', 'slug')->orderBy('name')->get();
@@ -362,6 +362,7 @@ class BlogController extends Controller
         $authors = $authorsQuery->with(['authorCategories'])->get()->map(function ($author) {
             return [
                 'id' => $author->id,
+                'slug' => $author->slug,
                 'name' => $author->name,
                 'avatar' => $author->avatar,
                 'position' => $author->position ?? null,
@@ -407,18 +408,12 @@ class BlogController extends Controller
 
 
 
-    public function author($id, Request $request)
+    public function author($authorKey, Request $request)
     {
-                $author = \App\Models\User::with(['authorCategories'])
-            ->where(function ($query) {
-                $query->where('is_admin', true)
-                    ->orWhereHas('blogs', function ($blogs) {
-                        $blogs->where('is_active', true)
-                            ->whereNotNull('published_at')
-                            ->where('published_at', '<=', now());
-                    });
-            })
-            ->findOrFail($id);
+        $author = $this->resolvePublicAuthor((string) $authorKey);
+        if ($author instanceof \Illuminate\Http\RedirectResponse) {
+            return $author;
+        }
 
         // 🔹 Запрос постов автора
         $blogsQuery = \App\Models\Blog::with(['author', 'category', 'tags'])
@@ -490,6 +485,7 @@ class BlogController extends Controller
         return Inertia::render('Public/Blog/Author', [
             'author' => [
                 'id' => $author->id,
+                'slug' => $author->slug,
                 'name' => $author->name,
                 'avatar' => $author->avatar,
                 'position' => $author->position,
@@ -517,6 +513,39 @@ class BlogController extends Controller
                 'keywords' => '',
             ],
         ]);
+    }
+
+    /**
+     * Числовой адрес /blog/author/3 остаётся рабочим и уходит на ЧПУ.
+     */
+    private function resolvePublicAuthor(string $key): \App\Models\User|\Illuminate\Http\RedirectResponse
+    {
+        $query = \App\Models\User::with(['authorCategories'])
+            ->where(function ($query) {
+                $query->where('is_admin', true)
+                    ->orWhereHas('blogs', function ($blogs) {
+                        $blogs->where('is_active', true)
+                            ->whereNotNull('published_at')
+                            ->where('published_at', '<=', now());
+                    });
+            });
+
+        $isId = preg_match('/^\d+$/', $key) === 1;
+        $author = $isId ? (clone $query)->find($key) : null;
+        if (! $author) {
+            $author = (clone $query)->where('slug', $key)->first();
+        }
+        if (! $author) {
+            abort(404);
+        }
+
+        if ($isId && $author->slug && $author->slug !== $key) {
+            $qs = request()->getQueryString();
+
+            return redirect('/blog/author/'.$author->slug.($qs ? '?'.$qs : ''), 301);
+        }
+
+        return $author;
     }
 
     private function publishedBlogQuery()
@@ -574,7 +603,7 @@ class BlogController extends Controller
             ? ['@type' => 'Person', 'name' => $publicAuthor->name]
             : ['@type' => 'Organization', 'name' => 'ALEX LAB'];
         if ($publicAuthor && ! $isDoctors) {
-            $authorSchema['url'] = url('/blog/author/'.$publicAuthor->id);
+            $authorSchema['url'] = url(\App\Support\AuthorSlug::publicPath($publicAuthor->slug, $publicAuthor->id));
         }
 
         $articleSchema = [
@@ -609,7 +638,7 @@ class BlogController extends Controller
             $articleSchema['reviewedBy'] = [
                 '@type' => 'Person',
                 'name' => $publicAuthor->name,
-                'url' => url('/blog/author/'.$publicAuthor->id),
+                'url' => url(\App\Support\AuthorSlug::publicPath($publicAuthor->slug, $publicAuthor->id)),
             ];
         }
 

@@ -7,6 +7,7 @@ import DoctorBreadcrumbIcon from '@/Components/DoctorBreadcrumbIcon.vue'
 import DoctorDocumentCategoryCard from '@/Components/DoctorDocumentCategoryCard.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import { usePublicSiteUrl } from '@/Composables/usePublicSiteUrl'
+import { authorPublicPath } from '@/utils/authorPath'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 const props = defineProps({
@@ -583,7 +584,7 @@ const ogImage = computed(() => {
               <component
                   v-if="blog.author?.id"
                   :is="Link"
-                  :href="`/blog/author/${blog.author.id}`"
+                  :href="authorPublicPath(blog.author)"
                   class="flex items-center gap-3 xl:gap-4 text-sm text-gray-600"
               >
                 <div class="flex items-center gap-2 xl:gap-3">

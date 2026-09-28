@@ -4,6 +4,7 @@ import { ref, watch, computed } from 'vue'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import { usePublicSiteUrl } from '@/Composables/usePublicSiteUrl'
+import { authorPublicPath } from '@/utils/authorPath'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 
@@ -210,7 +211,7 @@ const ogImage = computed(() => {
                 :key="author.id"
                 class="flex-shrink-0"
                 style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 16px; gap: 15px; background: #FFFFFF; border-radius: 20px;"
-                :href="`/blog/author/${author.id}`"
+                :href="authorPublicPath(author)"
             >
               <div class="w-full max-w-[317px] aspect-square rounded-[20px] overflow-hidden bg-white flex-shrink-0 border border-gray-200">
                 <img v-if="author.avatar"
