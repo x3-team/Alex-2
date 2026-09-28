@@ -372,7 +372,10 @@ const ogImage = computed(() => {
       }
     </script>
   </Head>
-  <div class="page-container search-page-container site-sidebar-layout doctor-mode">
+  <div
+    class="page-container search-page-container site-sidebar-layout"
+    :class="{ 'doctor-mode': isDoctorMode }"
+  >
 
     <SiteSidebar />
 

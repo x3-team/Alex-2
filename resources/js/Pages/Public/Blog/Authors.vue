@@ -8,7 +8,7 @@ import { authorPublicPath } from '@/utils/authorPath'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 
-const { blogBreadcrumbLabel } = useDoctorMode()
+const { blogBreadcrumbLabel, isDoctorMode } = useDoctorMode()
 
 const props = defineProps({
   authors: Array,
@@ -107,7 +107,10 @@ const ogImage = computed(() => {
     </script>
   </Head>
 
-  <div class="page-container search-page-container site-sidebar-layout doctor-mode">
+  <div
+    class="page-container search-page-container site-sidebar-layout"
+    :class="{ 'doctor-mode': isDoctorMode }"
+  >
 
       <!-- Компонент Сайдбара -->
       <SiteSidebar />
