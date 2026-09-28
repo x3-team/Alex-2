@@ -266,7 +266,7 @@ const toggleFaq = (index) => {
       :class="{}"
   >
 
-     <SiteSidebar />
+     <SiteSidebar :mobile-toggle="false" />
 
       <div class="flex-1 flex flex-col bg-[#f7f7f7;] " style="background-color: #f7f7f7; width: 100%; overflow: auto">
 

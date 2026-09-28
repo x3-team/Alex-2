@@ -377,7 +377,7 @@ const ogImage = computed(() => {
     :class="{ 'doctor-mode': isDoctorMode }"
   >
 
-    <SiteSidebar />
+    <SiteSidebar :mobile-toggle="false" />
 
 
 
