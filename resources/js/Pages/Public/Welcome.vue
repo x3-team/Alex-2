@@ -1808,6 +1808,7 @@ onUnmounted(() => {
         ref="siteSidebarRef"
         :doctor-mode="isDoctorMode"
         show-audience-switch
+        :mobile-toggle="false"
         @register="openCart"
         @home="goToSlideById('slide-1')"
         @about="goToSlideById('slide-1')"

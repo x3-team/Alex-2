@@ -14,6 +14,12 @@ const props = defineProps({
   showAudienceSwitch: {
     type: Boolean,
     default: true
+  },
+  // На главной и в статьях кнопка меню уже своя. На остальных страницах
+  // сайдбар на мобилке спрятан, и без этой кнопки уйти со страницы нельзя.
+  mobileToggle: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -35,6 +41,7 @@ const audienceSwitchVisible = computed(() => page.props.site?.switch?.visible ==
 // 2. Логика модальных окон
 const isRegisterModalOpen = ref(false)
 const isDevModalOpen = ref(false) // 🟡 Реактивное состояние для модалки разработки
+const mobileNavOpen = ref(false)
 
 const previouslyFocusedElement = ref(null)
 const sheetDragOffset = ref(0)
@@ -150,6 +157,9 @@ onMounted(() => window.addEventListener('keydown', handleKeydown))
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
   restorePage()
+  if (import.meta.client && mobileNavOpen.value) {
+    document.body.style.overflow = ''
+  }
 })
 
 // 3. Остальной функционал
@@ -164,6 +174,7 @@ const sidebarAssets = Object.freeze({
 })
 
 const goTo = (path) => {
+  closeMobileMenu()
   router.visit(path)
 }
 
@@ -187,8 +198,18 @@ const openProfile = () => {
 }
 
 const closeMobileMenu = () => {
+  mobileNavOpen.value = false
   emit('close')
 }
+
+const openMobileNav = () => {
+  mobileNavOpen.value = true
+}
+
+watch(mobileNavOpen, (open) => {
+  if (!import.meta.client) return
+  document.body.style.overflow = open ? 'hidden' : ''
+})
 
 const openHome = () => {
   emit('home')
@@ -211,7 +232,11 @@ const openAbout = () => {
 <template>
   <aside
       class="sidebar-container site-sidebar"
-      :class="{ 'doctor-theme': isDoctor }"
+      :class="{
+        'doctor-theme': isDoctor,
+        'is-mobile-open': mobileNavOpen,
+        'mobile-menu-open': mobileNavOpen
+      }"
       aria-label="Навигация по сайту"
   >
     <div id="card-promo" class="promo-card">
@@ -257,6 +282,7 @@ const openAbout = () => {
           id="card-search"
           href="/search"
           class="sub-card"
+          @click="closeMobileMenu"
       >
         <div class="card-icon-wrapper">
           <img :src="sidebarAssets.search" alt="" width="42" height="42" decoding="async" />
@@ -271,6 +297,7 @@ const openAbout = () => {
           id="card-demo"
           href="/demo-result"
           class="sub-card"
+          @click="closeMobileMenu"
       >
         <div class="card-icon-wrapper">
           <img :src="sidebarAssets.demo" alt="" width="42" height="42" decoding="async" />
@@ -349,6 +376,19 @@ const openAbout = () => {
       <span class="mobile-close-icon" aria-hidden="true"></span>
       <span>Закрыть</span>
     </button>
+
+    <Teleport to="body">
+      <button
+          v-if="mobileToggle && !mobileNavOpen"
+          class="mobile-site-menu-button"
+          type="button"
+          aria-label="Открыть меню"
+          :aria-expanded="mobileNavOpen"
+          @click="openMobileNav"
+      >
+        <img src="/assets/figma-mobile-menu-icon.svg" alt="" width="24" height="24" />
+      </button>
+    </Teleport>
 
     <!-- МОДАЛЬНОЕ ОКНО ВЫБОРА ЛАБОРАТОРИЙ -->
     <Teleport to="body">
