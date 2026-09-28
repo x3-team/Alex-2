@@ -378,16 +378,25 @@ const openAbout = () => {
     </button>
 
     <Teleport to="body">
-      <button
+      <nav
           v-if="mobileToggle && !mobileNavOpen"
-          class="mobile-site-menu-button"
-          type="button"
-          aria-label="Открыть меню"
-          :aria-expanded="mobileNavOpen"
-          @click="openMobileNav"
+          class="mobile-site-dock"
+          aria-label="Быстрые действия"
       >
-        <img src="/assets/figma-mobile-menu-icon.svg" alt="" width="24" height="24" />
-      </button>
+        <button class="mobile-home-register" type="button" @click="openRegisterModal">
+          <span class="mobile-home-register-text">Записаться на тест на аллергию</span>
+          <img src="/assets/figma-about-icon.svg" alt="" width="24" height="24" />
+        </button>
+        <button
+            class="mobile-home-menu-button"
+            type="button"
+            aria-label="Открыть меню"
+            :aria-expanded="mobileNavOpen"
+            @click="openMobileNav"
+        >
+          <img src="/assets/figma-mobile-menu-icon.svg" alt="" width="24" height="24" />
+        </button>
+      </nav>
     </Teleport>
 
     <!-- МОДАЛЬНОЕ ОКНО ВЫБОРА ЛАБОРАТОРИЙ -->

@@ -25,10 +25,16 @@ class MobileQuizMenuTest extends TestCase
         $sidebar = file_get_contents(base_path('resources/js/Components/SiteSidebar.vue'));
         $css = file_get_contents(base_path('resources/css/main.css'));
 
-        $this->assertStringContainsString('mobile-site-menu-button', $sidebar);
+        $this->assertStringContainsString('mobile-site-dock', $sidebar);
+        $this->assertStringContainsString('Записаться на тест на аллергию', $sidebar);
         $this->assertStringContainsString('is-mobile-open', $sidebar);
         $this->assertStringContainsString('.site-sidebar.is-mobile-open', $css);
+        $this->assertStringContainsString('.mobile-site-dock', $css);
         $this->assertStringContainsString('mobileToggle', $sidebar);
+        $this->assertStringContainsString('#row-profile', $css);
+        $this->assertStringContainsString('grid-row: 4;', $css);
+        $this->assertStringContainsString('.site-sidebar .sidebar-audience-row', $css);
+        $this->assertStringContainsString('grid-row: 5;', $css);
 
         $welcome = file_get_contents(base_path('resources/js/Pages/Public/Welcome.vue'));
         $this->assertStringContainsString(':mobile-toggle="false"', $welcome);
