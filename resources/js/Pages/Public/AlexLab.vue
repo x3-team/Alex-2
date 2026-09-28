@@ -1,6 +1,7 @@
 <script setup>
 import '../../../css/main.css';
 import { useDoctorMode } from '@/Composables/useDoctorMode'
+import { authorPublicPath } from '@/utils/authorPath'
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import HomeBackLink from '@/Components/HomeBackLink.vue'
@@ -390,7 +391,7 @@ const handleSectionClick = (key) => {
                 <Link
                     v-for="(doctor, doctorIdx) in doctors"
                     :key="doctor.id"
-                    :href="`/blog/author/${doctor.id}`"
+                    :href="authorPublicPath(doctor)"
                     class="flex-shrink-0"
                     style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 16px; gap: 15px; background: #FFFFFF; border-radius: 20px;"
                 >

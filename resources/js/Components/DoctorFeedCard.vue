@@ -2,6 +2,7 @@
 import { Link } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import { useDoctorMode } from '@/composables/useDoctorMode'
+import { authorPublicPath } from '@/utils/authorPath'
 
 const props = defineProps({
   item: { type: Object, required: true },
@@ -78,7 +79,7 @@ const durationLabel = computed(() => {
       <component
         :is="item.author?.id ? Link : 'div'"
         v-if="item.author?.id"
-        v-bind="item.author?.id ? { href: `/blog/author/${item.author.id}` } : {}"
+        v-bind="item.author?.id ? { href: authorPublicPath(item.author) } : {}"
         class="flex items-center gap-3 xl:gap-4 text-sm text-gray-600"
       >
         <div class="flex items-center gap-2 xl:gap-3">

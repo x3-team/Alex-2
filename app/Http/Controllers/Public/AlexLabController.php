@@ -38,6 +38,7 @@ class AlexLabController extends Controller
             ->map(function ($author) {
                 return [
                     'id' => $author->id,
+                    'slug' => $author->slug,
                     'name' => $author->name,
                     'avatar' => $author->avatar,
                     'bio' => $author->bio,

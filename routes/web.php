@@ -220,7 +220,7 @@ Route::get('/cart', [\App\Http\Controllers\Public\CartController::class, 'index'
 // Блог
 Route::get('/blog', [PublicBlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/authors', [PublicBlogController::class, 'authors'])->name('blog.authors');
-Route::get('/blog/author/{id}', [PublicBlogController::class, 'author'])->name('blog.author');
+Route::get('/blog/author/{author}', [PublicBlogController::class, 'author'])->name('blog.author');
 Route::post('/blog/{blog}/rate', [PublicBlogController::class, 'rate'])->name('blog.rate');
 
 // Лаборатория ALEX LAB (Публичные маршруты)

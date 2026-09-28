@@ -24,6 +24,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'slug',
         'email',
         'password',
         'phone',
@@ -88,5 +89,14 @@ class User extends Authenticatable
     public function isPublicAuthor(): bool
     {
         return \App\Support\PublicBlogAuthor::visible($this) === $this;
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (User $user) {
+            if (empty($user->slug)) {
+                $user->slug = \App\Support\AuthorSlug::unique((string) ($user->name ?? ''), $user->id);
+            }
+        });
     }
 }
