@@ -58,16 +58,19 @@ const formatDate = (value) => {
 .doctor-video-card__preview {
   position: relative;
   width: 100%;
-  height: 250px;
+  height: auto;
+  aspect-ratio: 2 / 1;
   overflow: hidden;
-  background: #111;
+  background: #f7f7f7;
 }
 
 .doctor-video-card__cover {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   display: block;
+  background: #f7f7f7;
 }
 
 .doctor-video-card__fallback {
