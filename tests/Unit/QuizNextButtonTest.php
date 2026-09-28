@@ -15,5 +15,9 @@ class QuizNextButtonTest extends TestCase
         $this->assertStringNotContainsString('align-items: stretch', $vue);
         $this->assertStringContainsString(".quiz-card-wrapper.quiz-state {\n  height: auto;\n  max-height: 100%;", $vue);
         $this->assertStringContainsString(".quiz-state .options-list {\n  flex: 0 1 auto;", $vue);
+
+        $start = strpos($vue, '.quiz-state .options-list {');
+        $block = substr($vue, $start, strpos($vue, '}', $start) - $start);
+        $this->assertStringNotContainsString('scrollbar-gutter', $block);
     }
 }

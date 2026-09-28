@@ -710,7 +710,6 @@ padding: 0;
   flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-gutter: stable;
 }
 
 .quiz-state .next-btn {
