@@ -100,7 +100,7 @@ const ogDescription = computed(() => props.videosMeta.og_description?.trim() || 
 
     <h1 class="font-400 text-[28px] sm:text-[34px] xl:text-[42px] mt-6 mb-8">{{ video.title }}</h1>
 
-    <div class="player">
+    <div class="player" :class="{ 'is-playing': playing && playSrc }">
       <iframe
         v-if="playing && playSrc"
         :src="playSrc"
@@ -109,7 +109,7 @@ const ogDescription = computed(() => props.videosMeta.og_description?.trim() || 
         allowfullscreen
       />
       <button v-else type="button" class="player-cover" @click="startPlayback">
-        <img v-if="video.cover" :src="video.cover" :alt="video.title" width="1115" height="627" />
+        <img v-if="video.cover" class="player-still" :src="video.cover" :alt="video.title" width="1774" height="887" />
         <span class="player-source">{{ video.source_label }}</span>
         <span v-if="video.duration" class="player-duration">{{ video.duration }}</span>
         <span class="player-play doctor-video-glass-play" aria-hidden="true">
@@ -147,9 +147,11 @@ const ogDescription = computed(() => props.videosMeta.og_description?.trim() || 
   display: inline-flex; align-items: center; height: 45px; padding: 0 16px; border-radius: 8px;
   background: rgba(0,0,0,0.07); font-family: Roboto, Arial, sans-serif; font-size: 18px;
 }
-.player { position: relative; width: 100%; aspect-ratio: 1115 / 627; background: #111; overflow: hidden; }
-.player iframe, .player-cover, .player-cover img { width: 100%; height: 100%; border: 0; display: block; object-fit: cover; }
-.player-cover { position: relative; padding: 0; border: 0; cursor: pointer; background: #111; }
+.player { position: relative; width: 100%; aspect-ratio: 2 / 1; background: #f7f7f7; overflow: hidden; }
+.player.is-playing { aspect-ratio: 16 / 9; background: #111; }
+.player iframe, .player-cover { width: 100%; height: 100%; border: 0; display: block; }
+.player-cover { position: relative; padding: 0; border: 0; cursor: pointer; background: #f7f7f7; }
+.player-still { width: 100%; height: 100%; display: block; object-fit: contain; object-position: center; background: #f7f7f7; }
 .player-source, .player-duration {
   position: absolute; display: inline-flex; align-items: center; height: 45px; padding: 0 16px;
   border-radius: 8px; background: #fff; font-family: Roboto, Arial, sans-serif; font-size: 16px;
