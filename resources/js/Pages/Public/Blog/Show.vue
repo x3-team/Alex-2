@@ -266,7 +266,7 @@ const toggleFaq = (index) => {
       :class="{}"
   >
 
-     <SiteSidebar :mobile-toggle="false" />
+     <SiteSidebar />
 
       <div class="flex-1 flex flex-col bg-[#f7f7f7;] " style="background-color: #f7f7f7; width: 100%; overflow: auto">
 
@@ -619,19 +619,6 @@ const toggleFaq = (index) => {
       </div>
     </div>
 
-    <div v-if="!mobileMenuOpen" class="xl:hidden fixed bottom-0 left-0 right-0 z-50">
-      <button
-          @click="toggleMobileMenu"
-          class="mobile-menu-button"
-      >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 5H20" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M4 12H20" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M4 19H20" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span class="mobile-menu-button-text">Меню</span>
-      </button>
-    </div>
 
 
     <Transition name="mobile-menu">

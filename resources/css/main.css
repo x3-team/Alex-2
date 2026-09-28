@@ -119,7 +119,7 @@ body:has(.home-page-container.doctor-mode) {
 .mobile-supplier-link,
 .mobile-close-row,
 .mobile-home-dock,
-.mobile-site-menu-button {
+.mobile-site-dock {
     display: none;
 }
 
@@ -2069,8 +2069,8 @@ body:has(.home-page-container.doctor-mode) {
         display: none !important;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         /* Extra viewport height belongs to the visual hero, never to navigation. */
-        /* 4-я строка — переключатель версий сайта, дальше профиль и «Закрыть». */
-        grid-template-rows: minmax(330px, 1fr) 66px 132px 76px 66px 66px;
+        /* После героя: квиз, поиск и демо, блог, затем переключатель версии и «Закрыть». */
+        grid-template-rows: minmax(330px, 1fr) 66px 132px 66px 76px 66px;
         width: 100%;
         height: 100dvh;
         min-height: 750px;
@@ -2187,6 +2187,7 @@ body:has(.home-page-container.doctor-mode) {
 
     .site-sidebar .promo-card {
         order: 1;
+        grid-row: 1;
         grid-column: 1 / -1;
         position: relative;
         width: 100%;
@@ -2289,6 +2290,7 @@ body:has(.home-page-container.doctor-mode) {
 
     .site-sidebar #row-quiz {
         order: 2;
+        grid-row: 2;
         grid-column: 1 / -1;
         height: 66px;
         min-height: 66px;
@@ -2334,6 +2336,15 @@ body:has(.home-page-container.doctor-mode) {
         overflow: hidden;
     }
 
+    .site-sidebar #row-doctor-materials {
+        order: 2;
+        grid-row: 2;
+        grid-column: 1 / -1;
+        width: 100%;
+        height: 66px;
+        min-height: 66px;
+    }
+
     .home-page-container .site-sidebar #row-doctor-materials .row-text {
         font-size: 18px;
         line-height: 24px;
@@ -2343,6 +2354,7 @@ body:has(.home-page-container.doctor-mode) {
 
     .site-sidebar .cards-row {
         order: 3;
+        grid-row: 3;
         grid-column: 1 / -1;
         display: grid;
         grid-template-columns: 1fr;
@@ -2431,7 +2443,8 @@ body:has(.home-page-container.doctor-mode) {
     }
 
     .site-sidebar .sidebar-audience-row {
-        order: 4;
+        order: 5;
+        grid-row: 5;
         grid-column: 1 / -1;
         display: flex;
         flex-direction: column;
@@ -2505,13 +2518,15 @@ body:has(.home-page-container.doctor-mode) {
     }
 
     .site-sidebar #row-profile {
-        order: 5;
+        order: 4;
+        grid-row: 4;
         grid-column: 1 / -1;
         border-right: 0;
     }
 
     .site-sidebar .mobile-close-row {
         order: 6;
+        grid-row: 6;
         grid-column: 1 / -1;
         display: flex;
         width: 100%;
@@ -2592,34 +2607,32 @@ body:has(.home-page-container.doctor-mode) {
         display: none !important;
     }
 
-    /* Кнопка меню на страницах, где сайдбар спрятан. На главной своя кнопка в доке. */
-    .mobile-site-menu-button {
+    /* Нижняя панель на внутренних страницах: запись и меню вместе, как на главной. */
+    .mobile-site-dock {
+        --mobile-unit: min(calc(100vw / 420), 1px);
+        --mobile-dock-height: 66px;
         position: fixed;
         z-index: 130;
+        left: 0;
         right: 0;
         bottom: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 66px;
-        height: 66px;
-        margin-bottom: env(safe-area-inset-bottom);
-        padding: 0;
-        border: 0;
-        border-top: 1px solid #dfdfdf;
-        border-left: 1px solid #dfdfdf;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 66px;
+        grid-template-rows: var(--mobile-dock-height);
+        height: var(--mobile-dock-height);
+        padding-bottom: env(safe-area-inset-bottom);
+        box-sizing: content-box;
         background: #fff;
-        box-sizing: border-box;
-        cursor: pointer;
     }
 
-    .mobile-site-menu-button img {
+    .mobile-site-dock .mobile-home-register,
+    .mobile-site-dock .mobile-home-menu-button {
+        height: 66px;
+    }
+
+    .mobile-site-dock .mobile-home-menu-button img {
         width: 24px;
         height: 24px;
-    }
-
-    .mobile-home-dock:not(:has(.mobile-home-menu-button)) {
-        grid-template-columns: minmax(0, 1fr) 66px;
     }
 
     .site-sidebar.is-mobile-open {
@@ -2628,7 +2641,7 @@ body:has(.home-page-container.doctor-mode) {
         z-index: 200;
         inset: 0;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        grid-template-rows: minmax(330px, 1fr) 66px 132px 76px 66px 66px;
+        grid-template-rows: minmax(330px, 1fr) 66px 132px 66px 76px 66px;
         width: 100%;
         height: 100dvh;
         min-height: 0;
@@ -5895,11 +5908,12 @@ body:has(.audience-switch--floating):not(:has(.home-page-container)) header.stic
 
 @media (max-width: 1024px) {
     .home-page-container.doctor-mode .site-sidebar {
-        grid-template-rows: minmax(330px, 1fr) 66px 132px 76px 66px 66px;
+        grid-template-rows: minmax(330px, 1fr) 66px 132px 66px 76px 66px;
     }
 
     .home-page-container .site-sidebar #row-doctor-materials {
         order: 2;
+        grid-row: 2;
         grid-column: 1 / -1;
         width: 100%;
         height: 66px;

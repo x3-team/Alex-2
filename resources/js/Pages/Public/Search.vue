@@ -397,12 +397,6 @@ const finishSheetDrag = () => {
 
       </div>
       <PublicFooter />
-      <nav class="mobile-home-dock" aria-label="Быстрые действия">
-        <button class="mobile-home-register" type="button" @click="openCart">
-          <span>Записаться на тест на аллергию</span>
-          <img src="/assets/figma-about-icon.svg" alt="" width="24" height="24" />
-        </button>
-      </nav>
     </main>
   </div>
 
