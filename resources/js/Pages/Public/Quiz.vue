@@ -694,17 +694,20 @@ padding: 0;
 
 .card-container.question-layout {
   overflow: hidden;
-  align-items: stretch;
+  align-items: flex-start;
 }
 
+/* Hug the answers. Stretching the card to the viewport pushed «Далее»
+   to the bottom of the screen on short questions. Cap at the column
+   height so a long answer list still scrolls above the button. */
 .quiz-card-wrapper.quiz-state {
-  height: 100%;
+  height: auto;
   max-height: 100%;
   min-height: 0;
 }
 
 .quiz-state .options-list {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
   scrollbar-gutter: stable;
@@ -1307,7 +1310,7 @@ padding: 0;
   .card-container.question-layout {
     padding-top: 20px;
     overflow: hidden;
-    align-items: stretch;
+    align-items: flex-start;
   }
 
   .quiz-card-wrapper {
