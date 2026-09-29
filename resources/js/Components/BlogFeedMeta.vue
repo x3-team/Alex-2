@@ -5,16 +5,13 @@ defineProps({
   source: { type: String, default: '' },
   category: { type: String, default: '' },
   tag: { type: String, default: '' },
-  overlay: { type: Boolean, default: false },
 })
 </script>
 
 <template>
   <div
     v-if="date || duration || source || category || tag"
-    :class="overlay
-      ? 'absolute top-2 left-2 xl:top-4 xl:left-4 flex flex-wrap gap-2'
-      : 'blog-feed-meta'"
+    class="blog-feed-meta"
   >
     <div v-if="date" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
       <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ date }}</span>

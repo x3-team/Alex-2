@@ -8524,8 +8524,8 @@ button {
     background-color: rgb(247, 247, 247);
 }
 
-/* Patient covers carry the title in the artwork. Chips sit under the
-   picture so they do not cover that type. */
+/* Cover artwork already includes the title. Chips sit under the
+   picture on both audiences so they do not cover that type. */
 .blog-feed-meta {
     display: flex;
     flex-wrap: wrap;

@@ -769,18 +769,9 @@ const ogImage = computed(() => {
               <div v-else class="w-full h-full bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center">
               </div>
 
-              <BlogFeedMeta
-                  v-if="isDoctorMode"
-                  overlay
-                  :date="blog.published_at ? formatDate(blog.published_at) : ''"
-                  :duration="blog.duration ? `~${blog.duration}` : ''"
-                  :category="blog.category?.name || ''"
-                  :tag="blog.tags?.[0]?.name || ''"
-              />
             </div>
 
             <BlogFeedMeta
-                v-if="!isDoctorMode"
                 :date="blog.published_at ? formatDate(blog.published_at) : ''"
                 :duration="blog.duration ? `~${blog.duration}` : ''"
                 :category="blog.category?.name || ''"
@@ -788,8 +779,7 @@ const ogImage = computed(() => {
             />
 
             <div
-                class="space-y-3 xl:space-y-4"
-                :class="isDoctorMode ? 'py-[2rem]' : 'pt-4 pb-[2rem]'"
+                class="space-y-3 xl:space-y-4 pt-4 pb-[2rem]"
                 style="padding-bottom: 64px"
             >
               <div class="flex items-center gap-3 xl:gap-4 text-sm text-gray-600">

@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import { useDoctorMode } from '@/composables/useDoctorMode'
 import { authorPublicPath } from '@/utils/authorPath'
+import BlogFeedMeta from '@/Components/BlogFeedMeta.vue'
 
 const props = defineProps({
   item: { type: Object, required: true },
@@ -52,30 +53,20 @@ const durationLabel = computed(() => {
       />
       <div v-else class="w-full h-full bg-gradient-to-br from-gray-400 to-gray-500" />
 
-      <div class="absolute top-2 left-2 xl:top-4 xl:left-4 flex flex-wrap gap-2">
-        <div v-if="formattedDate" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-          <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ formattedDate }}</span>
-        </div>
-        <div v-if="durationLabel" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-          <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ durationLabel }}</span>
-        </div>
-        <div v-if="isVideo && item.source_label" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-          <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ item.source_label }}</span>
-        </div>
-        <div v-if="item.category" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-          <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ item.category }}</span>
-        </div>
-        <div v-if="item.tag" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-          <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ item.tag }}</span>
-        </div>
-      </div>
-
       <span v-if="isVideo" class="doctor-feed-play" aria-hidden="true">
         <img src="/assets/figma-play-20.svg" alt="" width="20" height="20" />
       </span>
     </Link>
 
-    <div class="py-[2rem] space-y-3 xl:space-y-4" style="padding-bottom: 64px">
+    <BlogFeedMeta
+      :date="formattedDate"
+      :duration="durationLabel"
+      :source="isVideo && item.source_label ? item.source_label : ''"
+      :category="item.category || ''"
+      :tag="item.tag || ''"
+    />
+
+    <div class="pt-4 pb-[2rem] space-y-3 xl:space-y-4" style="padding-bottom: 64px">
       <component
         :is="item.author?.id ? Link : 'div'"
         v-if="item.author?.id"

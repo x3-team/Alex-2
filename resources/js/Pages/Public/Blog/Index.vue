@@ -555,31 +555,21 @@ const ogImage = computed(() => {
                    decoding="async" />
               <div v-else class="w-full h-full bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center"></div>
 
-              <BlogFeedMeta
-                  v-if="isDoctorMode"
-                  overlay
-                  :date="blog.published_at ? formatDate(blog.published_at) : ''"
-                  :duration="itemDuration(blog)"
-                  :source="isVideoItem(blog) ? (blog.source_label || '') : ''"
-                  :category="blog.category?.name || ''"
-                  :tag="blog.tags?.[0]?.name || ''"
-              />
               <span v-if="isVideoItem(blog)" class="doctor-feed-play doctor-video-glass-play" aria-hidden="true">
                 <img src="/assets/figma-play-20.svg" alt="" width="20" height="20" />
               </span>
             </Link>
 
             <BlogFeedMeta
-                v-if="!isDoctorMode"
                 :date="blog.published_at ? formatDate(blog.published_at) : ''"
                 :duration="itemDuration(blog)"
+                :source="isVideoItem(blog) ? (blog.source_label || '') : ''"
                 :category="blog.category?.name || ''"
                 :tag="blog.tags?.[0]?.name || ''"
             />
 
             <div
-                class="space-y-3 xl:space-y-4"
-                :class="isDoctorMode ? 'py-[2rem]' : 'pt-4 pb-[2rem]'"
+                class="space-y-3 xl:space-y-4 pt-4 pb-[2rem]"
                 style="padding-bottom: 64px"
             >
               <component

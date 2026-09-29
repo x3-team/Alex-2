@@ -563,24 +563,14 @@ const toggleFaq = (index) => {
                   </div>
 
 
-                  <BlogFeedMeta
-                      v-if="isDoctorMode"
-                      overlay
-                      :duration="related.duration ? `~${related.duration}` : ''"
-                      :category="related.category?.name || ''"
-                  />
                 </div>
 
                 <BlogFeedMeta
-                    v-if="!isDoctorMode"
                     :duration="related.duration ? `~${related.duration}` : ''"
                     :category="related.category?.name || ''"
                 />
 
-                <div
-                    class="space-y-3"
-                    :class="isDoctorMode ? 'py-5' : 'pt-4 pb-5'"
-                >
+                <div class="space-y-3 pt-4 pb-5">
 
                   <div
                     v-if="related.author?.id"
