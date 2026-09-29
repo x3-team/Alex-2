@@ -51,6 +51,7 @@ const formatDate = (value) => {
 .doctor-video-card {
   display: flex;
   flex-direction: column;
+  position: relative;
   min-width: 0;
   color: inherit;
   text-decoration: none;
@@ -103,7 +104,13 @@ const formatDate = (value) => {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px 0 0;
+  padding: 32px 0 0;
+}
+
+@media (max-width: 1024px) {
+  .doctor-video-card__body {
+    padding-top: 16px;
+  }
 }
 
 .doctor-video-card__body h2 {

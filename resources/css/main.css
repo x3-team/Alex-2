@@ -8524,8 +8524,12 @@ button {
     background-color: rgb(247, 247, 247);
 }
 
-/* Cover artwork already includes the title. Chips sit under the
-   picture on both audiences so they do not cover that type. */
+/* Mobile: chips sit under the cover so they do not cover the artwork
+   type. Desktop keeps them on the picture, top-left, as before. */
+.blog-feed-card {
+    position: relative;
+}
+
 .blog-feed-meta {
     display: flex;
     flex-wrap: wrap;
@@ -8535,4 +8539,44 @@ button {
 
 .blog-feed-meta > div {
     border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.blog-feed-body {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.blog-feed-body--related {
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+}
+
+@media (max-width: 1024px) {
+    .blog-feed-body,
+    .blog-feed-body--related {
+        padding-top: 1rem;
+    }
+}
+
+@media (min-width: 1025px) {
+    .blog-feed-meta {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 2;
+        margin-top: 0;
+        max-width: calc(100% - 16px);
+    }
+
+    .blog-feed-meta > div {
+        border: none;
+    }
+}
+
+@media (min-width: 1280px) {
+    .blog-feed-meta {
+        top: 16px;
+        left: 16px;
+        max-width: calc(100% - 32px);
+    }
 }

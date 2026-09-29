@@ -41,7 +41,7 @@ const durationLabel = computed(() => {
 </script>
 
 <template>
-  <article class="bg-[transparent] overflow-hidden">
+  <article class="blog-feed-card bg-[transparent] overflow-hidden">
     <Link :href="href" class="blog-feed-cover">
       <img
         v-if="cover"
@@ -66,7 +66,7 @@ const durationLabel = computed(() => {
       :tag="item.tag || ''"
     />
 
-    <div class="pt-4 pb-[2rem] space-y-3 xl:space-y-4" style="padding-bottom: 64px">
+    <div class="blog-feed-body space-y-3 xl:space-y-4" style="padding-bottom: 64px">
       <component
         :is="item.author?.id ? Link : 'div'"
         v-if="item.author?.id"

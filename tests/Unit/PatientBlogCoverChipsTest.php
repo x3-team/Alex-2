@@ -28,7 +28,8 @@ class PatientBlogCoverChipsTest extends TestCase
 
         $this->assertStringContainsString('class="blog-feed-meta"', $meta);
         $this->assertStringNotContainsString('absolute', $meta);
-        $this->assertStringContainsString('.blog-feed-meta {', $css);
+        $this->assertStringContainsString('margin-top: 12px;', $css);
+        $this->assertStringContainsString(".blog-feed-meta {\n        position: absolute;\n        top: 8px;\n        left: 8px;", $css);
 
         $videoCard = file_get_contents(base_path('resources/js/Components/DoctorVideoCard.vue'));
         $this->assertStringNotContainsString('doctor-video-card__badges', $videoCard);

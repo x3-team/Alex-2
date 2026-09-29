@@ -547,7 +547,7 @@ const toggleFaq = (index) => {
                   v-for="related in filteredRelatedPosts"
                   :key="related.id"
                   @click="$inertia.visit(articleUrl(related.slug))"
-                  class="bg-[transparent] overflow-hidden transition-all duration-300 cursor-pointer"
+                  class="blog-feed-card bg-[transparent] overflow-hidden transition-all duration-300 cursor-pointer"
               >
 
                 <div class="block overflow-hidden relative" style="max-height: 494px;     aspect-ratio: 16 / 9;">
@@ -570,7 +570,7 @@ const toggleFaq = (index) => {
                     :category="related.category?.name || ''"
                 />
 
-                <div class="space-y-3 pt-4 pb-5">
+                <div class="blog-feed-body blog-feed-body--related space-y-3">
 
                   <div
                     v-if="related.author?.id"

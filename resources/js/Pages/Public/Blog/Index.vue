@@ -540,7 +540,7 @@ const ogImage = computed(() => {
           <article
               v-for="(blog, blogIdx) in blogs.data"
               :key="blog.id"
-              class="bg-[transparent] overflow-hidden transition-all duration-300"
+              class="blog-feed-card bg-[transparent] overflow-hidden transition-all duration-300"
               style="height: auto;"
           >
             <Link
@@ -569,7 +569,7 @@ const ogImage = computed(() => {
             />
 
             <div
-                class="space-y-3 xl:space-y-4 pt-4 pb-[2rem]"
+                class="blog-feed-body space-y-3 xl:space-y-4"
                 style="padding-bottom: 64px"
             >
               <component
