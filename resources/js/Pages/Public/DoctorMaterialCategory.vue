@@ -6,7 +6,7 @@ import DoctorBreadcrumbIcon from '@/Components/DoctorBreadcrumbIcon.vue'
 import DoctorDocumentCategoryCard from '@/Components/DoctorDocumentCategoryCard.vue'
 import { useDoctorMode } from '@/composables/useDoctorMode'
 
-defineProps({
+const props = defineProps({
   category: { type: Object, required: true },
   materials: { type: Array, default: () => [] },
   otherCategories: { type: Array, default: () => [] },
@@ -25,7 +25,7 @@ const materialBind = (material) => {
       href,
       target: '_blank',
       rel: 'noopener noreferrer',
-      'aria-label': `Открыть: ${material.title}`,
+      'aria-label': `Открыть: ${material.title || props.category.name}`,
     }
   }
   return {
@@ -33,7 +33,7 @@ const materialBind = (material) => {
     download: '',
     target: '_blank',
     rel: 'noopener',
-    'aria-label': `Скачать: ${material.title}`,
+    'aria-label': `Скачать: ${material.title || props.category.name}`,
   }
 }
 </script>
@@ -86,7 +86,7 @@ const materialBind = (material) => {
         v-bind="materialBind(material)"
       >
         <div class="material-copy">
-          <h2>{{ material.title }}</h2>
+          <h2>{{ material.title || category.name }}</h2>
           <p v-if="material.date">{{ material.date }}</p>
           <p v-else-if="material.description">{{ material.description }}</p>
         </div>

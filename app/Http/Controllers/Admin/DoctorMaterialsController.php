@@ -40,7 +40,7 @@ class DoctorMaterialsController extends Controller
             'category_links.*' => 'nullable|string|max:1000',
             'materials' => 'present|array',
             'materials.*.id' => 'nullable|string|max:64',
-            'materials.*.title' => 'required|string|max:255',
+            'materials.*.title' => 'nullable|string|max:255',
             'materials.*.file_path' => 'nullable|string|max:500',
             'materials.*.link_url' => 'nullable|string|max:1000',
             'materials.*.date' => 'nullable|string|max:64',
@@ -135,7 +135,7 @@ class DoctorMaterialsController extends Controller
 
             return [
                 'id' => trim((string) ($row['id'] ?? '')) ?: (string) Str::uuid(),
-                'title' => trim($row['title']),
+                'title' => trim((string) ($row['title'] ?? '')),
                 'file_path' => $filePath,
                 'link_url' => $linkUrl,
                 'date' => trim((string) ($row['date'] ?? '')),
