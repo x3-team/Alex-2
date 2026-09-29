@@ -8523,3 +8523,16 @@ button {
     object-position: center center;
     background-color: rgb(247, 247, 247);
 }
+
+/* Patient covers carry the title in the artwork. Chips sit under the
+   picture so they do not cover that type. */
+.blog-feed-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.blog-feed-meta > div {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
