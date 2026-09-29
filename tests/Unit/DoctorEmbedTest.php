@@ -120,7 +120,7 @@ class DoctorEmbedTest extends TestCase
         $this->assertStringContainsString("redirect()->to('/materials?type=documents', 301)", $docs);
         $this->assertStringContainsString('categoryBySlug', $docs);
         $this->assertStringContainsString("Public/DoctorMaterialCategory", $docs);
-        $this->assertStringContainsString("(\$category['link_url'] ?? '')", $docs);
+        $this->assertStringContainsString('DoctorMaterialsStore::plaqueLink($category, $store->files())', $docs);
         $this->assertStringContainsString('redirect()->away', $docs);
 
         $admin = file_get_contents(dirname(__DIR__, 2).'/app/Http/Controllers/Admin/DoctorMaterialsController.php');
@@ -141,6 +141,31 @@ class DoctorEmbedTest extends TestCase
         $this->assertStringContainsString('Выберите категорию', $index);
         $this->assertStringContainsString('DoctorDocumentCategoryCard', $index);
         $this->assertStringContainsString('articleUrl(item.slug)', $index);
+    }
+
+    public function test_document_without_title_still_opens_the_category_plaque(): void
+    {
+        $category = ['id' => 'cat-1', 'link_url' => ''];
+        $link = 'https://www.madx.com/science/publications';
+
+        $this->assertSame($link, DoctorMaterialsStore::plaqueLink($category, [
+            ['category_id' => 'cat-1', 'title' => '', 'link_url' => $link, 'file_path' => ''],
+        ]));
+
+        $this->assertSame('https://own.example/page', DoctorMaterialsStore::plaqueLink(
+            ['id' => 'cat-1', 'link_url' => 'https://own.example/page'],
+            [['category_id' => 'cat-1', 'title' => '', 'link_url' => $link, 'file_path' => '']]
+        ));
+
+        $this->assertSame('', DoctorMaterialsStore::plaqueLink($category, [
+            ['category_id' => 'cat-1', 'title' => '', 'link_url' => $link, 'file_path' => ''],
+            ['category_id' => 'cat-1', 'title' => 'Второй', 'link_url' => '', 'file_path' => '/storage/a.pdf'],
+        ]));
+
+        $admin = file_get_contents(dirname(__DIR__, 2).'/app/Http/Controllers/Admin/DoctorMaterialsController.php');
+        $vue = file_get_contents(dirname(__DIR__, 2).'/resources/js/Pages/Admin/DoctorMaterials/index.vue');
+        $this->assertStringContainsString("'materials.*.title' => 'nullable|string|max:255'", $admin);
+        $this->assertStringNotContainsString(".filter((item) => (item.title || '').trim() !== '')", $vue);
     }
 
     public function test_doctor_article_permalinks_use_materials(): void

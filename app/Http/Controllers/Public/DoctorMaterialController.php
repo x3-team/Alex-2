@@ -44,7 +44,7 @@ class DoctorMaterialController extends Controller
             abort(404);
         }
 
-        $categoryLink = trim((string) ($category['link_url'] ?? ''));
+        $categoryLink = DoctorMaterialsStore::plaqueLink($category, $store->files());
         if ($categoryLink !== '') {
             if (str_starts_with($categoryLink, '/') && ! str_starts_with($categoryLink, '//')) {
                 return redirect()->to($categoryLink);

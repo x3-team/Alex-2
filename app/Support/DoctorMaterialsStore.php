@@ -45,7 +45,9 @@ class DoctorMaterialsStore
             }
 
             $title = trim((string) ($row['title'] ?? ''));
-            if ($title === '') {
+            $filePath = trim((string) ($row['file_path'] ?? ''));
+            $linkUrl = trim((string) ($row['link_url'] ?? ''));
+            if ($title === '' && $filePath === '' && $linkUrl === '') {
                 return null;
             }
 
@@ -54,8 +56,8 @@ class DoctorMaterialsStore
             return [
                 'id' => (string) ($row['id'] ?? Str::uuid()),
                 'title' => $title,
-                'file_path' => trim((string) ($row['file_path'] ?? '')),
-                'link_url' => trim((string) ($row['link_url'] ?? '')),
+                'file_path' => $filePath,
+                'link_url' => $linkUrl,
                 'date' => trim((string) ($row['date'] ?? '')),
                 'description' => trim((string) ($row['description'] ?? '')),
                 'category_id' => trim((string) ($row['category_id'] ?? '')),
@@ -68,7 +70,38 @@ class DoctorMaterialsStore
 
     public function publicCategories(): array
     {
-        return array_slice($this->categories(), 0, self::MAX_CATEGORIES);
+        $files = $this->files();
+
+        return array_map(function (array $category) use ($files) {
+            $category['link_url'] = self::plaqueLink($category, $files);
+
+            return $category;
+        }, array_slice($this->categories(), 0, self::MAX_CATEGORIES));
+    }
+
+    /**
+     * The category name is the plaque. Its own link wins. Otherwise one
+     * link-document in the category is enough: the plaque opens that URL
+     * and the document does not need its own title.
+     *
+     * @param  list<array<string, mixed>>  $files
+     */
+    public static function plaqueLink(array $category, array $files): string
+    {
+        $own = trim((string) ($category['link_url'] ?? ''));
+        if ($own !== '') {
+            return $own;
+        }
+
+        $rows = array_values(array_filter(
+            $files,
+            fn ($file) => (string) ($file['category_id'] ?? '') === (string) ($category['id'] ?? '')
+        ));
+        if (count($rows) !== 1) {
+            return '';
+        }
+
+        return trim((string) ($rows[0]['link_url'] ?? ''));
     }
 
     public function categoryBySlug(string $slug): ?array

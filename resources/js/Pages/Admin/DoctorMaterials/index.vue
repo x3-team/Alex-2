@@ -205,14 +205,13 @@ const onDragEnd = () => {
 
 const buildMaterialsPayload = () => {
   const rows = flattenMaterials()
-    .filter((item) => (item.title || '').trim() !== '')
     .map((item) => {
       const source = item.source_type === 'link' ? 'link' : 'file'
       const file_path = source === 'file' ? (item.file_path || '') : ''
       const link_url = source === 'link' ? normalizeLinkUrl(item.link_url) : ''
       return {
         id: item.id,
-        title: item.title.trim(),
+        title: (item.title || '').trim(),
         file_path,
         link_url,
         date: item.date || '',
@@ -221,15 +220,17 @@ const buildMaterialsPayload = () => {
         sort_order: item.sort_order,
       }
     })
+    .filter((item) => item.title !== '' || item.file_path !== '' || item.link_url !== '')
 
   for (const row of rows) {
     const hasFile = !!row.file_path
     const hasLink = !!row.link_url
+    const label = row.title || 'Документ'
     if (hasFile === hasLink) {
       return {
         error: hasFile
-          ? `«${row.title}»: у документа можно указать либо файл, либо ссылку — не оба сразу.`
-          : `«${row.title}»: добавьте файл или ссылку.`,
+          ? `«${label}»: у документа можно указать либо файл, либо ссылку — не оба сразу.`
+          : `«${label}»: добавьте файл или ссылку.`,
       }
     }
   }
@@ -457,7 +458,7 @@ const submit = () => {
 
                     <div class="flex-1 space-y-3 min-w-0">
                       <div class="grid md:grid-cols-2 gap-3">
-                        <input v-model="item.title" class="border rounded-md px-3 py-2 text-sm" placeholder="Название документа" />
+                        <input v-model="item.title" class="border rounded-md px-3 py-2 text-sm" placeholder="Название документа (необязательно)" />
                         <select v-model="item.category_id" class="border rounded-md px-3 py-2 text-sm" @change="onCategoryChange(item)">
                           <option value="">Без категории</option>
                           <option v-for="category in form.categories" :key="category.id" :value="category.id">{{ category.name || 'Без названия' }}</option>
@@ -480,7 +481,7 @@ const submit = () => {
                       </div>
                       <div v-else class="space-y-1">
                         <input v-model="item.link_url" type="text" inputmode="url" class="w-full border rounded-md px-3 py-2 text-sm" placeholder="https://… ссылка на скачивание" />
-                        <p class="text-xs text-gray-500">При клике на плашку откроется эта ссылка. Файл на сайт не загружается.</p>
+                        <p class="text-xs text-gray-500">Название можно не заполнять: на плашке останется имя категории. Если в категории только эта ссылка, клик по плашке открывает её. Файл на сайт не загружается.</p>
                       </div>
                       <input v-model="item.description" class="w-full border rounded-md px-3 py-2 text-sm" placeholder="Короткое описание" />
                       <button type="button" class="text-xs text-red-500" @click="removeMaterial(item.id)">Удалить строку</button>
