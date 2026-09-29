@@ -5,6 +5,7 @@ import SiteSidebar from '@/Components/SiteSidebar.vue'
 import DoctorTypeChips from '@/Components/DoctorTypeChips.vue'
 import DoctorBreadcrumbIcon from '@/Components/DoctorBreadcrumbIcon.vue'
 import DoctorDocumentCategoryCard from '@/Components/DoctorDocumentCategoryCard.vue'
+import BlogFeedMeta from '@/Components/BlogFeedMeta.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import { usePublicSiteUrl } from '@/Composables/usePublicSiteUrl'
 import { authorPublicPath } from '@/utils/authorPath'
@@ -539,7 +540,7 @@ const ogImage = computed(() => {
           <article
               v-for="(blog, blogIdx) in blogs.data"
               :key="blog.id"
-              class="bg-[transparent] overflow-hidden transition-all duration-300"
+              class="blog-feed-card bg-[transparent] overflow-hidden transition-all duration-300"
               style="height: auto;"
           >
             <Link
@@ -554,32 +555,22 @@ const ogImage = computed(() => {
                    decoding="async" />
               <div v-else class="w-full h-full bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center"></div>
 
-              <div class="absolute top-2 left-2 xl:top-4 xl:left-4 flex flex-wrap gap-2">
-                <div v-if="blog.published_at" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-                  <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">
-                    {{ formatDate(blog.published_at) }}
-                  </span>
-                </div>
-                <div v-if="itemDuration(blog)" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-                  <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ itemDuration(blog) }}</span>
-                </div>
-                <div v-if="isVideoItem(blog) && blog.source_label" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-                  <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ blog.source_label }}</span>
-                </div>
-                <div v-if="blog.category" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-                  <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ blog.category.name }}</span>
-                </div>
-                <div v-if="blog.tags && blog.tags.length" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-                  <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ blog.tags[0].name }}</span>
-                </div>
-              </div>
               <span v-if="isVideoItem(blog)" class="doctor-feed-play doctor-video-glass-play" aria-hidden="true">
                 <img src="/assets/figma-play-20.svg" alt="" width="20" height="20" />
               </span>
             </Link>
 
+            <BlogFeedMeta
+                :date="blog.published_at ? formatDate(blog.published_at) : ''"
+                :duration="itemDuration(blog)"
+                :source="isVideoItem(blog) ? (blog.source_label || '') : ''"
+                :category="blog.category?.name || ''"
+                :tag="blog.tags?.[0]?.name || ''"
+            />
+
             <div
-                class="py-[2rem] space-y-3 xl:space-y-4" style="padding-bottom: 64px"
+                class="blog-feed-body space-y-3 xl:space-y-4"
+                style="padding-bottom: 64px"
             >
               <component
                   v-if="blog.author?.id"

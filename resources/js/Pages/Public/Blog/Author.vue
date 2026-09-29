@@ -8,6 +8,7 @@ import { usePublicSiteUrl } from '@/Composables/usePublicSiteUrl'
 import { authorPublicPath } from '@/utils/authorPath'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
+import BlogFeedMeta from '@/Components/BlogFeedMeta.vue'
 const { isDoctorMode, articleUrl, blogBreadcrumbLabel } = useDoctorMode()
 const pageSwitchVisible = computed(() => usePage().props.site?.switch?.visible === true)
 const props = defineProps({
@@ -754,7 +755,7 @@ const ogImage = computed(() => {
           <article
               v-for="(blog, blogIdx) in blogs.data"
               :key="blog.id"
-              class="bg-[transparent] overflow-hidden transition-all duration-300"
+              class="blog-feed-card bg-[transparent] overflow-hidden transition-all duration-300"
               style="height: auto;"
           >
             <Link :href="articleUrl(blog.slug)" class="block">
@@ -768,27 +769,19 @@ const ogImage = computed(() => {
               <div v-else class="w-full h-full bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center">
               </div>
 
-
-              <div class="absolute top-2 left-2 xl:top-4 xl:left-4 flex flex-wrap gap-2">
-                <div v-if="blog.published_at" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-                    <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">
-                      {{ formatDate(blog.published_at) }}
-                    </span>
-                </div>
-                <div v-if="blog.duration" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-                  <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">~{{ blog.duration }}</span>
-                </div>
-                <div v-if="blog.category" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-                  <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ blog.category.name }}</span>
-                </div>
-                <div v-if="blog.tags && blog.tags.length" class="bg-white h-[32px] xl:h-[45px] px-3 xl:px-4 flex items-center shadow-md" style="border-radius: 8px">
-                  <span class="text-[14px] xl:text-[18px] font-[400] text-gray-900">{{ blog.tags[0].name }}</span>
-                </div>
-              </div>
             </div>
 
+            <BlogFeedMeta
+                :date="blog.published_at ? formatDate(blog.published_at) : ''"
+                :duration="blog.duration ? `~${blog.duration}` : ''"
+                :category="blog.category?.name || ''"
+                :tag="blog.tags?.[0]?.name || ''"
+            />
 
-            <div class="py-[2rem] space-y-3 xl:space-y-4" style="padding-bottom: 64px">
+            <div
+                class="blog-feed-body space-y-3 xl:space-y-4"
+                style="padding-bottom: 64px"
+            >
               <div class="flex items-center gap-3 xl:gap-4 text-sm text-gray-600">
                 <div class="flex items-center gap-2 xl:gap-3">
                   <div class="w-[45px] h-[45px] xl:w-[60px] xl:h-[60px] rounded-[8px] xl:rounded-[10px] overflow-hidden bg-white flex-shrink-0">

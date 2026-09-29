@@ -8,6 +8,7 @@ import { usePublicSiteUrl } from '@/Composables/usePublicSiteUrl'
 import { authorPublicPath } from '@/utils/authorPath'
 import '../../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
+import BlogFeedMeta from '@/Components/BlogFeedMeta.vue'
 
 const { isDoctorMode, articleUrl, blogBreadcrumbLabel } = useDoctorMode()
 const pageSwitchVisible = computed(() => usePage().props.site?.switch?.visible === true)
@@ -546,7 +547,7 @@ const toggleFaq = (index) => {
                   v-for="related in filteredRelatedPosts"
                   :key="related.id"
                   @click="$inertia.visit(articleUrl(related.slug))"
-                  class="bg-[transparent] overflow-hidden transition-all duration-300 cursor-pointer"
+                  class="blog-feed-card bg-[transparent] overflow-hidden transition-all duration-300 cursor-pointer"
               >
 
                 <div class="block overflow-hidden relative" style="max-height: 494px;     aspect-ratio: 16 / 9;">
@@ -562,18 +563,14 @@ const toggleFaq = (index) => {
                   </div>
 
 
-                  <div class="absolute top-3 left-3 flex gap-2">
-                    <div v-if="related.duration" class="bg-white h-[36px] px-3 flex items-center rounded-xl shadow-md">
-                      <span class="text-[14px] font-[400] text-gray-900">~{{ related.duration }}</span>
-                    </div>
-                    <div v-if="related.category" class="bg-white h-[36px] px-3 flex items-center rounded-xl shadow-md">
-                      <span class="text-[14px] font-[400] text-gray-900">{{ related.category.name }}</span>
-                    </div>
-                  </div>
                 </div>
 
+                <BlogFeedMeta
+                    :duration="related.duration ? `~${related.duration}` : ''"
+                    :category="related.category?.name || ''"
+                />
 
-                <div class="py-5 space-y-3">
+                <div class="blog-feed-body blog-feed-body--related space-y-3">
 
                   <div
                     v-if="related.author?.id"
