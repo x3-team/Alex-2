@@ -2294,7 +2294,7 @@ body:has(.home-page-container.doctor-mode) {
         grid-column: 1 / -1;
         height: 66px;
         min-height: 66px;
-        padding: 10px 16px;
+        padding: 10px 21px;
         align-items: center;
     }
 
@@ -2436,10 +2436,17 @@ body:has(.home-page-container.doctor-mode) {
     }
 
     .site-sidebar .row-icon-icon,
-    .site-sidebar .row-icon-icon img {
+    .site-sidebar .row-icon-icon img,
+    .site-sidebar .row-icon-icon svg {
         width: 24px;
         height: 24px;
         flex: 0 0 24px;
+    }
+
+    /* Search and demo are 42px art scaled to 24px, so their stroke looks lighter.
+       Match the blog/profile icon to that weight on mobile only. */
+    .site-sidebar .sidebar-profile-icon path {
+        stroke-width: 1.143;
     }
 
     .site-sidebar .sidebar-audience-row {
