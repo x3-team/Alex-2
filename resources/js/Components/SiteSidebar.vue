@@ -168,7 +168,6 @@ const sidebarAssets = Object.freeze({
   cta: '/assets/figma-cta-arrow.svg',
   search: '/assets/figma-search-icon.svg',
   demo: '/assets/figma-demo-icon.svg',
-  profile: '/assets/figma-profile-icon.svg',
   about: '/assets/figma-about-icon.svg',
   materials: '/assets/figma-doctor-materials-icon.svg'
 })
@@ -349,7 +348,11 @@ const openAbout = () => {
     >
       <div class="row-left-content">
         <span class="row-icon-icon sidebar-profile-icon" aria-hidden="true">
-          <img :src="sidebarAssets.profile" alt="" width="24" height="24" decoding="async" />
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M7 20.662V19C7 18.4696 7.21071 17.9609 7.58579 17.5858C7.96086 17.2107 8.46957 17 9 17H15C15.5304 17 16.0391 17.2107 16.4142 17.5858C16.7893 17.9609 17 18.4696 17 19V20.662" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </span>
         <span class="row-text">{{ isDoctor ? 'Личный кабинет' : 'Блог' }}</span>
       </div>
