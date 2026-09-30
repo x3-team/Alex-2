@@ -2444,8 +2444,9 @@ body:has(.home-page-container.doctor-mode) {
     }
 
     /* Search and demo are 42px art scaled to 24px, so their stroke looks lighter.
-       Match the blog/profile icon to that weight on mobile only. */
-    .site-sidebar .sidebar-profile-icon path {
+       Match the blog and doctor-materials icons to that weight on mobile only. */
+    .site-sidebar .sidebar-profile-icon path,
+    .site-sidebar .sidebar-materials-icon path {
         stroke-width: 1.143;
     }
 
