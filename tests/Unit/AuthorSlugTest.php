@@ -53,7 +53,7 @@ class AuthorSlugTest extends TestCase
     {
         $author = User::factory()->create([
             'name' => 'Мокроносова Марина Адольфовна',
-            'is_admin' => true,
+            'is_admin' => false,
         ]);
 
         $this->withoutVite();
@@ -67,6 +67,56 @@ class AuthorSlugTest extends TestCase
                 ->component('Public/Blog/Author')
                 ->where('author.slug', 'mokronosova-marina-adolfovna')
                 ->where('author.name', 'Мокроносова Марина Адольфовна')
+            );
+    }
+
+    public function test_author_without_posts_listed_on_authors_page_is_public(): void
+    {
+        $author = User::factory()->create([
+            'name' => 'Бала Анатолий Михайлович',
+            'is_admin' => false,
+            'bio' => 'Врач-аллерголог.',
+        ]);
+
+        $this->assertSame('bala-anatolii-mixailovic', $author->slug);
+
+        $this->withoutVite();
+
+        $this->get('/blog/authors')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Public/Blog/Authors')
+                ->where('authors', function ($authors) use ($author) {
+                    $match = collect($authors)->firstWhere('id', $author->id);
+
+                    return $match
+                        && $match['slug'] === 'bala-anatolii-mixailovic'
+                        && (int) $match['articles_count'] === 0;
+                })
+            );
+
+        $this->get('/blog/author/'.$author->slug)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Public/Blog/Author')
+                ->where('author.slug', 'bala-anatolii-mixailovic')
+                ->where('author.name', 'Бала Анатолий Михайлович')
+                ->where('author.bio', 'Врач-аллерголог.')
+                ->where('blogs.total', 0)
+                ->where('tags', [])
+                ->where('categories', [])
+            );
+
+        $this->get('/blog/author/'.$author->id)
+            ->assertRedirect('/blog/author/bala-anatolii-mixailovic');
+
+        $this->withServerVariables(['HTTP_HOST' => 'doc.alexallergotest.ru'])
+            ->get('http://doc.alexallergotest.ru/blog/author/'.$author->slug)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Public/Blog/Author')
+                ->where('author.slug', 'bala-anatolii-mixailovic')
+                ->where('blogs.total', 0)
             );
     }
 }
