@@ -6,7 +6,7 @@ use App\Models\Blog;
 use App\Models\User;
 
 /**
- * Public author URLs: /blog/author/{slug} from the person's name.
+ * Public author URLs: /blog/authors/{slug} from the person's name.
  */
 final class AuthorSlug
 {
@@ -40,6 +40,6 @@ final class AuthorSlug
     {
         $key = ($slug !== null && $slug !== '') ? $slug : (string) $id;
 
-        return '/blog/author/'.$key;
+        return '/blog/authors/'.$key;
     }
 }

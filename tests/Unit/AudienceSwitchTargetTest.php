@@ -74,10 +74,11 @@ class AudienceSwitchTargetTest extends TestCase
 
         $this->assertSame('/blog/authors', AudienceSwitchTarget::pathFor('/blog/authors', 'doctors', $none));
         $this->assertSame('/blog/authors', AudienceSwitchTarget::pathFor('/blog/authors', 'patients', $none));
-        $this->assertSame('/blog/author/4', AudienceSwitchTarget::pathFor('/blog/author/4', 'doctors', $none));
-        $this->assertSame('/blog/author/4', AudienceSwitchTarget::pathFor('/blog/author/4', 'patients', $none));
+        $this->assertSame('/blog/authors/4', AudienceSwitchTarget::pathFor('/blog/authors/4', 'doctors', $none));
+        $this->assertSame('/blog/authors/4', AudienceSwitchTarget::pathFor('/blog/author/4', 'doctors', $none));
+        $this->assertSame('/blog/authors/4', AudienceSwitchTarget::pathFor('/blog/author/4', 'patients', $none));
         $this->assertSame(
-            '/blog/author/mokronosova-marina-adolfovna',
+            '/blog/authors/mokronosova-marina-adolfovna',
             AudienceSwitchTarget::pathFor('/blog/author/mokronosova-marina-adolfovna', 'doctors', $none)
         );
     }

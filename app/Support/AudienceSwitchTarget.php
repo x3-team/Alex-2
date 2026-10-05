@@ -108,6 +108,10 @@ class AudienceSwitchTarget
             $path = '/';
         }
 
+        if (preg_match('#^/blog/author/([^/]+)$#', $path, $legacy) === 1) {
+            $path = '/blog/authors/'.$legacy[1];
+        }
+
         if (in_array($path, self::SHARED, true)) {
             return $path;
         }
@@ -157,7 +161,7 @@ class AudienceSwitchTarget
             return '/materials';
         }
 
-        if ($path === '/blog/authors' || preg_match('#^/blog/author/([^/]+)$#', $path) === 1) {
+        if ($path === '/blog/authors' || preg_match('#^/blog/authors/([^/]+)$#', $path) === 1) {
             return $path;
         }
 

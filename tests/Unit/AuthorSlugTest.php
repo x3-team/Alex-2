@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Models\Blog;
 use App\Models\User;
 use App\Support\AuthorSlug;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -44,7 +45,7 @@ class AuthorSlugTest extends TestCase
         $this->assertSame('mokronosova-marina-adolfovna', $first->slug);
         $this->assertSame('mokronosova-marina-adolfovna-2', $second->slug);
         $this->assertSame(
-            '/blog/author/mokronosova-marina-adolfovna',
+            '/blog/authors/mokronosova-marina-adolfovna',
             AuthorSlug::publicPath($first->slug, $first->id)
         );
     }
@@ -58,16 +59,21 @@ class AuthorSlugTest extends TestCase
 
         $this->withoutVite();
 
-        $this->get('/blog/author/'.$author->id)
-            ->assertRedirect('/blog/author/mokronosova-marina-adolfovna');
+        $this->get('/blog/authors/'.$author->id)
+            ->assertStatus(301)
+            ->assertRedirect('/blog/authors/mokronosova-marina-adolfovna');
 
-        $this->get('/blog/author/mokronosova-marina-adolfovna?page=2')
+        $this->get('/blog/authors/mokronosova-marina-adolfovna?page=2')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Public/Blog/Author')
                 ->where('author.slug', 'mokronosova-marina-adolfovna')
                 ->where('author.name', 'Мокроносова Марина Адольфовна')
             );
+
+        $this->get('/blog/author/'.$author->id.'?page=2')
+            ->assertStatus(301)
+            ->assertRedirect('/blog/authors/mokronosova-marina-adolfovna?page=2');
     }
 
     public function test_author_without_posts_listed_on_authors_page_is_public(): void
@@ -95,7 +101,7 @@ class AuthorSlugTest extends TestCase
                 })
             );
 
-        $this->get('/blog/author/'.$author->slug)
+        $this->get('/blog/authors/'.$author->slug)
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Public/Blog/Author')
@@ -107,16 +113,59 @@ class AuthorSlugTest extends TestCase
                 ->where('categories', [])
             );
 
+        $this->get('/blog/authors?category=net-takoi')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('Public/Blog/Authors'));
+
+        $this->get('/blog/author/'.$author->slug.'?page=2')
+            ->assertStatus(301)
+            ->assertRedirect('/blog/authors/bala-anatolii-mixailovic?page=2');
+
         $this->get('/blog/author/'.$author->id)
-            ->assertRedirect('/blog/author/bala-anatolii-mixailovic');
+            ->assertStatus(301)
+            ->assertRedirect('/blog/authors/bala-anatolii-mixailovic');
 
         $this->withServerVariables(['HTTP_HOST' => 'doc.alexallergotest.ru'])
-            ->get('http://doc.alexallergotest.ru/blog/author/'.$author->slug)
+            ->get('http://doc.alexallergotest.ru/blog/authors/'.$author->slug)
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Public/Blog/Author')
                 ->where('author.slug', 'bala-anatolii-mixailovic')
                 ->where('blogs.total', 0)
             );
+
+        $this->withServerVariables(['HTTP_HOST' => 'doc.alexallergotest.ru'])
+            ->get('http://doc.alexallergotest.ru/blog/author/'.$author->id)
+            ->assertStatus(301)
+            ->assertRedirect('/blog/authors/bala-anatolii-mixailovic');
+    }
+
+    public function test_sitemap_lists_author_cards_on_the_plural_path(): void
+    {
+        $author = User::factory()->create([
+            'name' => 'Бала Анатолий Михайлович',
+            'is_admin' => false,
+        ]);
+
+        Blog::create([
+            'user_id' => $author->id,
+            'title' => 'Материал',
+            'slug' => 'material-bala',
+            'content' => 'Текст',
+            'is_active' => true,
+            'published_at' => now(),
+            'audience' => 'patients',
+        ]);
+
+        $patient = $this->get('/sitemap.xml');
+        $patient->assertOk();
+        $xml = $patient->getContent();
+        $this->assertStringContainsString('/blog/authors/bala-anatolii-mixailovic', $xml);
+        $this->assertDoesNotMatchRegularExpression('#/blog/author/#', $xml);
+
+        $doctor = $this->withServerVariables(['HTTP_HOST' => 'doc.alexallergotest.ru'])
+            ->get('http://doc.alexallergotest.ru/sitemap.xml');
+        $doctor->assertOk();
+        $this->assertDoesNotMatchRegularExpression('#/blog/author/#', $doctor->getContent());
     }
 }
