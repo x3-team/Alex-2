@@ -285,7 +285,7 @@
                 && ! $isArticle
                 && (
                     $seoPath === 'blog'
-                    || preg_match('#^blog/author/[A-Za-z0-9_-]+$#', (string) $seoPath)
+                    || preg_match('#^blog/authors/[A-Za-z0-9_-]+$#', (string) $seoPath)
                     || (
                         preg_match('#^blog/[A-Za-z0-9_-]+$#', (string) $seoPath)
                         && $seoPath !== 'blog/authors'

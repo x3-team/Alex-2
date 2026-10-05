@@ -409,9 +409,13 @@ class BlogController extends Controller
 
     public function author($authorKey, Request $request)
     {
-        $author = $this->resolvePublicAuthor((string) $authorKey);
-        if ($author instanceof \Illuminate\Http\RedirectResponse) {
-            return $author;
+        $author = $this->findListedAuthor((string) $authorKey);
+        if (! $author) {
+            abort(404);
+        }
+
+        if ($this->authorKeyIsId((string) $authorKey) && $author->slug && $author->slug !== (string) $authorKey) {
+            return $this->redirectToAuthor($author);
         }
 
         // 🔹 Запрос постов автора
@@ -515,28 +519,41 @@ class BlogController extends Controller
     }
 
     /**
-     * Числовой адрес /blog/author/3 остаётся рабочим и уходит на ЧПУ.
+     * Старый адрес /blog/author/{slug|id} сразу на /blog/authors/{slug}.
      */
-    private function resolvePublicAuthor(string $key): \App\Models\User|\Illuminate\Http\RedirectResponse
+    public function legacyAuthorRedirect(string $author)
     {
-        $query = \App\Models\User::with(['authorCategories'])->visibleInAuthorsList();
-
-        $isId = preg_match('/^\d+$/', $key) === 1;
-        $author = $isId ? (clone $query)->find($key) : null;
-        if (! $author) {
-            $author = (clone $query)->where('slug', $key)->first();
-        }
-        if (! $author) {
+        $found = $this->findListedAuthor($author);
+        if (! $found) {
             abort(404);
         }
 
-        if ($isId && $author->slug && $author->slug !== $key) {
-            $qs = request()->getQueryString();
+        return $this->redirectToAuthor($found);
+    }
 
-            return redirect('/blog/author/'.$author->slug.($qs ? '?'.$qs : ''), 301);
+    private function findListedAuthor(string $key): ?\App\Models\User
+    {
+        $query = \App\Models\User::with(['authorCategories'])->visibleInAuthorsList();
+
+        $author = $this->authorKeyIsId($key) ? (clone $query)->find($key) : null;
+        if (! $author) {
+            $author = (clone $query)->where('slug', $key)->first();
         }
 
         return $author;
+    }
+
+    private function authorKeyIsId(string $key): bool
+    {
+        return preg_match('/^\d+$/', $key) === 1;
+    }
+
+    private function redirectToAuthor(\App\Models\User $author): \Illuminate\Http\RedirectResponse
+    {
+        $qs = request()->getQueryString();
+        $target = \App\Support\AuthorSlug::publicPath($author->slug, $author->id);
+
+        return redirect($target.($qs ? '?'.$qs : ''), 301);
     }
 
     private function publishedBlogQuery()
@@ -590,12 +607,12 @@ class BlogController extends Controller
         $currentUrl = url()->current();
         $publicAuthor = $blog->publicAuthor();
 
+        $authorPageUrl = $publicAuthor
+            ? $siteBase.\App\Support\AuthorSlug::publicPath($publicAuthor->slug, $publicAuthor->id)
+            : null;
         $authorSchema = $publicAuthor
-            ? ['@type' => 'Person', 'name' => $publicAuthor->name]
+            ? ['@type' => 'Person', 'name' => $publicAuthor->name, 'url' => $authorPageUrl]
             : ['@type' => 'Organization', 'name' => 'ALEX LAB'];
-        if ($publicAuthor && ! $isDoctors) {
-            $authorSchema['url'] = url(\App\Support\AuthorSlug::publicPath($publicAuthor->slug, $publicAuthor->id));
-        }
 
         $articleSchema = [
             '@context' => 'https://schema.org',
@@ -625,11 +642,11 @@ class BlogController extends Controller
             $articleSchema['image'] = $siteBase.'/storage/'.ltrim((string) $blog->preview_image, '/');
         }
 
-        if ($publicAuthor && $publicAuthor->name && ! $isDoctors) {
+        if ($publicAuthor && $publicAuthor->name) {
             $articleSchema['reviewedBy'] = [
                 '@type' => 'Person',
                 'name' => $publicAuthor->name,
-                'url' => url(\App\Support\AuthorSlug::publicPath($publicAuthor->slug, $publicAuthor->id)),
+                'url' => $authorPageUrl,
             ];
         }
 

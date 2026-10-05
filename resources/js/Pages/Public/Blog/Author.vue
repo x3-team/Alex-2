@@ -376,7 +376,7 @@ const ogImage = computed(() => {
             "@type": "ListItem",
             "position": 4,
             "name": "{{ author?.name || 'Автор' }}",
-            "item": "{{ siteUrl }}/blog/author/{{ author?.slug || author?.id }}"
+            "item": "{{ siteUrl }}{{ authorPublicPath(author) }}"
           }
         ]
       }
