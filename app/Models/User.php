@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -68,6 +69,14 @@ class User extends Authenticatable
     public function blogs(): HasMany
     {
         return $this->hasMany(Blog::class);
+    }
+
+    /**
+     * Кто попадает в список /blog/authors. Страница автора использует тот же отбор.
+     */
+    public function scopeVisibleInAuthorsList(Builder $query): Builder
+    {
+        return $query->where('is_admin', false);
     }
     public function authorCategories()
     {

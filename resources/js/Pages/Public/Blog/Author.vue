@@ -48,6 +48,15 @@ const selectedTags = ref(
         : []
 )
 
+const hasPublicationFilters = computed(() => (
+    selectedCategories.value.length > 0 || selectedTags.value.length > 0
+))
+
+const hasNoMaterials = computed(() => {
+    const total = Number(props.blogs?.total ?? props.blogs?.data?.length ?? 0)
+    return total === 0 && !hasPublicationFilters.value
+})
+
 // 🔹 🔥 Фильтрация по SLUG категории
 const toggleCategory = (categorySlug) => {
   const index = selectedCategories.value.indexOf(categorySlug)
@@ -682,7 +691,11 @@ const ogImage = computed(() => {
         </div>
         
 
-        <h2 class="text-[21px] font-[400] text-gray-900 mb-6 pt-8 xl:text-[32px] xl:pt-16 truncate" :title="pageTitle">
+        <div v-if="hasNoMaterials" class="text-center py-16">
+          <h2 class="text-[21px] xl:text-[32px] font-[400] text-gray-900">Материалов пока нет</h2>
+        </div>
+
+        <h2 v-else class="text-[21px] font-[400] text-gray-900 mb-6 pt-8 xl:text-[32px] xl:pt-16 truncate" :title="pageTitle">
   <span v-if="!selectedCategoryName && !selectedTags.length">
    Всего {{ blogs.total || 0 }} {{ pluralizePublications(blogs.total || 0) }}
   </span>
@@ -700,7 +713,7 @@ const ogImage = computed(() => {
         </h2>
 
 
-        <div v-if="tags?.length" class="relative mb-4">
+        <div v-if="!hasNoMaterials && tags?.length" class="relative mb-4">
           <button
               @click="showTagDropdown = !showTagDropdown"
               class="filter-btn-tags"
@@ -751,7 +764,7 @@ const ogImage = computed(() => {
           </div>
         </div>
 
-        <div class="grid gap-4">
+        <div v-if="!hasNoMaterials" class="grid gap-4">
           <article
               v-for="(blog, blogIdx) in blogs.data"
               :key="blog.id"

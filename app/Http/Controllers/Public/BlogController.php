@@ -349,8 +349,7 @@ class BlogController extends Controller
     {
         $authorCategories = \App\Models\AuthorCategory::all();
 
-        $adminId = 1;
-        $authorsQuery = \App\Models\User::where('is_admin', false);
+        $authorsQuery = \App\Models\User::query()->visibleInAuthorsList();
 
         // 🔹 Фильтрация по SLUG категории
         if ($request->category) {
@@ -520,15 +519,7 @@ class BlogController extends Controller
      */
     private function resolvePublicAuthor(string $key): \App\Models\User|\Illuminate\Http\RedirectResponse
     {
-        $query = \App\Models\User::with(['authorCategories'])
-            ->where(function ($query) {
-                $query->where('is_admin', true)
-                    ->orWhereHas('blogs', function ($blogs) {
-                        $blogs->where('is_active', true)
-                            ->whereNotNull('published_at')
-                            ->where('published_at', '<=', now());
-                    });
-            });
+        $query = \App\Models\User::with(['authorCategories'])->visibleInAuthorsList();
 
         $isId = preg_match('/^\d+$/', $key) === 1;
         $author = $isId ? (clone $query)->find($key) : null;

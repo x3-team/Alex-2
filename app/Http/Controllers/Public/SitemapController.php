@@ -70,7 +70,7 @@ class SitemapController extends Controller
             );
         }
 
-        $authors = User::whereHas('blogs', function ($query) {
+        $authors = User::query()->visibleInAuthorsList()->whereHas('blogs', function ($query) {
             $query->where('is_active', true)
                 ->whereNotNull('published_at')
                 ->where('published_at', '<=', now());
