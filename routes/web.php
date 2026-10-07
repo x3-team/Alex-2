@@ -231,17 +231,19 @@ Route::post('/blog/{blog}/rate', [PublicBlogController::class, 'rate'])->name('b
 // Лаборатория ALEX LAB (Публичные маршруты)
 Route::get('/alex-lab', [PublicAlexLabController::class, 'index'])->name('alex-lab');
 
-// 🔹 Секции ALEX LAB (licenses|doctors|contacts|privacy). /about → 301 на /alex-lab
+// 🔹 Секции ALEX LAB (licenses|doctors|contacts|privacy|consent). /about → 301 на /alex-lab
 Route::redirect('/alex-lab/about', '/alex-lab', 301);
-// Канонический consent — /consent (в sitemap/nav); дубль /alex-lab/consent → 301
-Route::redirect('/alex-lab/consent', '/consent', 301);
+// Канонический адрес согласия — /alex-lab/consent (как остальные документы ALEX LAB).
+// Имя `consent` оставлено: route('consent') → /alex-lab/consent.
+Route::get('/alex-lab/consent', [PublicAlexLabController::class, 'consent'])->name('consent');
 Route::get('/alex-lab/{section}', [PublicAlexLabController::class, 'section'])
-    ->where('section', 'licenses|doctors|contacts|privacy')
+    ->where('section', 'licenses|doctors|contacts|privacy|consent')
     ->name('alex-lab.section');
 
 // Обратная совместимость для старых URL
 Route::redirect('/privacy-policy', '/alex-lab/privacy', 301)->name('privacy-policy');
-Route::get('/consent', [PublicAlexLabController::class, 'consent'])->name('consent');
+// Старый /consent → 301 на /alex-lab/consent одним хопом, query сохраняется
+Route::get('/consent', [PublicAlexLabController::class, 'legacyConsentRedirect'])->name('consent.legacy');
 
 // Квиз
 Route::get('/quiz', [\App\Http\Controllers\Public\QuizController::class, 'index'])->name('quiz.index');

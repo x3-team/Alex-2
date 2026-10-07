@@ -217,9 +217,16 @@ const parseWorkHours = (line) => {
   return { days: line, hours: '' }
 }
 
+// «О нас» живёт на /alex-lab, согласие — на /alex-lab/consent, остальное — /alex-lab/{section}
+const sectionUrl = (key) => {
+  if (key === 'about') return route('alex-lab')
+  if (key === 'consent') return route('consent')
+  return route('alex-lab.section', { section: key })
+}
+
 const handleSectionClick = (key) => {
   // Все секции переходят по отдельному URL
-  router.get(route('alex-lab.section', { section: key }), {}, {
+  router.get(sectionUrl(key), {}, {
     preserveState: true,
     preserveScroll: false, // Сбрасываем скролл при переходе
     replace: true

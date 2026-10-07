@@ -123,7 +123,7 @@ class SitemapController extends Controller
             '/quiz' => '2026-08-26',
             '/demo-result' => '2026-08-26',
             '/search' => '2026-08-26',
-            '/consent' => '2026-08-26',
+            '/alex-lab/consent' => '2026-10-07',
             '/alex-lab/licenses' => '2026-08-26',
             '/alex-lab/contacts' => '2026-08-26',
             '/alex-lab/privacy' => '2026-08-26',
@@ -223,8 +223,8 @@ class SitemapController extends Controller
         $xml .= $this->addUrl($baseUrl . '/demo-result', $staticLastmods['/demo-result'], 'monthly', '0.6');
         $xml .= $this->addUrl($baseUrl . '/search', $staticLastmods['/search'], 'weekly', '0.7');
 
-        // Канонический consent — /consent (не /alex-lab/consent)
-        $xml .= $this->addUrl($baseUrl . '/consent', $staticLastmods['/consent'], 'monthly', '0.4');
+        // Канонический consent — /alex-lab/consent (старый /consent → 301)
+        $xml .= $this->addUrl($baseUrl . '/alex-lab/consent', $staticLastmods['/alex-lab/consent'], 'monthly', '0.4');
         $xml .= $this->addUrl($baseUrl . '/alex-lab/licenses', $staticLastmods['/alex-lab/licenses'], 'monthly', '0.5');
         $xml .= $this->addUrl($baseUrl . '/alex-lab/contacts', $staticLastmods['/alex-lab/contacts'], 'monthly', '0.5');
         $xml .= $this->addUrl($baseUrl . '/alex-lab/privacy', $staticLastmods['/alex-lab/privacy'], 'monthly', '0.4');

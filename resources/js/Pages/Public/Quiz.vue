@@ -545,7 +545,7 @@ const submitDoctorAppointment = async () => {
                 />
                 <span class="consent-text">
                   Я даю согласие на
-                  <a href="https://alexallergotest.ru/consent" target="_blank" class="text-blue-600 underline hover:text-blue-800">
+                  <a href="/alex-lab/consent" target="_blank" class="text-blue-600 underline hover:text-blue-800">
                     обработку персональных данных
                   </a>
                 </span>
