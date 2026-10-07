@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Setting;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class AlexLabController extends Controller
@@ -131,5 +132,15 @@ class AlexLabController extends Controller
     public function consent()
     {
         return $this->section('consent');
+    }
+
+    /**
+     * Старый адрес /consent → 301 на канонический /alex-lab/consent (query сохраняется).
+     */
+    public function legacyConsentRedirect(Request $request)
+    {
+        $query = $request->getQueryString();
+
+        return redirect()->to('/alex-lab/consent'.($query ? '?'.$query : ''), 301);
     }
 }

@@ -86,7 +86,7 @@ import { Link } from '@inertiajs/vue3'
         <Link href="/alex-lab/privacy" style="color: #000; font-family: Roboto; font-size: 16px; font-style: normal; font-weight: 400; line-height: normal;">
           Политика конфиденциальности
         </Link>
-        <Link href="/consent" style="color: #000; font-family: Roboto; font-size: 16px; font-style: normal; font-weight: 400; line-height: normal;">
+        <Link href="/alex-lab/consent" style="color: #000; font-family: Roboto; font-size: 16px; font-style: normal; font-weight: 400; line-height: normal;">
           Условия использования материалов сайта
         </Link>
       </div>

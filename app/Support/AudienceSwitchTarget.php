@@ -21,12 +21,12 @@ class AudienceSwitchTarget
         '/cart',
         '/quiz',
         '/demo-result',
-        '/consent',
         '/alex-lab',
         '/alex-lab/licenses',
         '/alex-lab/doctors',
         '/alex-lab/contacts',
         '/alex-lab/privacy',
+        '/alex-lab/consent',
     ];
 
     /** Служебные адреса: админка, вход, кабинет, 404 сюда не попадает (отдельное приложение). */

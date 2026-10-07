@@ -30,7 +30,7 @@ class AudienceSwitchTargetTest extends TestCase
     {
         $none = $this->noArticles();
 
-        foreach (['/search', '/cart', '/quiz', '/demo-result', '/alex-lab', '/consent'] as $path) {
+        foreach (['/search', '/cart', '/quiz', '/demo-result', '/alex-lab', '/alex-lab/consent'] as $path) {
             $this->assertSame($path, AudienceSwitchTarget::pathFor($path, 'patients', $none));
             $this->assertSame($path, AudienceSwitchTarget::pathFor($path, 'doctors', $none));
         }

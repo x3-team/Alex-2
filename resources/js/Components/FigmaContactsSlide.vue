@@ -76,7 +76,7 @@ const activeTab = ref('contacts') // 'contacts' | 'navigation'
         <footer class="desktop-contacts-footer">
           <div class="desktop-policy-links">
             <Link href="/alex-lab/privacy">Политика конфиденциальности</Link>
-            <Link href="/consent">Условия использования материалов сайта</Link>
+            <Link href="/alex-lab/consent">Условия использования материалов сайта</Link>
           </div>
 
           <Link href="https://t.me/cartonasunsetbeach" class="desktop-studio-credit">
@@ -138,7 +138,7 @@ const activeTab = ref('contacts') // 'contacts' | 'navigation'
 
             <div class="mobile-policy-list">
               <Link href="/alex-lab/privacy">Политика конфиденциальности</Link>
-              <Link href="/consent">Условия использования материалов сайта</Link>
+              <Link href="/alex-lab/consent">Условия использования материалов сайта</Link>
             </div>
           </div>
 

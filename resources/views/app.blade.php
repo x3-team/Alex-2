@@ -248,7 +248,7 @@
                     'title' => 'Врачи и эксперты — ALEX LAB',
                     'description' => 'Врачи и эксперты лаборатории ALEX LAB.',
                 ],
-                'consent' => [
+                'alex-lab/consent' => [
                     'title' => 'Согласие на обработку ПД — ALEX LAB',
                     'description' => 'Согласие на обработку персональных данных ALEX LAB.',
                 ],
