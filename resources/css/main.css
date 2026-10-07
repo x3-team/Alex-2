@@ -8588,3 +8588,27 @@ button {
         max-width: calc(100% - 32px);
     }
 }
+/* ==========================================================================
+   Чат Carrot Quest на мобилке — над нижней плашкой «Записаться на тест…»
+   Виджет грузится через Яндекс Метрику (не из кода сайта) и по умолчанию
+   стоит в 25px от низа экрана (настройка Carrot messenger_mobile_indent),
+   то есть на плашке. --mobile-dock-offset — реальная высота видимой плашки
+   вместе с safe-area, её ставит resources/js/utils/chatDockOffset.js вместе
+   с классом html.has-mobile-dock. Нет плашки — нет класса, чат на своём месте.
+   ========================================================================== */
+@media (max-width: 1024px) {
+    html.has-mobile-dock {
+        --chat-dock-gap: 12px;
+        --carrot-mobile-indent: 25px;
+        --chat-dock-shift: max(0px, calc(var(--mobile-dock-offset, 0px) + var(--chat-dock-gap) - var(--carrot-mobile-indent)));
+    }
+
+    html.has-mobile-dock body #carrotquest-messenger-collapsed-container.carrotquest-messenger-right_bottom,
+    html.has-mobile-dock body #carrotquest-messenger-collapsed-container.carrotquest-messenger-left_bottom {
+        bottom: var(--chat-dock-shift) !important;
+    }
+
+    html.has-mobile-dock body .carrot-notification-container {
+        margin-bottom: var(--chat-dock-shift) !important;
+    }
+}
