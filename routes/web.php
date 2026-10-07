@@ -215,6 +215,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
 Route::get('/search', [\App\Http\Controllers\Public\SearchController::class, 'index'])->name('search.index');
 Route::redirect('/alex-lab/search', '/search', 301);
+// Корзина скрыта (не боевая): 404 для всех, кроме админов — см. CartController@index
 Route::get('/cart', [\App\Http\Controllers\Public\CartController::class, 'index'])->name('cart.index');
 
 // Блог
@@ -301,7 +302,7 @@ Route::get('/robots.txt', function () {
     $content = \Illuminate\Support\Facades\Cache::remember($cacheKey, 3600, function () use ($sitemapBase) {
         $robots = \App\Models\Setting::get(
             \App\Http\Controllers\Admin\AdminRobotsController::ROBOTS_KEY,
-            "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin/\nDisallow: /login\nDisallow: /patient\nDisallow: /up\n\nSitemap: {$sitemapBase}/sitemap.xml"
+            "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin/\nDisallow: /login\nDisallow: /patient\nDisallow: /up\nDisallow: /cart\n\nSitemap: {$sitemapBase}/sitemap.xml"
         );
 
         return str_replace('{{sitemap_url}}', $sitemapBase . '/sitemap.xml', $robots);

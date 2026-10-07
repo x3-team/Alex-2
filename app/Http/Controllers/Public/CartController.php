@@ -5,12 +5,18 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\CartService;
 use App\Models\Setting;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class CartController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // Корзина пока не боевая: публике — 404, админ видит страницу для доработки.
+        if (! $request->user()?->is_admin) {
+            abort(404);
+        }
+
         $defaults = [
             'id' => 'alex2',
             'title' => 'Сдача анализа ALEX2',
@@ -50,7 +56,7 @@ class CartController extends Controller
             ]
         ];
 
-        return Inertia::render('Public/Cart', [
+        $response = Inertia::render('Public/Cart', [
             'mainProduct' => $mainProduct,
             'additionalServices' => $additionalServices,
             'labs' => $labs,
@@ -58,6 +64,10 @@ class CartController extends Controller
                 'title' => 'Корзина — запись на тест ALEX²',
                 'description' => 'Оформите запись на тест на аллергию ALEX².',
             ],
-        ]);
+        ])->toResponse($request);
+
+        $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
+
+        return $response;
     }
 }
