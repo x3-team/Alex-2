@@ -5,6 +5,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import AudienceSwitchHost from './Components/AudienceSwitchHost.vue';
 import { ZiggyVue, route } from '../../vendor/tightenco/ziggy';
+import { watchChatDockOffset } from './utils/chatDockOffset';
 
 // Breeze Auth pages call route() inside <script setup>. skip-route-function
 // omits route.umd.js from HTML, and `const Ziggy` is not window.Ziggy, so
@@ -41,10 +42,14 @@ if (errorAppEl) {
                 console.error('Inertia error:', err);
             };
 
-            return app
+            const vm = app
                 .use(plugin)
                 .use(ZiggyVue)
                 .mount(el);
+
+            watchChatDockOffset();
+
+            return vm;
         },
         progress: {
             color: '#4B5563',
