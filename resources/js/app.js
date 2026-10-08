@@ -6,6 +6,7 @@ import { createApp, h } from 'vue';
 import AudienceSwitchHost from './Components/AudienceSwitchHost.vue';
 import { ZiggyVue, route } from '../../vendor/tightenco/ziggy';
 import { watchChatDockOffset } from './utils/chatDockOffset';
+import { watchAdminArea } from './utils/adminArea';
 
 // Breeze Auth pages call route() inside <script setup>. skip-route-function
 // omits route.umd.js from HTML, and `const Ziggy` is not window.Ziggy, so
@@ -48,6 +49,7 @@ if (errorAppEl) {
                 .mount(el);
 
             watchChatDockOffset();
+            watchAdminArea();
 
             return vm;
         },

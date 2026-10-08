@@ -21,10 +21,17 @@
             .($switchQuery ? '?'.http_build_query($switchQuery) : '')
             .(isset($switchUrl['fragment']) ? '#'.$switchUrl['fragment'] : '');
     }
+    // Админка и вход в неё: полный Ziggy, без Метрики/GA и без чата Carrot Quest
+    // (его подтягивает Метрика). Тот же список путей — в resources/js/utils/adminArea.js.
+    $isAdminArea = request()->is('admin', 'admin/*', 'login', 'forgot-password', 'reset-password', 'reset-password/*', 'confirm-password', 'verify-email', 'verify-email/*', 'register');
+    $htmlClasses = array_filter([
+        $cameFromSwitch ? 'audience-switching' : null,
+        $isAdminArea ? 'is-admin-area' : null,
+    ]);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
-    @if($cameFromSwitch) class="audience-switching" @endif
+    @if($htmlClasses) class="{{ implode(' ', $htmlClasses) }}" @endif
     @if($paintAudience) style="background-color: {{ $audienceColor }}" @endif
 >
     <head>
@@ -131,7 +138,7 @@
         </noscript>
         @endif
         <!-- Scripts -->
-        @if(request()->is('admin', 'admin/*', 'login', 'forgot-password', 'reset-password', 'reset-password/*', 'confirm-password', 'verify-email', 'verify-email/*', 'register'))
+        @if($isAdminArea)
         @routes
         @else
         @routes('public')
@@ -425,6 +432,7 @@
         </script>
         @endif
         @inertia
+        @unless($isAdminArea)
         <script>
             (function () {
                 var loaded = false;
@@ -471,5 +479,6 @@
             })();
         </script>
         <noscript><div><img src="https://mc.yandex.ru/watch/110363549" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+        @endunless
     </body>
 </html>

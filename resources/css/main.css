@@ -8612,3 +8612,21 @@ button {
         margin-bottom: var(--chat-dock-shift) !important;
     }
 }
+
+/* ==========================================================================
+   Чат Carrot Quest не показываем в админке
+   Метрика (а с ней и Carrot) на страницах админки не выводится — см. $isAdminArea
+   в resources/views/app.blade.php. Это страховка для перехода с сайта в админку
+   через Inertia, когда чат уже загружен: класс html.is-admin-area ставит
+   resources/js/utils/adminArea.js, при уходе из админки он снимается.
+   Свёрнутая кнопка — #carrotquest-messenger-collapsed-container, открытый чат —
+   div.carrotquest-css-reset с iframe#carrot-messenger-frame, всплывашки —
+   .carrot-notification-container.
+   ========================================================================== */
+html.is-admin-area #carrotquest-messenger-collapsed-container,
+html.is-admin-area body > .carrotquest-css-reset,
+html.is-admin-area .carrot-notification-container,
+html.is-admin-area #carrot-messenger-collapsed-frame,
+html.is-admin-area #carrot-messenger-frame {
+    display: none !important;
+}
