@@ -1,5 +1,6 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { createQuizJournal } from '@/analytics/quizJournal'
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false }
@@ -16,17 +17,27 @@ const quizQuestions = [
   { text: 'Есть ли у ваших близких родственников подтвержденная аллергия?', category: 'heredity' }
 ]
 
+// Внутренний журнал (только наша база и только с согласия; ответы не пишутся).
+const journal = createQuizJournal({ placement: 'modal', version: 'vmodal3' })
+onMounted(() => { if (props.isOpen) journal.introShown() })
+
 const startQuiz = () => {
   quizStep.value = 1
   quizAnswers.value = []
+  journal.started()
+  journal.stepShown(1, 1)
 }
 
 const answerQuiz = (answer) => {
   quizAnswers.value.push(answer)
+  journal.answered(quizStep.value)
   if (quizStep.value < quizQuestions.length) {
     quizStep.value++
+    journal.stepShown(quizStep.value, quizStep.value)
   } else {
     quizStep.value = 4
+    journal.completed(null)
+    journal.resultShown(null)
   }
 }
 
@@ -44,6 +55,7 @@ const getQuizRecommendation = () => {
 const resetQuiz = () => {
   quizStep.value = 0
   quizAnswers.value = []
+  journal.introShown()
 }
 
 const handleClose = () => {
@@ -51,11 +63,15 @@ const handleClose = () => {
 }
 
 const handleOpenDemo = () => {
+  journal.action('demo', 'no_contact')
+  journal.flush()
   emit('close')
   emit('openDemo')
 }
 
 const handleOpenRegister = () => {
+  journal.action('labs', 'primary')
+  journal.flush()
   emit('close')
   emit('openRegister')
 }

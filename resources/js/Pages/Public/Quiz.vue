@@ -9,6 +9,7 @@ import { saveQuizLead } from '@/quizLead'
 import { newSubmissionId } from '@/utils/submissionId'
 import { PARTNER_LABS } from '@/data/partnerLabs'
 import { openPartnerLab } from '@/analytics'
+import { createQuizJournal, quizVersion } from '@/analytics/quizJournal'
 
 const props = defineProps({
   questions: { type: Array, default: () => [] },
@@ -45,6 +46,10 @@ const doctorForm = ref({
 })
 const isModalSubmitting = ref(false)
 let doctorSubmissionId = null
+
+// Внутренний журнал прохождения (только наша база и только с согласия; без ответов).
+const journal = createQuizJournal({ placement: 'page', version: quizVersion(props.questions) })
+onMounted(() => { if (step.value === 'intro') journal.introShown() })
 
 // Состояние модального окна выбора лабораторий
 const isRegisterModalOpen = ref(false)
@@ -204,7 +209,13 @@ const startQuiz = () => {
   historyStack.value = []
   userAnswers.value = {}
   const firstQ = availableQuestions.value[0] || props.questions?.[0]
-  if (firstQ) currentQuestionId.value = firstQ.id
+  if (firstQ) {
+    currentQuestionId.value = firstQ.id
+    journal.started()
+    journal.stepShown(1, firstQ.id)
+  } else {
+    journal.failed('load', 'no_questions')
+  }
 }
 
 const isSelected = (qId, oId) => {
@@ -238,6 +249,7 @@ const goToNextStep = async () => {
     selectedOption = options.find(o => o.id === currentAns)
   }
 
+  journal.answered(historyStack.value.length + 1)
   historyStack.value.push({ questionId: currentQ.id, audience: currentAudience.value })
   if (selectedOption?.target_audience) currentAudience.value = selectedOption.target_audience
 
@@ -261,6 +273,7 @@ const goToNextStep = async () => {
 
   if (nextQId) {
     currentQuestionId.value = nextQId
+    journal.stepShown(historyStack.value.length + 1, nextQId)
     await nextTick()
     cardContainer.value?.scrollTo({ top: 0, behavior: 'auto' })
   } else {
@@ -269,12 +282,17 @@ const goToNextStep = async () => {
 }
 
 const prevQuestion = () => {
+  const fromPosition = historyStack.value.length + 1
   if (historyStack.value.length > 0) {
     const previousState = historyStack.value.pop()
     currentQuestionId.value = previousState.questionId
     currentAudience.value = previousState.audience
+    journal.back(fromPosition, fromPosition - 1)
+    journal.stepShown(fromPosition - 1, previousState.questionId)
   } else {
     step.value = 'intro'
+    journal.back(fromPosition, 0)
+    journal.introShown()
   }
 }
 
@@ -292,16 +310,26 @@ const calculateResult = async () => {
       body: JSON.stringify({ answers: userAnswers.value })
     })
 
-    if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`)
+    if (!response.ok) {
+      journal.failed('calculate', 'rejected')
+      throw new Error(`Ошибка сервера: ${response.status}`)
+    }
     const data = await response.json()
+    if (!data?.result) {
+      journal.failed('calculate', 'invalid_response')
+      throw new Error('Пустой результат')
+    }
     resultData.value = data.result
     step.value = 'result'
+    journal.completed(data.result.id)
+    nextTick(() => journal.resultShown(data.result.id))
     saveQuizLead({
       quiz_answers: userAnswers.value,
       quiz_result_id: data.result?.id ?? null,
       quiz_result_title: data.result?.title ?? null,
     })
   } catch (error) {
+    if (error instanceof TypeError) journal.failed('calculate', 'network')
     console.error('Error calculating result:', error)
     alert('Произошла ошибка при расчете результата. Пожалуйста, попробуйте еще раз.')
   } finally {
@@ -309,13 +337,22 @@ const calculateResult = async () => {
   }
 }
 
-const redirectToCart = () => openRegisterModal()
-const redirectToSearch = () => router.visit('/search')
+const redirectToCart = () => {
+  journal.action('labs', 'primary')
+  openRegisterModal()
+}
+const redirectToSearch = () => {
+  journal.action('search', 'no_contact')
+  journal.flush()
+  router.visit('/search')
+}
 
 // Модальное окно врача
 const openDoctorModal = () => {
   doctorForm.value = { fullName: '', phone: '', city: '', agreedToTerms: false }
   isDoctorModalOpen.value = true
+  journal.action('doctor_form', 'primary')
+  journal.formOpened()
 }
 
 const closeDoctorModal = () => {
