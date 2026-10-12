@@ -1,5 +1,6 @@
 <script setup>
 import { Link } from '@inertiajs/vue3'
+import CookieSettingsLink from '@/Components/CookieSettingsLink.vue'
 </script>
 
 <template>
@@ -89,6 +90,7 @@ import { Link } from '@inertiajs/vue3'
         <Link href="/alex-lab/consent" style="color: #000; font-family: Roboto; font-size: 16px; font-style: normal; font-weight: 400; line-height: normal;">
           Условия использования материалов сайта
         </Link>
+        <CookieSettingsLink style="color: #000; font-family: Roboto; font-size: 16px; font-style: normal; font-weight: 400; line-height: normal;" />
       </div>
 
 

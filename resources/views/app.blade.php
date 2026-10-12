@@ -24,6 +24,9 @@
     // Админка и вход в неё: полный Ziggy, без Метрики/GA и без чата Carrot Quest
     // (его подтягивает Метрика). Тот же список путей — в resources/js/utils/adminArea.js.
     $isAdminArea = request()->is('admin', 'admin/*', 'login', 'forgot-password', 'reset-password', 'reset-password/*', 'confirm-password', 'verify-email', 'verify-email/*', 'register');
+    // Квиз, поиск аллергенов, личные разделы и скрытая корзина — без Метрики и GA (ТЗ по аналитике, §8).
+    // Тот же список — в resources/js/analytics/rules.js.
+    $analyticsExcluded = $isAdminArea || request()->is('quiz', 'quiz/*', 'search', 'search/*', 'cart', 'cart/*', 'dashboard', 'dashboard/*', 'profile', 'profile/*', 'recover', 'recover/*', 'cabinet', 'cabinet/*');
     $htmlClasses = array_filter([
         $cameFromSwitch ? 'audience-switching' : null,
         $isAdminArea ? 'is-admin-area' : null,
@@ -433,52 +436,152 @@
         @endif
         @inertia
         @unless($isAdminArea)
+        {{-- Аналитика по ТЗ заказчика (этап А): Метрика и GA4 грузятся только после согласия
+             посетителя и не грузятся на путях из $analyticsExcluded (квиз, поиск аллергенов,
+             личные разделы). Вебвизора нет, noscript-пикселя нет. Цели и просмотры страниц
+             отправляет resources/js/analytics/index.js через window.alexAnalytics. --}}
+        <style>
+            .alex-consent { position: fixed; left: 16px; right: 16px; bottom: calc(16px + var(--mobile-dock-offset, 0px)); z-index: 2147482000; box-sizing: border-box; max-width: 440px; padding: 18px 20px; border-radius: 16px; background: #fff; color: #111; box-shadow: 0 8px 32px rgba(0, 0, 0, .18); font: 400 14px/1.45 Roboto, system-ui, -apple-system, sans-serif; }
+            .alex-consent p { margin: 0 0 14px; }
+            .alex-consent a { color: inherit; text-decoration: underline; }
+            .alex-consent__actions { display: flex; gap: 10px; }
+            .alex-consent__btn { flex: 1 1 0; min-height: 44px; padding: 10px 16px; border: 1px solid #111; border-radius: 999px; background: #fff; color: #111; font: 500 14px/1.2 Roboto, system-ui, -apple-system, sans-serif; cursor: pointer; }
+            .alex-consent__btn--accept { background: #111; color: #fff; }
+            @media (min-width: 1025px) { .alex-consent { left: auto; right: 24px; bottom: 24px; } }
+        </style>
         <script>
             (function () {
+                var YM_ID = 110363549;
+                var GA_ID = 'G-YZ7B5FSFW0';
+                var COOKIE = 'alex_analytics_consent';
+                var VERSION = '1';
+                var MAX_AGE = 60 * 60 * 24 * 180;
+                // Тот же список, что EXCLUDED_PATH в resources/js/analytics/rules.js.
+                var EXCLUDED = /^\/(quiz|search|cart|dashboard|profile|recover|cabinet|admin|login|forgot-password|reset-password|confirm-password|verify-email|register)(\/|$)/;
+                var excludedHere = {{ $analyticsExcluded ? 'true' : 'false' }};
                 var loaded = false;
-                function loadAnalytics() {
-                    if (loaded) return;
+
+                function cookieDomain() {
+                    return /(^|\.)alexallergotest\.ru$/.test(location.hostname) ? '; Domain=.alexallergotest.ru' : '';
+                }
+                function consent() {
+                    var match = document.cookie.match(new RegExp('(?:^|; )' + COOKIE + '=([^;]*)'));
+                    if (!match) return null;
+                    var parts = decodeURIComponent(match[1]).split(':');
+                    return parts[0] === VERSION && (parts[1] === 'granted' || parts[1] === 'denied') ? parts[1] : null;
+                }
+                function save(state) {
+                    document.cookie = COOKIE + '=' + VERSION + ':' + state + '; Max-Age=' + MAX_AGE + '; Path=/; SameSite=Lax'
+                        + cookieDomain() + (location.protocol === 'https:' ? '; Secure' : '');
+                }
+                function clearAnalyticsCookies() {
+                    var host = location.hostname;
+                    document.cookie.split('; ').forEach(function (pair) {
+                        var name = pair.split('=')[0];
+                        if (!/^(_ym|_ga|_gid|_gat)/.test(name)) return;
+                        ['', '; Domain=' + host, '; Domain=.' + host, '; Domain=.alexallergotest.ru'].forEach(function (domain) {
+                            document.cookie = name + '=; Max-Age=0; Path=/' + domain;
+                        });
+                    });
+                }
+
+                function load() {
+                    if (loaded || consent() !== 'granted' || EXCLUDED.test(location.pathname)) return;
                     loaded = true;
-                    window.dataLayer = window.dataLayer || [];
-                    function gtag(){dataLayer.push(arguments);}
-                    window.gtag = window.gtag || gtag;
+
+                    // Google tag пишет в свою очередь gaLayer, Метрика читает ecommerce из ymLayer (ТЗ §3.2).
+                    window.gaLayer = window.gaLayer || [];
+                    window.gtag = function () { window.gaLayer.push(arguments); };
+                    gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+                    gtag('consent', 'update', { analytics_storage: 'granted' });
+                    gtag('js', new Date());
+                    gtag('config', GA_ID, { send_page_view: false });
                     var g = document.createElement('script');
                     g.async = true;
-                    g.src = 'https://www.googletagmanager.com/gtag/js?id=G-YZ7B5FSFW0';
-                    g.onload = function () {
-                        gtag('js', new Date());
-                        gtag('config', 'G-YZ7B5FSFW0');
-                    };
+                    g.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID + '&l=gaLayer';
                     document.head.appendChild(g);
 
+                    window.ymLayer = window.ymLayer || [];
                     (function(m,e,t,r,i,k,a){
                         m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
                         m[i].l=1*new Date();
                         for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
                         k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-                    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=110363549', 'ym');
-                    ym(110363549, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+                    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=' + YM_ID, 'ym');
+                    // defer: просмотры отправляет только resources/js/analytics/index.js (первый и при переходах).
+                    ym(YM_ID, 'init', { ssr: true, defer: true, webvisor: false, clickmap: true, trackLinks: false, accurateTrackBounce: true, ecommerce: 'ymLayer' });
+
+                    window.dispatchEvent(new Event('alex:analytics-ready'));
                 }
+
+                // Как и раньше, не мешаем первой отрисовке: грузим после первого действия или через 5 с.
                 function arm() {
                     var armed = false;
+                    var events = ['scroll', 'pointerdown', 'touchstart', 'keydown'];
                     function go() {
                         if (armed) return;
                         armed = true;
-                        loadAnalytics();
-                        ['scroll', 'pointerdown', 'touchstart', 'keydown'].forEach(function (evt) {
-                            window.removeEventListener(evt, go, { passive: true });
-                        });
+                        events.forEach(function (evt) { window.removeEventListener(evt, go, { passive: true }); });
+                        load();
                     }
-                    ['scroll', 'pointerdown', 'touchstart', 'keydown'].forEach(function (evt) {
-                        window.addEventListener(evt, go, { once: true, passive: true });
-                    });
+                    events.forEach(function (evt) { window.addEventListener(evt, go, { once: true, passive: true }); });
                     setTimeout(go, 5000);
                 }
-                if (document.readyState === 'complete') arm();
-                else window.addEventListener('load', arm, { once: true });
+
+                function hideBanner() {
+                    var box = document.getElementById('alex-consent');
+                    if (box && box.parentNode) box.parentNode.removeChild(box);
+                }
+                function choose(state) {
+                    var previous = consent();
+                    save(state);
+                    hideBanner();
+                    if (state === 'granted') {
+                        load();
+                        return;
+                    }
+                    clearAnalyticsCookies();
+                    // Отзыв: уже загруженные теги не выгрузить, перезагружаем страницу без них.
+                    if (loaded || previous === 'granted') location.reload();
+                }
+                function showBanner() {
+                    if (document.getElementById('alex-consent')) return;
+                    var box = document.createElement('div');
+                    box.id = 'alex-consent';
+                    box.className = 'alex-consent';
+                    box.setAttribute('role', 'dialog');
+                    box.setAttribute('aria-label', 'Согласие на cookie и веб-аналитику');
+                    box.innerHTML = '<p>Мы используем cookie и сервисы веб-аналитики Яндекс Метрика и Google Analytics, чтобы понимать, как работает сайт. '
+                        + 'Они включатся, только если вы разрешите. Подробнее — в <a href="/alex-lab/privacy">политике конфиденциальности</a>.</p>'
+                        + '<div class="alex-consent__actions">'
+                        + '<button type="button" class="alex-consent__btn" data-consent="denied">Отказаться</button>'
+                        + '<button type="button" class="alex-consent__btn alex-consent__btn--accept" data-consent="granted">Разрешить</button>'
+                        + '</div>';
+                    box.addEventListener('click', function (event) {
+                        var button = event.target.closest && event.target.closest('[data-consent]');
+                        if (button) choose(button.getAttribute('data-consent'));
+                    });
+                    document.body.appendChild(box);
+                }
+
+                window.alexAnalytics = {
+                    ymId: YM_ID,
+                    consent: consent,
+                    load: load,
+                    isLoaded: function () { return loaded; },
+                    openSettings: showBanner,
+                };
+
+                var state = consent();
+                if (state === null) {
+                    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', showBanner, { once: true });
+                    else showBanner();
+                } else if (state === 'granted' && !excludedHere) {
+                    if (document.readyState === 'complete') arm();
+                    else window.addEventListener('load', arm, { once: true });
+                }
             })();
         </script>
-        <noscript><div><img src="https://mc.yandex.ru/watch/110363549" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
         @endunless
     </body>
 </html>

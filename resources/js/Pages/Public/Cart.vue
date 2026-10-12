@@ -4,6 +4,7 @@ import { router } from '@inertiajs/vue3'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import HomeBackLink from '@/Components/HomeBackLink.vue'
 import { readQuizLead } from '@/quizLead'
+import { newSubmissionId } from '@/utils/submissionId'
 
 const props = defineProps({
   mainProduct: {
@@ -34,6 +35,7 @@ const phone = ref('')
 const email = ref('')
 const promo = ref('')
 const consent = ref(false)
+let submissionId = null
 
 // Опции для выбора города
 const cities = [
@@ -206,6 +208,7 @@ const handleContinue = async () => {
     }
   })
 
+  submissionId ||= newSubmissionId()
   try {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
     const response = await fetch('/api/test-order', {
@@ -226,6 +229,7 @@ const handleContinue = async () => {
         quiz_answers: quiz?.quiz_answers || null,
         quiz_result_id: quiz?.quiz_result_id || null,
         quiz_result_title: quiz?.quiz_result_title || null,
+        submission_id: submissionId,
       }),
     })
     if (!response.ok) throw new Error('save failed')
