@@ -2,9 +2,9 @@
 // По ТЗ заказчика на аналитику (версия 1.2, этап А): во внешние счётчики уходят только
 // перечисленные ниже события и только нейтральные значения из фиксированных справочников.
 
-// Пути, где аналитики нет вовсе: квиз, поиск аллергенов, личные разделы пациента, скрытая корзина
+// Пути, где аналитики нет вовсе: квиз, поиск аллергенов, личные разделы пациента и врача, скрытая корзина
 // и админка. Тот же список — в resources/views/app.blade.php ($analyticsExcluded).
-export const EXCLUDED_PATH = /^\/(quiz|search|cart|dashboard|profile|recover|admin|login|forgot-password|reset-password|confirm-password|verify-email|register)(\/|$)/
+export const EXCLUDED_PATH = /^\/(quiz|search|cart|dashboard|profile|recover|cabinet|admin|login|forgot-password|reset-password|confirm-password|verify-email|register)(\/|$)/
 
 // Из адреса страницы во внешние счётчики уходят только эти параметры (рекламная атрибуция).
 const ALLOWED_QUERY = /^(utm_(source|medium|campaign|content|term)|yclid|gclid)$/
@@ -36,7 +36,7 @@ export function isExcludedPath(pathname) {
 export function pageType(pathname) {
     const path = pathname || '/'
     if (path === '/') return 'home'
-    if (/^\/(blog|materials|videos|demo-result)(\/|$)/.test(path)) return 'content'
+    if (/^\/(blog|materials|video|demo-result)(\/|$)/.test(path)) return 'content'
     if (/^\/alex-lab(\/|$)/.test(path)) return 'information'
     return 'other'
 }
@@ -85,4 +85,24 @@ export function buildEvent(name, params = {}, context = {}) {
     }
     const ymGoal = typeof spec.ym === 'function' ? spec.ym(clean) : spec.ym
     return { name, ymGoal, gaEvent: spec.ga, params: clean }
+}
+
+// Заголовок страницы для просмотра при переходе внутри сайта. Не все страницы меняют
+// <title> на клиенте, поэтому берём его из props так же, как app.blade.php ($documentTitle).
+const TITLE_FALLBACKS = {
+    '/': 'Тест на аллергию ALEX² — 300 аллергенов за один анализ',
+    '/alex-lab': 'Лаборатория ALEX LAB',
+    '/demo-result': 'Пример результата теста ALEX²',
+    '/blog': 'Блог — ALEX LAB',
+}
+
+export function pageTitle(props, pathname, fallback = '') {
+    const pick = (path) => path.split('.').reduce((value, key) => (value == null ? value : value[key]), props || {})
+    const title = ['meta.title', 'pageTitle', 'blogMeta.title', 'authorMeta.title', 'authorsMeta.title', 'blog.seo_title', 'blog.title']
+        .map(pick)
+        .find((value) => typeof value === 'string' && value.trim() !== '')
+    if (title) return title
+    if (TITLE_FALLBACKS[pathname]) return TITLE_FALLBACKS[pathname]
+    if (/^\/alex-lab(\/|$)/.test(pathname || '')) return TITLE_FALLBACKS['/alex-lab']
+    return fallback
 }

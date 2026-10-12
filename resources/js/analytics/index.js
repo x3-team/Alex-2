@@ -3,7 +3,8 @@
 // Здесь — единственный владелец просмотров страниц (Метрика defer:true, GA send_page_view:false)
 // и отправка целей по справочнику из rules.js.
 import { router } from '@inertiajs/vue3'
-import { buildEvent, isExcludedPath, pageType, safeReferrer, safeUrl, siteMode } from './rules'
+import { buildEvent, isExcludedPath, pageTitle, pageType, safeReferrer, safeUrl, siteMode } from './rules'
+import { partnerUrl } from '@/data/partnerLabs'
 
 const REPEAT_GUARD_MS = 700
 const PLACEMENT_MEMORY_MS = 3000
@@ -28,14 +29,13 @@ function context() {
     }
 }
 
-function sendPageView() {
+function sendPageView(href = window.location.href, title = document.title) {
     const a = api()
     if (!a || !a.isLoaded()) return
-    const url = safeUrl(window.location.href)
+    const url = safeUrl(href)
     if (!url || url === lastPageUrl) return
     const referrer = lastPageUrl || safeReferrer(document.referrer)
     lastPageUrl = url
-    const title = document.title
     window.ym?.(a.ymId, 'hit', url, { title, referer: referrer })
     window.gtag?.('event', 'page_view', { page_location: url, page_title: title, page_referrer: referrer })
 }
@@ -126,7 +126,11 @@ export function startAnalytics() {
         window.location.assign(visit.url.href)
     })
 
-    router.on('navigate', () => {
+    // Первый navigate приходит при загрузке документа: теги тогда грузит отложенно inline-скрипт.
+    let firstNavigate = true
+    router.on('navigate', (event) => {
+        const initial = firstNavigate
+        firstNavigate = false
         const a = api()
         if (!a) return
         if (isExcludedPath(window.location.pathname)) {
@@ -135,8 +139,12 @@ export function startAnalytics() {
             return
         }
         if (a.consent() !== 'granted') return
-        if (!a.isLoaded()) a.load()
-        sendPageView()
+        if (!a.isLoaded()) {
+            // Пришли с пути без тегов (квиз, поиск) — грузим сразу; просмотр отправит 'alex:analytics-ready'.
+            if (!initial) a.load()
+            return
+        }
+        sendPageView(window.location.href, pageTitle(event.detail.page?.props, window.location.pathname, document.title))
     })
 
     // Теги загрузились (после согласия или отложенной загрузки) — один просмотр текущей страницы.
@@ -144,4 +152,17 @@ export function startAnalytics() {
         if (!isExcludedPath(window.location.pathname)) sendPageView()
     })
     if (api()?.isLoaded() && !isExcludedPath(window.location.pathname)) sendPageView()
+}
+
+// Переход к сети-партнёру из любого списка лабораторий: выбор, затем исходящий переход.
+// Без валидного адреса — техническая цель вместо перехода (раньше Ситилаб молча вёл на «#»).
+export function openPartnerLab(lab, placement) {
+    track('partner_select', { partner_id: lab.id, placement })
+    const url = partnerUrl(lab)
+    if (!url) {
+        track('navigation_error', { partner_id: lab.id, placement, error_code: 'invalid_destination' })
+        return
+    }
+    track('partner_outbound', { partner_id: lab.id, placement, destination_domain: new URL(url).hostname.replace(/^www\./, '') })
+    window.open(url, '_blank')
 }

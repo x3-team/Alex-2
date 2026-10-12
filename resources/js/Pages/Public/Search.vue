@@ -8,6 +8,8 @@ import SearchParticleBackground from '@/Components/SearchParticleBackground.vue'
 import '../../../css/main.css'
 import PublicFooter from '@/Components/PublicFooter.vue'
 import { useDoctorMode } from '@/Composables/useDoctorMode'
+import { PARTNER_LABS } from '@/data/partnerLabs'
+import { openPartnerLab } from '@/analytics'
 
 // 🔹 Принимаем данные аллергенов из БД через контроллер
 const { isDoctorMode } = useDoctorMode()
@@ -190,14 +192,7 @@ const isSheetDragging = ref(false)
 const sheetDragOffset = ref(0)
 let startY = 0
 
-const labs = [
-  { name: 'Гемотест', logo: '/assets/figma-lab-gemotest.webp', logoClass: 'test-location-modal__logo--gemotest', href: 'https://gemotest.ru/moskva/catalog/allergii/pervichnye-testy/obshchaya-allergodiagnostika/allergochip-alex-2/allergochip-alex-2-300-allergokomponentov-allergy-explorer-2-19ddaf/' },
-  { name: 'ДНКОМ', logo: '/assets/figma-lab-dncom.webp', logoClass: 'test-location-modal__logo--dncom', href: 'https://dncom.ru/analizy-i-tseny/allergochip-alex2-allergy-explorer/allergochip-alex2-allergy-explorer-2-do-300-allergokomponentov-i-obshchiy-ige/' },
-  { name: 'Ситилаб', logo: '/assets/figma-lab-citilab.webp', logoClass: 'test-location-modal__logo--citilab', href: '#' },
-  { name: 'KDL', logo: '/assets/figma-lab-kdl.webp', logoClass: 'test-location-modal__logo--kdl', href: 'https://kdl.ru/analizy-i-tseny/msk/allergochip-alex2-300-komponentov' },
-  { name: 'CMD', logo: '/assets/figma-lab-cmd.webp', logoClass: 'test-location-modal__logo--cmd', href: 'https://www.cmd-online.ru/analizy-i-tseny/katalog-analizov/msk/allergochip_alex_2_300_allergokomponentov_i_ig_e_obshhij_ig_e/' },
-  { name: 'CHROMOLAB', logo: '/assets/figma-lab-chromolab.webp', logoClass: 'test-location-modal__logo--chromolab', href: 'https://www.chromolab.ru/issledovaniya/al866_allergochip_alex2_300_komponentov_vklyuchaet_opredelenie_obshchego_ige/' }
-]
+const labs = PARTNER_LABS
 
 const openCart = () => { isRegisterModalOpen.value = true }
 const closeRegisterModal = () => {
@@ -205,17 +200,9 @@ const closeRegisterModal = () => {
   sheetDragOffset.value = 0
 }
 
-const withClinicUtm = (url) => {
-  if (!url || url === '#') return url
-  if (url.includes('utm_source=')) return url
-  return url + (url.includes('?') ? '&' : '?') + 'utm_source=site&utm_medium=cta&utm_campaign=clinic'
-}
-
 const handleLabClick = (lab) => {
   closeRegisterModal()
-  if (lab.href && lab.href !== '#') {
-    window.open(withClinicUtm(lab.href), '_blank')
-  }
+  openPartnerLab(lab, 'page')
 }
 
 const startSheetDrag = (e) => {

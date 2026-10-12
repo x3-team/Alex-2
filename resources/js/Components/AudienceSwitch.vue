@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import { useDoctorMode } from '@/composables/useDoctorMode'
 import { AUDIENCE_COLOR, SWITCH_FLAG, hideAudienceVeil, showAudienceVeil } from '@/audienceTheme'
+import { track } from '@/analytics'
 
 const props = defineProps({
   // floating — плашка поверх первого экрана, row — строка в мобильном меню
@@ -150,6 +151,8 @@ const navigate = (event, audience, href) => {
   if (audience === current.value || leaving.value) {
     return
   }
+
+  track('site_mode_select', { site_mode: audience, placement: props.variant === 'row' ? 'menu' : 'header' })
 
   if (prefersReducedMotion()) {
     window.location.assign(withFlag(href))

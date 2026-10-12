@@ -10,7 +10,7 @@ class AdminNoAnalyticsTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const TRACKERS = ['mc.yandex.ru', 'ym(110363549', 'googletagmanager.com'];
+    private const TRACKERS = ['mc.yandex.ru', 'YM_ID = 110363549', 'googletagmanager.com'];
 
     protected function setUp(): void
     {

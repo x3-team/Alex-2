@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
+import CookieSettingsLink from '@/Components/CookieSettingsLink.vue'
 
 defineProps({
   blogHref: {
@@ -14,7 +15,7 @@ const activeTab = ref('contacts') // 'contacts' | 'navigation'
 </script>
 
 <template>
-  <section class="figma-exact-contacts" aria-labelledby="contacts-title">
+  <section class="figma-exact-contacts" aria-labelledby="contacts-title" data-analytics-placement="contacts">
     <!-- =========================================================================
          1. DESKTOP VIEW (min-width: 1025px)
          ========================================================================= -->
@@ -24,7 +25,7 @@ const activeTab = ref('contacts') // 'contacts' | 'navigation'
         <div class="desktop-contacts-header">
           <h2 id="contacts-title">Тест на аллергию ALEX² — один анализ, который даёт ответы</h2>
 
-          <button class="desktop-cta-banner" type="button" @click="emit('register')">
+          <button class="desktop-cta-banner" type="button" data-analytics-cta="booking_primary" data-analytics-placement="contacts" @click="emit('register')">
             <span class="cta-banner-text">Записаться на тест на аллергию</span>
             <div class="cta-banner-icon" aria-hidden="true">
               <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -77,6 +78,7 @@ const activeTab = ref('contacts') // 'contacts' | 'navigation'
           <div class="desktop-policy-links">
             <Link href="/alex-lab/privacy">Политика конфиденциальности</Link>
             <Link href="/alex-lab/consent">Условия использования материалов сайта</Link>
+            <CookieSettingsLink />
           </div>
 
           <Link href="https://t.me/cartonasunsetbeach" class="desktop-studio-credit">
@@ -139,6 +141,7 @@ const activeTab = ref('contacts') // 'contacts' | 'navigation'
             <div class="mobile-policy-list">
               <Link href="/alex-lab/privacy">Политика конфиденциальности</Link>
               <Link href="/alex-lab/consent">Условия использования материалов сайта</Link>
+              <CookieSettingsLink />
             </div>
           </div>
 
