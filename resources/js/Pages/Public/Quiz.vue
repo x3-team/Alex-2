@@ -6,6 +6,7 @@ import HomeBackLink from '@/Components/HomeBackLink.vue'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import QuizIntroAnimation from '@/Components/QuizIntroAnimation.vue'
 import { saveQuizLead } from '@/quizLead'
+import { newSubmissionId } from '@/utils/submissionId'
 import { PARTNER_LABS } from '@/data/partnerLabs'
 import { openPartnerLab } from '@/analytics'
 
@@ -43,6 +44,7 @@ const doctorForm = ref({
   agreedToTerms: false
 })
 const isModalSubmitting = ref(false)
+let doctorSubmissionId = null
 
 // Состояние модального окна выбора лабораторий
 const isRegisterModalOpen = ref(false)
@@ -332,6 +334,7 @@ const submitDoctorAppointment = async () => {
   }
 
   isModalSubmitting.value = true
+  doctorSubmissionId ||= newSubmissionId()
   try {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
     const response = await fetch('/api/doctor-appointment', {
@@ -346,12 +349,14 @@ const submitDoctorAppointment = async () => {
         city: doctorForm.value.city,
         agreed_to_terms: doctorForm.value.agreedToTerms,
         quiz_answers: userAnswers.value,
-        quiz_result_id: resultData.value?.id ?? null
+        quiz_result_id: resultData.value?.id ?? null,
+        submission_id: doctorSubmissionId
       })
     })
 
     if (!response.ok) throw new Error('Ошибка при отправке')
 
+    doctorSubmissionId = null
     alert('Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.')
     closeDoctorModal()
   } catch (e) {

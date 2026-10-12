@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Order;
-use App\Support\LeadMailer;
+use App\Support\LeadIntake;
 use App\Support\LeadQuizPayload;
 use Illuminate\Http\Request;
 
@@ -18,13 +17,14 @@ class DoctorAppointmentController extends Controller
             'agreed_to_terms' => 'required|accepted',
             'quiz_answers' => 'nullable|array',
             'quiz_result_id' => 'nullable|integer|exists:quiz_results,id',
+            'submission_id' => LeadIntake::SUBMISSION_RULE,
         ]);
 
         $quizAnswers = $validated['quiz_answers'] ?? [];
         $resultId = $validated['quiz_result_id'] ?? null;
 
         // Сначала запись в БД. Письмо не должно её откатывать.
-        $order = Order::create([
+        $order = LeadIntake::accept($request, [
             'customer_name' => $validated['full_name'],
             'customer_phone' => $validated['phone'],
             'customer_email' => null,
@@ -36,9 +36,7 @@ class DoctorAppointmentController extends Controller
             ], LeadQuizPayload::store($quizAnswers, $resultId)),
             'total_amount' => 0,
             'status' => 'new',
-        ]);
-
-        LeadMailer::notify($order);
+        ], 'doctor_appointment');
 
         return response()->json(['success' => true, 'order_id' => $order->id]);
     }

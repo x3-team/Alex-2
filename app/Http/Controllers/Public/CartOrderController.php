@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
-use App\Support\LeadMailer;
+use App\Support\LeadIntake;
 use App\Support\LeadQuizPayload;
 use Illuminate\Http\Request;
 
@@ -25,6 +24,7 @@ class CartOrderController extends Controller
             'quiz_answers' => 'nullable|array',
             'quiz_result_id' => 'nullable|integer',
             'quiz_result_title' => 'nullable|string|max:255',
+            'submission_id' => LeadIntake::SUBMISSION_RULE,
         ]);
 
         $lines = [];
@@ -43,7 +43,7 @@ class CartOrderController extends Controller
             isset($validated['birth_date']) ? 'Дата рождения: '.$validated['birth_date'] : null,
         ]);
 
-        $order = Order::create([
+        $order = LeadIntake::accept($request, [
             'customer_name' => $validated['full_name'],
             'customer_phone' => $validated['phone'],
             'customer_email' => $validated['email'] ?? null,
@@ -61,9 +61,7 @@ class CartOrderController extends Controller
             )),
             'total_amount' => $total,
             'status' => 'new',
-        ]);
-
-        LeadMailer::notify($order);
+        ], 'test_order');
 
         return response()->json(['success' => true, 'order_id' => $order->id]);
     }
