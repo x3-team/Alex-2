@@ -32,6 +32,19 @@ backup() {
   if [[ -f public/build/manifest.json ]]; then
     cp -a public/build/manifest.json "${dest}/manifest.json"
   fi
+  # Дамп БД перед заливкой. Доступ из ~/.my.cnf (права 600), пароль не в командной строке.
+  if [[ -f "$HOME/.my.cnf" && -f .env ]] && command -v mysqldump >/dev/null; then
+    local db
+    db="$(grep -E '^DB_DATABASE=' .env | tail -1 | cut -d= -f2- | tr -d "\r\"'")"
+    if [[ -n "$db" ]]; then
+      ( umask 077; mysqldump --single-transaction --routines --triggers --no-tablespaces "$db" | gzip -9 > "${dest}/db.sql.gz" )
+      gzip -t "${dest}/db.sql.gz"
+      zcat "${dest}/db.sql.gz" | tail -1 | grep -q 'Dump completed'
+      echo "==> DB dump: ${dest}/db.sql.gz ($(stat -c %s "${dest}/db.sql.gz") bytes)"
+    fi
+  else
+    echo "==> WARNING: no ~/.my.cnf or mysqldump — DB dump skipped" >&2
+  fi
   echo "==> Backup written to ${dest}"
 }
 
