@@ -638,7 +638,17 @@ const handleImageUpload = (form, index, event) => {
 
           <!-- Контент для врачей -->
           <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-            <h2 class="text-2xl font-bold mb-6">Контент страницы для врачей</h2>
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-2xl font-bold">Контент страницы для врачей</h2>
+              <a
+                  href="https://doc.alexallergotest.ru/"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Открыть на сайте
+              </a>
+            </div>
 
             <form @submit.prevent="submit(doctorForm, true)" class="space-y-8">
 
