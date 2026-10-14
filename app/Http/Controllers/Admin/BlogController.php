@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use App\Services\ImageService;
 use App\Models\Redirect;
 use App\Support\AdminPublishedAt;
+use App\Support\PublicSiteUrl;
 
 class BlogController extends Controller
 {
@@ -54,6 +55,11 @@ class BlogController extends Controller
         $blogs = $query->latest('created_at')
             ->paginate(15)
             ->withQueryString();
+
+        // «Открыть» ведёт на сайт аудитории статьи: врачи → doc.*, пациенты → основной домен.
+        $blogs->getCollection()->each(function (Blog $blog) {
+            $blog->setAttribute('public_url', PublicSiteUrl::blog($blog));
+        });
 
         $authors = User::select('id', 'name', 'avatar')->orderBy('name')->get();
         $categories = \App\Models\Category::select('id', 'name', 'slug')->orderBy('name')->get();

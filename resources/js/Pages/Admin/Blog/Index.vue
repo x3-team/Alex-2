@@ -286,8 +286,9 @@ const paginationRange = computed(() => {
                 <!-- 🔹 🔥 Кнопка "Перейти на страницу блога" -->
                 <td class="px-6 py-4 whitespace-nowrap text-center">
                   <a
-                      :href="`/blog/${blog.slug}`"
+                      :href="blog.public_url || `/blog/${blog.slug}`"
                       target="_blank"
+                      rel="noopener"
                       class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-md hover:bg-emerald-100 border border-emerald-200 transition-colors"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
