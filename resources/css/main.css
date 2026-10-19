@@ -841,6 +841,14 @@ body:has(.home-page-container.doctor-mode) {
     background-color: #FAFAFA;
 }
 
+/* Пункты меню стали ссылками <a> (1.0.202): без подчёркивания и синего цвета. */
+a.sidebar-row-card,
+a.sidebar-row-card:visited {
+    color: inherit;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
 .row-left-content {
     display: flex;
     align-items: center;

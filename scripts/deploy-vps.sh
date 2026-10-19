@@ -96,6 +96,13 @@ apply() {
     sudo -n systemctl reload php8.2-fpm 2>/dev/null         || sudo -n systemctl reload php8.3-fpm 2>/dev/null         || sudo -n systemctl reload php-fpm 2>/dev/null         || echo "==> WARN: could not reload php-fpm via systemctl (need passwordless sudo or manual reload)"
   fi
   php artisan inertia:stop-ssr 2>/dev/null || true
+  # Без SSR Laravel молча отдаёт пустой <div id="app">. Ждём, пока процесс поднимется
+  # (supervisor), иначе запускаем сами; падаем, если так и не поднялся.
+  if ! bash scripts/ssr-watchdog.sh; then
+    echo "ERROR: Inertia SSR не поднялся после деплоя (storage/logs/ssr-watchdog.log)" >&2
+    exit 1
+  fi
+  install_ssr_watchdog_cron
   if [[ "${RESTART_SERVICES}" == "true" ]]; then
     echo "==> RESTART_SERVICES=true — extra reload requested"
   fi
@@ -114,6 +121,30 @@ apply() {
   smoke_after_apply
 
   echo "==> apply finished in ${APP_ROOT}"
+}
+
+# Cron раз в 5 минут: scripts/ssr-watchdog.sh поднимает SSR, если тот упал.
+# Существующие строки crontab (ночной бэкап) не трогаем, свою строку не дублируем.
+install_ssr_watchdog_cron() {
+  local line current
+  line="*/5 * * * * bash ${APP_ROOT}/scripts/ssr-watchdog.sh >/dev/null 2>&1"
+  if ! command -v crontab >/dev/null 2>&1; then
+    echo "==> WARN: crontab недоступен, watchdog SSR не поставлен" >&2
+    return 0
+  fi
+  if ! current="$(crontab -l 2>&1)"; then
+    if ! grep -qi 'no crontab' <<<"$current"; then
+      echo "==> WARN: crontab -l не прочитан, watchdog SSR не ставлю: ${current}" >&2
+      return 0
+    fi
+    current=""
+  fi
+  if grep -qF "scripts/ssr-watchdog.sh" <<<"$current"; then
+    echo "==> SSR watchdog cron already present"
+    return 0
+  fi
+  printf '%s\n%s\n' "$current" "$line" | sed '/^$/d' | crontab -
+  echo "==> SSR watchdog cron installed"
 }
 
 # First real file under storage/app/public/<folder>, as a /storage URL path.
@@ -228,7 +259,60 @@ smoke_homes() {
   return "$failed"
 }
 
+# SSR реально рендерит страницы: заголовок X-SSR: on и <h1 в HTML. Пациентский домен —
+# главная, /blog и первая статья из /blog; врачебный — главная и /materials.
+smoke_ssr_url() {
+  local url="$1" hdr body ok=1
+  hdr="$(mktemp)"; body="$(mktemp)"
+  curl -sS -A 'Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)' \
+    -D "$hdr" -o "$body" --max-time 25 "$url" || true
+  if grep -qi '^x-ssr: *on' "$hdr" && grep -q '<h1' "$body"; then
+    echo "OK ssr ${url}"
+    ok=0
+  else
+    echo "FAIL ssr ${url}: $(grep -i '^x-ssr:' "$hdr" | tr -d '\r' || true)" >&2
+  fi
+  SMOKE_SSR_LAST_BODY="$(cat "$body")"
+  rm -f "$hdr" "$body"
+  return "$ok"
+}
+
+smoke_ssr() {
+  local origin article failed=0
+  local -a origins=()
+  mapfile -t origins < <(smoke_origins) || return 1
+
+  for origin in "${origins[@]}"; do
+    smoke_ssr_url "${origin}/" || failed=1
+    if [[ "$origin" == *"://doc."* ]]; then
+      smoke_ssr_url "${origin}/materials" || failed=1
+      continue
+    fi
+    smoke_ssr_url "${origin}/blog" || failed=1
+    article="$(grep -oE 'href="/blog/[a-z0-9_-]+/[^"?#]+"' <<<"${SMOKE_SSR_LAST_BODY:-}" \
+      | grep -v '/blog/authors/' | head -1 | sed -E 's/^href="//; s/"$//' || true)"
+    if [[ -z "$article" ]]; then
+      echo "FAIL ssr: на ${origin}/blog нет ссылки на статью" >&2
+      failed=1
+      continue
+    fi
+    smoke_ssr_url "${origin}${article}" || failed=1
+  done
+
+  return "$failed"
+}
+
 smoke_after_apply() {
+  echo "==> smoke: SSR (X-SSR: on и <h1>)"
+  if ! smoke_ssr; then
+    echo "WARN: SSR не отрисовал страницы, перезапускаю и проверяю ещё раз" >&2
+    bash scripts/ssr-watchdog.sh || true
+    if ! smoke_ssr; then
+      echo "ERROR: SSR не отрисовывает публичные страницы, роботы видят запасной текст. Смотри storage/logs/ssr-fallback-*.log" >&2
+      exit 1
+    fi
+  fi
+
   echo "==> smoke: главные и /storage"
   local storage_ok=0 home_ok=0
 

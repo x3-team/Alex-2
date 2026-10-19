@@ -122,7 +122,6 @@ class SitemapController extends Controller
             '/alex-lab' => '2026-08-26',
             '/quiz' => '2026-08-26',
             '/demo-result' => '2026-08-26',
-            '/search' => '2026-08-26',
             '/alex-lab/consent' => '2026-10-07',
             '/alex-lab/licenses' => '2026-08-26',
             '/alex-lab/contacts' => '2026-08-26',
@@ -221,7 +220,7 @@ class SitemapController extends Controller
         $xml .= $this->addUrl($baseUrl . '/alex-lab', $staticLastmods['/alex-lab'], 'monthly', '0.7');
         $xml .= $this->addUrl($baseUrl . '/quiz', $staticLastmods['/quiz'], 'monthly', '0.7');
         $xml .= $this->addUrl($baseUrl . '/demo-result', $staticLastmods['/demo-result'], 'monthly', '0.6');
-        $xml .= $this->addUrl($baseUrl . '/search', $staticLastmods['/search'], 'weekly', '0.7');
+        // /search закрыт от индексации (noindex, Disallow), в карту не попадает.
 
         // Канонический consent — /alex-lab/consent (старый /consent → 301)
         $xml .= $this->addUrl($baseUrl . '/alex-lab/consent', $staticLastmods['/alex-lab/consent'], 'monthly', '0.4');

@@ -12,7 +12,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Свой SSR-шлюз: короткий таймаут, лог отказов, статус для X-SSR и запасного текста.
+        $this->app->scoped(\App\Support\Ssr\SsrStatus::class);
+        $this->app->singleton(\Inertia\Ssr\Gateway::class, \App\Support\Ssr\ResilientSsrGateway::class);
     }
 
     /**

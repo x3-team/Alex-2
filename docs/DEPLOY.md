@@ -81,6 +81,13 @@ ssh ... "cd $ALEX_APP_ROOT && RUN_MIGRATIONS=true bash scripts/deploy-vps.sh app
 
 `RESTART_SERVICES=true` — сигнал перезапустить php-fpm / SSR на VPS вручную или через ваш PM.
 
+### SSR (с 1.0.202)
+
+- Без SSR Laravel отдаёт пустой `<div id="app">`. Теперь в нём запасной текст (`resources/views/partials/ssr-fallback.blade.php`), а отказ пишется в `storage/logs/ssr-fallback-*.log`.
+- Каждый HTML-ответ несёт `X-SSR: on | off | skip` (`skip` — админка, вход, личные разделы: там SSR выключен).
+- `apply` после `inertia:stop-ssr` ждёт `/health` через `scripts/ssr-watchdog.sh` (supervisor → иначе отдельный `inertia:start-ssr`), ставит его в crontab раз в 5 минут и смоукает `X-SSR: on` + `<h1` на главной, `/blog`, первой статье и doc `/materials`.
+- Ручная проверка: `curl -sI -A 'YandexBot' https://alexallergotest.ru/blog | grep -i x-ssr`.
+
 ## Iron-аудит VPS ↔ git (2026-09-16)
 
 - 403 файла совпали с `production`.

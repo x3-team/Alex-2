@@ -18,6 +18,8 @@ class SetNoindexRobots
 
         if (in_array($path, $noindex, true)) {
             $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
+        } elseif ($path === 'search') {
+            $response->headers->set('X-Robots-Tag', 'noindex, follow');
         }
 
         return $response;

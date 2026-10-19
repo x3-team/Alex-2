@@ -196,6 +196,10 @@
             $robotsMeta = ($blogNoindex || in_array($seoPath, $noindexPaths, true))
                 ? ($blogNoindex ? 'noindex' : 'noindex, nofollow')
                 : null;
+            // Поиск аллергенов не индексируем, но ссылки с него робот пусть проходит.
+            if (! $robotsMeta && $seoPath === 'search') {
+                $robotsMeta = 'noindex, follow';
+            }
 
             $documentDescription = data_get($seoProps, 'meta.description')
                 ?: data_get($seoProps, 'blogMeta.description')
@@ -434,7 +438,25 @@
             })();
         </script>
         @endif
-        @inertia
+        {{-- То же, что @inertia, но при отказе SSR внутри #app лежит запасной текст
+             (h1, текст, ссылки), а не пустой div. Vue при старте его заменяет. --}}
+        @php
+            if (! isset($__inertiaSsrDispatched)) {
+                $__inertiaSsrDispatched = true;
+                $__inertiaSsrResponse = app(\Inertia\Ssr\Gateway::class)->dispatch($page);
+            }
+            $ssrFallback = ! $__inertiaSsrResponse && ! $isAdminArea
+                && app(\App\Support\Ssr\SsrStatus::class)->failed();
+        @endphp
+        @if($__inertiaSsrResponse)
+        {!! $__inertiaSsrResponse->body !!}
+        @else
+        <div id="app" data-page="{{ json_encode($page) }}">
+            @if($ssrFallback)
+            @include('partials.ssr-fallback')
+            @endif
+        </div>
+        @endif
         @unless($isAdminArea)
         {{-- Аналитика по ТЗ заказчика (этап А): Метрика и GA4 грузятся только после согласия
              посетителя и не грузятся на путях из $analyticsExcluded (квиз, поиск аллергенов,
