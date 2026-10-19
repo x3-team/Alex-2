@@ -244,7 +244,7 @@ class BlogController extends Controller
             $category = \App\Models\Category::find($categoryId);
             $categorySlug = $category?->slug ?? '';
         }
-        $titleSlug = \App\Models\Blog::slugifyTitle($title);
+        $titleSlug = \App\Models\Blog::seoSlug($title);
 
         return $categorySlug ? "{$categorySlug}/{$titleSlug}" : $titleSlug;
     }
@@ -277,13 +277,14 @@ class BlogController extends Controller
                 $request->category_id
             );
         } else {
-            $slug = $posted;
+            $slug = trim($posted, '/');
+            // Путь с разделом (vidy-allergii/...) SEO задаёт целиком — не дописываем категорию поверх.
             $categorySlug = '';
             if ($request->category_id) {
                 $category = \App\Models\Category::find($request->category_id);
                 $categorySlug = $category?->slug ?? '';
             }
-            if ($categorySlug && !str_starts_with($slug, $categorySlug . '/')) {
+            if ($categorySlug && !str_contains($slug, '/')) {
                 $slug = "{$categorySlug}/{$slug}";
             }
         }

@@ -212,16 +212,16 @@ const getCategorySlug = (categoryId) => {
   return category?.slug || ''
 }
 
-const RU_TO_LAT = {
-  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'z', з: 'z',
-  и: 'i', й: 'i', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r',
-  с: 's', т: 't', у: 'u', ф: 'f', х: 'x', ц: 'c', ч: 'c', ш: 's', щ: 'shh',
-  ъ: '', ы: 'y', ь: '', э: 'e', ю: 'iu', я: 'ia',
+const SEO_TRANSLIT = {
+  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'yo', ж: 'zh', з: 'z',
+  и: 'i', й: 'j', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r',
+  с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'c', ч: 'ch', ш: 'sh', щ: 'shh',
+  ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya',
 }
 
 const slugifyTitle = (title) => {
   const mapped = String(title || '').toLowerCase().split('').map((ch) => (
-    Object.prototype.hasOwnProperty.call(RU_TO_LAT, ch) ? RU_TO_LAT[ch] : ch
+    Object.prototype.hasOwnProperty.call(SEO_TRANSLIT, ch) ? SEO_TRANSLIT[ch] : ch
   )).join('')
   return mapped
     .replace(/[^a-z0-9\s-]/g, '')

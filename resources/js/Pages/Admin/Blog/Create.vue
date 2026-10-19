@@ -90,16 +90,16 @@ const getCategorySlug = (categoryId) => {
 }
 
 // 🔹 Генерация слага из заголовка + категории
-const RU_TO_LAT = {
-  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'z', з: 'z',
-  и: 'i', й: 'i', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r',
-  с: 's', т: 't', у: 'u', ф: 'f', х: 'x', ц: 'c', ч: 'c', ш: 's', щ: 'shh',
-  ъ: '', ы: 'y', ь: '', э: 'e', ю: 'iu', я: 'ia',
+const SEO_TRANSLIT = {
+  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'yo', ж: 'zh', з: 'z',
+  и: 'i', й: 'j', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r',
+  с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'c', ч: 'ch', ш: 'sh', щ: 'shh',
+  ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya',
 }
 
 const slugifyTitle = (title) => {
   const mapped = String(title || '').toLowerCase().split('').map((ch) => (
-    Object.prototype.hasOwnProperty.call(RU_TO_LAT, ch) ? RU_TO_LAT[ch] : ch
+    Object.prototype.hasOwnProperty.call(SEO_TRANSLIT, ch) ? SEO_TRANSLIT[ch] : ch
   )).join('')
   return mapped
     .replace(/[^a-z0-9\s-]/g, '')
@@ -135,20 +135,12 @@ watch(() => form.category_id, () => {
   }
 })
 
-// 🔹 Watch на ручное редактирование slug
-watch(() => form.slug, (newSlug, oldSlug) => {
-  // Если slug изменился не из-за автогенерации — помечаем как ручной
-  if (oldSlug && newSlug !== oldSlug) {
-    const categorySlug = getCategorySlug(form.category_id)
-    const expectedSlug = categorySlug
-        ? `${categorySlug}/${slugifyTitle(form.title)}`
-        : slugifyTitle(form.title)
-
-    if (newSlug !== expectedSlug) {
-      slugManuallyEdited.value = true
-    }
-  }
-})
+// 🔹 Ручное редактирование ЧПУ: любой ввод в поле фиксирует его, автогенерация больше не трогает.
+// Очистили поле — снова генерируем из заголовка.
+const onSlugInput = () => {
+  slugManuallyEdited.value = String(form.slug || '').trim() !== ''
+  if (!slugManuallyEdited.value) generateSlug()
+}
 
 // 🔹 В <script setup> добавь переменную для отображения пропорций:
 const previewRatio = ref('') // "1117×494px (пропорция 2.26:1)"
@@ -489,6 +481,7 @@ const removeSource = (index) => {
                 <label class="block text-sm font-medium text-gray-700 mb-1">Символьный код (ЧПУ)</label>
                 <input
                     v-model="form.slug"
+                    @input="onSlugInput"
                     type="text"
                     class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm px-3 py-2 border"
                     placeholder="auto-generate"
