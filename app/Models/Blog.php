@@ -124,14 +124,38 @@ class Blog extends Model
         return trim((string) $out, '-');
     }
 
+    /**
+     * ЧПУ статьи по правилам Яндекс Транслита: «Аллергия на яйца» → allergiya-na-yajca.
+     * slugifyTitle остаётся для ссылок авторов, чтобы их адреса не поменялись.
+     */
+    public static function seoSlug(string $title): string
+    {
+        $map = [
+            'а'=>'a','б'=>'b','в'=>'v','г'=>'g','д'=>'d','е'=>'e','ё'=>'yo','ж'=>'zh','з'=>'z',
+            'и'=>'i','й'=>'j','к'=>'k','л'=>'l','м'=>'m','н'=>'n','о'=>'o','п'=>'p','р'=>'r',
+            'с'=>'s','т'=>'t','у'=>'u','ф'=>'f','х'=>'h','ц'=>'c','ч'=>'ch','ш'=>'sh','щ'=>'shh',
+            'ъ'=>'','ы'=>'y','ь'=>'','э'=>'e','ю'=>'yu','я'=>'ya',
+        ];
+        $title = mb_strtolower($title, 'UTF-8');
+        $out = '';
+        $len = mb_strlen($title, 'UTF-8');
+        for ($i = 0; $i < $len; $i++) {
+            $ch = mb_substr($title, $i, 1, 'UTF-8');
+            $out .= array_key_exists($ch, $map) ? $map[$ch] : $ch;
+        }
+        $out = preg_replace('/[^a-z0-9\s-]/', '', $out);
+        $out = preg_replace('/[\s_-]+/', '-', $out);
+        return trim((string) $out, '-');
+    }
+
     public function setSlugAttribute($value)
     {
-        // Не трогаем уже заданный ЧПУ (в т.ч. published nested slugs). Пустой — та же карта, что JS RU_TO_LAT.
+        // Не трогаем уже заданный ЧПУ (в т.ч. published nested slugs). Пустой — та же карта, что JS SEO_TRANSLIT.
         if (is_string($value) && trim($value) !== '') {
             $this->attributes['slug'] = $value;
             return;
         }
-        $this->attributes['slug'] = static::slugifyTitle((string) $this->title);
+        $this->attributes['slug'] = static::seoSlug((string) $this->title);
     }
 
     public function tags()
