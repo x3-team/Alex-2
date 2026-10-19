@@ -31,7 +31,7 @@ concurrency:
 jobs:
   deploy:
     name: Backup, rsync sources, build on VPS
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, x3]
     timeout-minutes: 45
     environment: production
 
@@ -61,6 +61,9 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          # Self-hosted runner keeps $HOME between runs: drop a stale host entry
+          # before re-scanning so known_hosts does not grow on every deploy.
+          ssh-keygen -R "$SSH_HOST" >/dev/null 2>&1 || true
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Pre-deploy backup on VPS
@@ -135,3 +138,7 @@ jobs:
             fi
           done
           exit "$fail"
+
+      - name: Remove deploy key from runner
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

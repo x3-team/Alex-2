@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   test-and-build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, x3]
     timeout-minutes: 25
 
     steps:
