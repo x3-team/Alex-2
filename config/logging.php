@@ -73,6 +73,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Отказы SSR на публичных страницах (App\Support\Ssr\ResilientSsrGateway).
+        'ssr' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/ssr-fallback.log'),
+            'level' => 'warning',
+            'days' => 30,
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

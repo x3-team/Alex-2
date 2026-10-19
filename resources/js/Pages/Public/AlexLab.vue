@@ -3,7 +3,7 @@ import '../../../css/main.css';
 import { useDoctorMode } from '@/Composables/useDoctorMode'
 import { authorPublicPath } from '@/utils/authorPath'
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
-import { Head, Link, router } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3'
 import HomeBackLink from '@/Components/HomeBackLink.vue'
 import SiteSidebar from '@/Components/SiteSidebar.vue'
 import PublicFooter from '@/Components/PublicFooter.vue'
@@ -218,20 +218,14 @@ const parseWorkHours = (line) => {
 }
 
 // «О нас» живёт на /alex-lab, согласие — на /alex-lab/consent, остальное — /alex-lab/{section}
+// Вкладки — ссылки <Link>, адрес считается при SSR, где глобального route() нет.
+// Относительный путь, чтобы на doc-домене вкладка не уводила на пациентский.
 const sectionUrl = (key) => {
-  if (key === 'about') return route('alex-lab')
-  if (key === 'consent') return route('consent')
-  return route('alex-lab.section', { section: key })
+  if (key === 'about') return '/alex-lab'
+  if (key === 'consent') return '/alex-lab/consent'
+  return `/alex-lab/${key}`
 }
 
-const handleSectionClick = (key) => {
-  // Все секции переходят по отдельному URL
-  router.get(sectionUrl(key), {}, {
-    preserveState: true,
-    preserveScroll: false, // Сбрасываем скролл при переходе
-    replace: true
-  })
-}
 </script>
 
 <template>
@@ -274,16 +268,18 @@ const handleSectionClick = (key) => {
           <!-- Кнопки переключения секций -->
           <div class="relative">
             <div class="flex gap-[5px] overflow-x-auto pb-2 2xl:flex-wrap 2xl:overflow-visible 2xl:pb-0 scrollbar-hide" style="flex-flow: wrap">
-              <button
+              <Link
                   v-for="(section, key) in sections"
                   :key="key"
-                  @click="handleSectionClick(key)"
+                  :href="sectionUrl(key)"
+                  preserve-state
+                  replace
                   :class="activeSection === key ? 'bg-black text-white' : 'bg-[transparent] text-black border border-black'"
-                  class="px-6 py-3 rounded-[8px] font-medium transition-all flex-shrink-0 whitespace-nowrap"
+                  class="px-6 py-3 rounded-[8px] font-medium transition-all flex-shrink-0 whitespace-nowrap no-underline"
                   style="max-width:fit-content;height: 45px; font-size: 18px; font-weight: 400; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0, 0, 0, 0.4);"
               >
                 {{ section.title }}
-              </button>
+              </Link>
             </div>
           </div>
 

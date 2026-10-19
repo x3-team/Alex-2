@@ -550,7 +550,7 @@ const toggleFaq = (index) => {
                   class="blog-feed-card bg-[transparent] overflow-hidden transition-all duration-300 cursor-pointer"
               >
 
-                <div class="block overflow-hidden relative" style="max-height: 494px;     aspect-ratio: 16 / 9;">
+                <Link :href="articleUrl(related.slug)" class="block overflow-hidden relative" style="max-height: 494px;     aspect-ratio: 16 / 9;" @click.stop>
                   <img v-if="related.preview_image"
                        :src="`/storage/${related.preview_image}`"
                        :alt="related.title"
@@ -563,7 +563,7 @@ const toggleFaq = (index) => {
                   </div>
 
 
-                </div>
+                </Link>
 
                 <BlogFeedMeta
                     :duration="related.duration ? `~${related.duration}` : ''"
@@ -572,10 +572,11 @@ const toggleFaq = (index) => {
 
                 <div class="blog-feed-body blog-feed-body--related space-y-3">
 
-                  <div
+                  <Link
                     v-if="related.author?.id"
+                    :href="authorPublicPath(related.author)"
                     class="flex items-center gap-3 cursor-pointer"
-                    @click.stop="$inertia.visit(authorPublicPath(related.author))"
+                    @click.stop
                   >
                     <div class="w-[40px] h-[40px] rounded-[8px] overflow-hidden bg-white flex-shrink-0">
                       <img v-if="related.author?.avatar"
@@ -596,12 +597,12 @@ const toggleFaq = (index) => {
           {{ related.author.author_categories[0].name }}
         </span>
                     </div>
-                  </div>
+                  </Link>
 
 
-                  <div class="text-[32px] font-[400] text-black line-clamp-2 hover:text-emerald-700 transition-colors" style="line-height: 1">
+                  <Link :href="articleUrl(related.slug)" class="text-[32px] font-[400] text-black line-clamp-2 hover:text-emerald-700 transition-colors" style="line-height: 1" @click.stop>
                     {{ related.title }}
-                  </div>
+                  </Link>
 
 
                   <p class="text-gray-600 text-[16px] font-[400] line-clamp-3" style="margin-top: 8px">

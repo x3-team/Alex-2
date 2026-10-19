@@ -171,23 +171,18 @@ const goTo = (path) => {
   router.visit(path)
 }
 
+// Пункты меню «Квиз / Материалы» и «Блог» — ссылки <Link>, переход делает сама ссылка.
+const audienceContentHref = computed(() => (isDoctor.value ? doctorsUrl('/materials') : '/quiz'))
+
 const openAudienceContent = () => {
-  if (isDoctor.value) {
-    goTo(doctorsUrl('/materials'))
-    closeMobileMenu()
-    return
-  }
-  goTo('/quiz')
+  closeMobileMenu()
 }
 
 const openProfile = () => {
-  if (isDoctor.value) {
-    closeMobileMenu()
-    openDevModal()
-    return
-  }
-  goTo('/blog')
   closeMobileMenu()
+  if (isDoctor.value) {
+    openDevModal()
+  }
 }
 
 const closeMobileMenu = () => {
@@ -218,7 +213,7 @@ const openMobileAbout = () => {
 
 const openAbout = () => {
   emit('about')
-  goTo('/alex-lab')
+  closeMobileMenu()
 }
 </script>
 
@@ -309,14 +304,11 @@ const openAbout = () => {
       <AudienceSwitch variant="row" />
     </div>
 
-    <div
+    <Link
         :id="isDoctor ? 'row-doctor-materials' : 'row-quiz'"
+        :href="audienceContentHref"
         class="sidebar-row-card"
-        role="button"
-        tabindex="0"
         @click="openAudienceContent"
-        @keydown.enter="openAudienceContent"
-        @keydown.space.prevent="openAudienceContent"
     >
       <div class="row-left-content">
         <template v-if="isDoctor">
@@ -335,17 +327,17 @@ const openAbout = () => {
           <span class="row-text">КВИЗ: Нужен ли вам тест на аллергены?</span>
         </template>
       </div>
-    </div>
+    </Link>
 
     <!-- 🟡 КЛИК ТЕПЕРЬ ОТКРЫВАЕТ МОДАЛКУ ЗАГЛУШКУ -->
-    <div
+    <component
+        :is="isDoctor ? 'div' : Link"
         id="row-profile"
         class="sidebar-row-card"
-        role="button"
-        tabindex="0"
+        v-bind="isDoctor ? { role: 'button', tabindex: 0 } : { href: '/blog' }"
         @click="openProfile"
-        @keydown.enter="openProfile"
-        @keydown.space.prevent="openProfile"
+        @keydown.enter="isDoctor && openProfile()"
+        @keydown.space="isDoctor && ($event.preventDefault(), openProfile())"
     >
       <div class="row-left-content">
         <span class="row-icon-icon sidebar-profile-icon" aria-hidden="true">
@@ -357,16 +349,13 @@ const openAbout = () => {
         </span>
         <span class="row-text">{{ isDoctor ? 'Личный кабинет' : 'Блог' }}</span>
       </div>
-    </div>
+    </component>
 
-    <div
+    <Link
         id="row-about"
+        href="/alex-lab"
         class="sidebar-row-card"
-        role="button"
-        tabindex="0"
         @click="openAbout"
-        @keydown.enter="openAbout"
-        @keydown.space.prevent="openAbout"
     >
       <div class="row-left-content">
         <span class="row-text">О лаборатории ALEX LAB <span class="site-version">v{{ SITE_VERSION }}</span></span>
@@ -374,7 +363,7 @@ const openAbout = () => {
       <span class="row-icon-icon" aria-hidden="true">
         <img :src="sidebarAssets.about" alt="" width="24" height="24" decoding="async" />
       </span>
-    </div>
+    </Link>
 
     <button class="mobile-close-row" type="button" @click="closeMobileMenu">
       <span class="mobile-close-icon" aria-hidden="true"></span>

@@ -305,7 +305,7 @@ Route::get('/robots.txt', function () {
             "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin/\nDisallow: /login\nDisallow: /patient\nDisallow: /up\nDisallow: /cart\n\nSitemap: {$sitemapBase}/sitemap.xml"
         );
 
-        return str_replace('{{sitemap_url}}', $sitemapBase . '/sitemap.xml', $robots);
+        return \App\Support\RobotsTxt::finalize((string) $robots, $sitemapBase . '/sitemap.xml');
     });
 
     return response($content, 200, [

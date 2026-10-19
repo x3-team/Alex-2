@@ -78,16 +78,25 @@ const excerpt = (html, words = 30) => {
   return parts.slice(0, words).join(' ') + (parts.length > words ? '...' : '')
 }
 
-const toggleCategory = (categorySlug) => {
-  if (categorySlug === null) {
-    selectedCategories.value = []
-  } else if (selectedCategories.value.length === 1 && selectedCategories.value[0] === categorySlug) {
-    selectedCategories.value = []
-  } else {
-    selectedCategories.value = [categorySlug]
-  }
+// Чипсы разделов — настоящие ссылки (робот видит href). Адрес тот же, что строит
+// applySelectedTags: повторный клик по активному разделу ведёт на /blog.
+const nextCategoriesFor = (categorySlug) => {
+  if (categorySlug === null) return []
+  if (selectedCategories.value.length === 1 && selectedCategories.value[0] === categorySlug) return []
+  return [categorySlug]
+}
 
-  applySelectedTags()
+const categoryChipHref = (categorySlug) => {
+  const next = nextCategoriesFor(categorySlug)
+  const path = next.length === 1 ? `/blog/${next[0]}` : '/blog'
+  return selectedTags.value.length
+    ? `${path}?${new URLSearchParams({ tags: selectedTags.value.join(',') }).toString()}`
+    : path
+}
+
+const selectCategoryChip = (categorySlug) => {
+  selectedCategories.value = nextCategoriesFor(categorySlug)
+  showTagDropdown.value = false
 }
 
 const toggleTag = (tagSlug) => {
@@ -421,23 +430,29 @@ const ogImage = computed(() => {
           <div class="text-[16px] xl:text-[18px] text-[rgba(0, 0, 0, 1)] mb-2 opacity-[0.5] font-400">Выберите категорию</div>
 
           <div class="flex gap-[5px] overflow-x-auto pb-2 xl:flex-wrap xl:overflow-visible xl:pb-0 scrollbar-hide">
-            <button
-                @click="toggleCategory(null)"
+            <Link
+                :href="categoryChipHref(null)"
+                preserve-state
+                preserve-scroll
+                @start="selectCategoryChip(null)"
                 :class="!selectedCategories.length ? 'is-active' : ''"
                 class="blog-filter-chip"
             >
               Все
-            </button>
+            </Link>
 
-            <button
+            <Link
                 v-for="category in categories"
                 :key="category.id"
-                @click="toggleCategory(category.slug)"
+                :href="categoryChipHref(category.slug)"
+                preserve-state
+                preserve-scroll
+                @start="selectCategoryChip(category.slug)"
                 :class="selectedCategories.includes(category.slug) ? 'is-active' : ''"
                 class="blog-filter-chip"
             >
               {{ category.name }}
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -705,6 +720,7 @@ const ogImage = computed(() => {
 <style scoped>
 .blog-filter-chip {
   display: inline-flex;
+  text-decoration: none;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;

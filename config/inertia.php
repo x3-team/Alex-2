@@ -27,6 +27,9 @@ return [
 
         'ensure_bundle_exists' => (bool) env('INERTIA_SSR_ENSURE_BUNDLE_EXISTS', true),
 
+        // Секунды на ответ SSR-процесса. Дольше ждать нет смысла: страница уйдёт без SSR.
+        'timeout' => (float) env('INERTIA_SSR_TIMEOUT', 4),
+
         // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
 
     ],
