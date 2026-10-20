@@ -80,7 +80,7 @@ const handleOpenRegister = () => {
 <template>
   <Transition name="fade">
     <div class="modal-overlay" v-if="isOpen" @click.self="handleClose">
-      <div class="modal-card">
+      <div class="modal-card ym-hide-content">
         <button class="modal-close-btn" @click="handleClose">&times;</button>
         <h3 class="modal-title">Нужен ли вам тест?</h3>
 

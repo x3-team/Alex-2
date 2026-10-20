@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\App\Http\Middleware\SetNoindexRobots::class);
+        $middleware->append(\App\Http\Middleware\AllowMetrikaPlayerFrame::class);
 
         $middleware->web(prepend: [
             \App\Http\Middleware\DetectSiteMiddleware::class,

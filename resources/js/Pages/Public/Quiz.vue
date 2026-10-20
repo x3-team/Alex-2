@@ -448,7 +448,7 @@ const submitDoctorAppointment = async () => {
             </button>
           </div>
 
-          <div v-else-if="step === 'quiz' && currentQuestion" class="quiz-card-wrapper quiz-state">
+          <div v-else-if="step === 'quiz' && currentQuestion" class="quiz-card-wrapper quiz-state ym-hide-content">
             <div class="options-header" @click="prevQuestion">
               <button class="back-prev-btn">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -502,7 +502,7 @@ const submitDoctorAppointment = async () => {
             </button>
           </div>
 
-          <div v-else-if="step === 'result'" class="quiz-card-wrapper result-state">
+          <div v-else-if="step === 'result'" class="quiz-card-wrapper result-state ym-hide-content">
             <div class="glass-card result-card">
               <QuizIntroAnimation :variant="currentAnimationVariant" />
               <div class="result-content">
@@ -545,7 +545,7 @@ const submitDoctorAppointment = async () => {
     <!-- МОДАЛЬНОЕ ОКНО: Запись к врачу -->
     <Teleport to="body">
       <div v-if="isDoctorModalOpen" class="modal-backdrop" @click.self="closeDoctorModal">
-        <div class="modal-card">
+        <div class="modal-card ym-hide-content">
           <button class="modal-close-btn" @click="closeDoctorModal">&times;</button>
 
           <h3 class="modal-title">Запись к врачу-аллергологу</h3>
