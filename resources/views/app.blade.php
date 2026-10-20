@@ -461,7 +461,8 @@
         {{-- Аналитика по ТЗ заказчика (этап А): Метрика и GA4 грузятся только после согласия
              посетителя и не грузятся на путях из $analyticsExcluded (поиск аллергенов, личные
              разделы). На квизе (QUIET) теги есть ради целей квиза, но без просмотров и карты кликов.
-             Вебвизора нет, noscript-пикселя нет. Цели и просмотры страниц
+             Вебвизор после согласия, поля и чувствительные блоки скрыты (resources/js/analytics/privacy.js),
+             noscript-пикселя нет. Цели и просмотры страниц
              отправляет resources/js/analytics/index.js через window.alexAnalytics. --}}
         <style>
             .alex-consent { position: fixed; left: 16px; right: 16px; bottom: calc(16px + var(--mobile-dock-offset, 0px)); z-index: 2147482000; box-sizing: border-box; max-width: 440px; padding: 18px 20px; border-radius: 16px; background: #fff; color: #111; box-shadow: 0 8px 32px rgba(0, 0, 0, .18); font: 400 14px/1.45 Roboto, system-ui, -apple-system, sans-serif; }
@@ -534,7 +535,7 @@
                         k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
                     })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=' + YM_ID, 'ym');
                     // defer: просмотры отправляет только resources/js/analytics/index.js (первый и при переходах).
-                    ym(YM_ID, 'init', { ssr: true, defer: true, webvisor: false, clickmap: !QUIET.test(location.pathname), trackLinks: false, accurateTrackBounce: true, ecommerce: 'ymLayer' });
+                    ym(YM_ID, 'init', { ssr: true, defer: true, webvisor: true, clickmap: !QUIET.test(location.pathname), trackLinks: false, accurateTrackBounce: true, ecommerce: 'ymLayer' });
 
                     window.dispatchEvent(new Event('alex:analytics-ready'));
                 }

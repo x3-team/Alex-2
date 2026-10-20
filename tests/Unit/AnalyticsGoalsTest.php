@@ -5,7 +5,7 @@ namespace Tests\Unit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-// ТЗ по аналитике, этап А: счётчики только после согласия, без Вебвизора и noscript-пикселя,
+// ТЗ по аналитике, этап А: счётчики только после согласия, Вебвизор с маскировкой, без noscript-пикселя,
 // поиск аллергенов без аналитики, квиз только с целями квиза, цели из одного справочника.
 class AnalyticsGoalsTest extends TestCase
 {
@@ -24,21 +24,20 @@ class AnalyticsGoalsTest extends TestCase
         $this->withoutVite();
     }
 
-    public function test_counters_wait_for_consent_and_skip_session_replay(): void
+    public function test_counters_wait_for_consent_and_mask_session_replay(): void
     {
         $html = $this->get('/alex-lab/consent')->assertOk()->getContent();
 
         $this->assertStringContainsString("var COOKIE = 'alex_analytics_consent';", $html);
         $this->assertStringContainsString("if (loaded || consent() !== 'granted' || EXCLUDED.test(location.pathname)) return;", $html);
         $this->assertStringContainsString("box.id = 'alex-consent';", $html);
-        $this->assertStringContainsString('webvisor: false', $html);
+        $this->assertStringContainsString('webvisor: true', $html);
         $this->assertStringContainsString('defer: true', $html);
         $this->assertStringContainsString('trackLinks: false', $html);
         $this->assertStringContainsString("ecommerce: 'ymLayer'", $html);
         $this->assertStringContainsString('send_page_view: false', $html);
         $this->assertStringContainsString("ad_storage: 'denied'", $html);
         $this->assertStringContainsString('&l=gaLayer', $html);
-        $this->assertStringNotContainsString('webvisor:true', $html);
         $this->assertStringNotContainsString('mc.yandex.ru/watch/', $html);
         $this->assertStringContainsString('var excludedHere = false;', $html);
     }
@@ -52,7 +51,40 @@ class AnalyticsGoalsTest extends TestCase
         $html = $this->get('/quiz')->assertOk()->getContent();
         $this->assertStringContainsString('var excludedHere = false;', $html);
         $this->assertStringContainsString('clickmap: !QUIET.test(location.pathname)', $html);
-        $this->assertStringContainsString('webvisor: false', $html);
+        $this->assertStringContainsString('webvisor: true', $html);
+    }
+
+    public function test_metrika_player_may_frame_both_sites(): void
+    {
+        foreach (['http://localhost/', 'http://doc.localhost/'] as $url) {
+            $csp = $this->get($url)->headers->get('Content-Security-Policy');
+            $this->assertStringStartsWith("frame-ancestors 'self' https://metrika.yandex.ru ", $csp, $url);
+            $this->assertStringContainsString('https://metrica.yandex.com', $csp);
+            $this->assertStringContainsString('https://analytics.yandex.ru', $csp);
+            $this->assertCount(26, explode(' ', trim(substr($csp, strlen('frame-ancestors ')))));
+        }
+    }
+
+    public function test_webvisor_masks_fields_and_quiz(): void
+    {
+        $privacy = file_get_contents(base_path('resources/js/analytics/privacy.js'));
+        $this->assertStringContainsString("classList.add('ym-disable-keys')", $privacy);
+        $this->assertStringContainsString("classList.add('ym-hide-content')", $privacy);
+        $this->assertStringContainsString('startWebvisorPrivacy();', file_get_contents(base_path('resources/js/app.js')));
+
+        $quiz = file_get_contents(base_path('resources/js/Pages/Public/Quiz.vue'));
+        $this->assertStringContainsString('class="quiz-card-wrapper quiz-state ym-hide-content"', $quiz);
+        $this->assertStringContainsString('class="quiz-card-wrapper result-state ym-hide-content"', $quiz);
+        $this->assertStringContainsString('<div class="modal-card ym-hide-content">', $quiz);
+        $this->assertStringContainsString('<div class="modal-card ym-hide-content">', file_get_contents(base_path('resources/js/Components/QuizModal.vue')));
+
+        // ym-record-keys разрешил бы запись поля — его в коде быть не должно.
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(base_path('resources'), \FilesystemIterator::SKIP_DOTS));
+        foreach ($files as $file) {
+            if (preg_match('/\.(vue|js|php)$/', $file->getFilename())) {
+                $this->assertStringNotContainsString('ym-record-keys', str_replace("ym-record-keys не используем", '', file_get_contents($file->getPathname())), $file->getPathname());
+            }
+        }
     }
 
     public function test_quiet_quiz_path_matches_between_blade_and_js(): void
