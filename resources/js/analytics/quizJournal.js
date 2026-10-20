@@ -1,8 +1,12 @@
 // Внутренний журнал прохождения квиза (ТЗ по аналитике, §4.4–4.5, пакет А4-К).
-// Пишется только в нашу базу (/api/quiz-events) и только при согласии на аналитику.
-// В Метрику и GA4 события квиза не уходят. Ответы, варианты, текст результата, возраст
-// и контакты в журнал не попадают: только этап, номер шага и служебные ключи.
+// Пишется в нашу базу (/api/quiz-events) и только при согласии на аналитику.
+// Те же события уходят целями в Метрику и GA4 (решение D1), но только с quiz_id, версией,
+// размещением, номером шага и кодом ошибки — фильтр параметров в rules.js.
+// Ответы, варианты, текст результата, возраст и контакты не попадают никуда.
 import { newSubmissionId } from '@/utils/submissionId'
+import { track } from './index'
+
+export const QUIZ_ID = 'allergy_quiz'
 
 const ENDPOINT = '/api/quiz-events'
 const FLUSH_DELAY_MS = 1000
@@ -67,6 +71,17 @@ export function createQuizJournal({ placement = 'page', version = 'v0' } = {}) {
             ...fields,
         })
         if (!timer) timer = window.setTimeout(flush, FLUSH_DELAY_MS)
+
+        // Во внешние счётчики — только перечисленные поля; код действия, маршрут результата,
+        // ID вопроса и попытки остаются во внутреннем журнале.
+        track(event, {
+            quiz_id: QUIZ_ID,
+            quiz_version: version,
+            quiz_placement: placement,
+            step_position: fields.step_position,
+            error_stage: fields.error_stage,
+            error_code: fields.error_code,
+        })
     }
 
     // Экран засчитывается показанным, если пробыл на виду не меньше секунды при активной вкладке.

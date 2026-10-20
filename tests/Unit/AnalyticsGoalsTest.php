@@ -6,7 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 // ТЗ по аналитике, этап А: счётчики только после согласия, без Вебвизора и noscript-пикселя,
-// квиз и поиск аллергенов без аналитики, цели из одного справочника.
+// поиск аллергенов без аналитики, квиз только с целями квиза, цели из одного справочника.
 class AnalyticsGoalsTest extends TestCase
 {
     use RefreshDatabase;
@@ -43,11 +43,49 @@ class AnalyticsGoalsTest extends TestCase
         $this->assertStringContainsString('var excludedHere = false;', $html);
     }
 
-    public function test_quiz_and_allergen_search_are_excluded(): void
+    public function test_allergen_search_is_excluded_and_quiz_is_quiet(): void
     {
-        foreach (['/quiz', '/search'] as $path) {
-            $html = $this->get($path)->assertOk()->getContent();
-            $this->assertStringContainsString('var excludedHere = true;', $html, $path);
+        $html = $this->get('/search')->assertOk()->getContent();
+        $this->assertStringContainsString('var excludedHere = true;', $html);
+
+        // Квиз (решение D1): теги грузятся ради целей квиза, но без карты кликов и просмотров.
+        $html = $this->get('/quiz')->assertOk()->getContent();
+        $this->assertStringContainsString('var excludedHere = false;', $html);
+        $this->assertStringContainsString('clickmap: !QUIET.test(location.pathname)', $html);
+        $this->assertStringContainsString('webvisor: false', $html);
+    }
+
+    public function test_quiet_quiz_path_matches_between_blade_and_js(): void
+    {
+        $blade = file_get_contents(base_path('resources/views/app.blade.php'));
+        $rules = file_get_contents(base_path('resources/js/analytics/rules.js'));
+        $index = file_get_contents(base_path('resources/js/analytics/index.js'));
+
+        preg_match('/var QUIET = (\/.+\/);/', $blade, $bladeRe);
+        preg_match('/export const QUIET_PATH = (\/.+\/)\n/', $rules, $jsRe);
+        $this->assertNotEmpty($bladeRe);
+        $this->assertSame($bladeRe[1], $jsRe[1] ?? null);
+
+        $this->assertStringContainsString('!a.isLoaded() || isQuietPath(window.location.pathname)) return', $index);
+    }
+
+    public function test_quiz_goals_carry_only_service_fields(): void
+    {
+        $rules = file_get_contents(base_path('resources/js/analytics/rules.js'));
+        foreach (['quiz_view', 'quiz_start', 'quiz_step_view', 'quiz_answer', 'quiz_back', 'quiz_complete',
+            'quiz_result_view', 'primary_cta_click', 'no_contact_action_click', 'allergist_form_open',
+            'chat_open', 'chat_message_sent'] as $goal) {
+            $this->assertStringContainsString("ym: '{$goal}'", $rules, $goal);
+        }
+        $this->assertStringContainsString("quiz_error: { params: [...QUIZ_PARAMS, 'error_stage', 'error_code'], ym: 'diag_event', ga: 'quiz_error' }", $rules);
+        $this->assertStringContainsString("const QUIZ_PARAMS = ['quiz_id', 'quiz_version', 'quiz_placement']", $rules);
+
+        // Во внешние счётчики уходят только перечисленные поля журнала.
+        $journal = file_get_contents(base_path('resources/js/analytics/quizJournal.js'));
+        preg_match('/track\(event, \{(.+?)\}\)/s', $journal, $call);
+        $this->assertNotEmpty($call);
+        foreach (['action_code', 'action_role', 'result_route_id', 'question_key', 'step_visit_id', 'attempt_id', 'answer'] as $field) {
+            $this->assertStringNotContainsString($field, $call[1], $field);
         }
     }
 
@@ -62,10 +100,11 @@ class AnalyticsGoalsTest extends TestCase
         $this->assertNotEmpty($bladeRe);
         $this->assertSame($bladeRe[1], $jsRe[1] ?? null);
 
-        foreach (['quiz', 'search', 'cart', 'dashboard', 'profile', 'recover', 'cabinet'] as $path) {
+        foreach (['search', 'cart', 'dashboard', 'profile', 'recover', 'cabinet'] as $path) {
             $this->assertStringContainsString("'{$path}', '{$path}/*'", $blade);
             $this->assertMatchesRegularExpression('/[(|]'.$path.'[|)]/', $jsRe[1]);
         }
+        $this->assertStringNotContainsString("'quiz', 'quiz/*'", $blade);
     }
 
     public function test_every_lab_list_uses_the_shared_registry(): void

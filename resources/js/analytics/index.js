@@ -3,13 +3,16 @@
 // Здесь — единственный владелец просмотров страниц (Метрика defer:true, GA send_page_view:false)
 // и отправка целей по справочнику из rules.js.
 import { router } from '@inertiajs/vue3'
-import { buildEvent, isExcludedPath, pageTitle, pageType, safeReferrer, safeUrl, siteMode } from './rules'
+import { buildEvent, isExcludedPath, isQuietPath, pageTitle, pageType, safeReferrer, safeUrl, siteMode } from './rules'
 import { partnerUrl } from '@/data/partnerLabs'
 
 const REPEAT_GUARD_MS = 700
 const PLACEMENT_MEMORY_MS = 3000
+const FULL_RELOAD_DELAY_MS = 300
 
 let lastPageUrl = null
+// Режим, в котором загружены теги: на квизе счётчик настроен без карты кликов.
+let loadedQuiet = false
 let lastSent = { key: '', at: 0 }
 let recentPlacement = { value: null, at: 0 }
 
@@ -31,7 +34,7 @@ function context() {
 
 function sendPageView(href = window.location.href, title = document.title) {
     const a = api()
-    if (!a || !a.isLoaded()) return
+    if (!a || !a.isLoaded() || isQuietPath(window.location.pathname)) return
     const url = safeUrl(href)
     if (!url || url === lastPageUrl) return
     const referrer = lastPageUrl || safeReferrer(document.referrer)
@@ -115,15 +118,19 @@ export function startAnalytics() {
 
     document.addEventListener('click', onDocumentClick, true)
 
-    // Теги уже на странице, а человек уходит в квиз/поиск: открываем этот путь
+    // Теги уже на странице, а человек уходит в поиск или личный раздел: открываем этот путь
     // полной загрузкой, где сервер теги не выводит, иначе их автосбор продолжится там.
+    // Вход в квиз и выход из него — тоже полной загрузкой: там счётчик без карты кликов.
     router.on('before', (event) => {
         const visit = event.detail.visit
         const a = api()
         if (!a || !a.isLoaded() || visit.prefetch || String(visit.method).toLowerCase() !== 'get') return
-        if (!isExcludedPath(visit.url.pathname)) return
+        const target = visit.url.pathname
+        if (!isExcludedPath(target) && isQuietPath(target) === isQuietPath(window.location.pathname)) return
         event.preventDefault()
-        window.location.assign(visit.url.href)
+        // Небольшая пауза, чтобы цель, отправленная этим же кликом (например, действие
+        // результата квиза), успела уйти до перезагрузки.
+        window.setTimeout(() => window.location.assign(visit.url.href), FULL_RELOAD_DELAY_MS)
     })
 
     // Первый navigate приходит при загрузке документа: теги тогда грузит отложенно inline-скрипт.
@@ -133,14 +140,15 @@ export function startAnalytics() {
         firstNavigate = false
         const a = api()
         if (!a) return
-        if (isExcludedPath(window.location.pathname)) {
-            // Назад/вперёд браузера минуют 'before' — перезагружаемся без тегов.
+        // Назад/вперёд браузера минуют 'before': перезагружаемся, если теги здесь не нужны
+        // или были настроены для другого режима (квиз без карты кликов).
+        if (isExcludedPath(window.location.pathname) || (a.isLoaded() && loadedQuiet !== isQuietPath(window.location.pathname))) {
             if (a.isLoaded()) window.location.reload()
             return
         }
         if (a.consent() !== 'granted') return
         if (!a.isLoaded()) {
-            // Пришли с пути без тегов (квиз, поиск) — грузим сразу; просмотр отправит 'alex:analytics-ready'.
+            // Пришли с пути без тегов (поиск, личные разделы) — грузим сразу; просмотр отправит 'alex:analytics-ready'.
             if (!initial) a.load()
             return
         }
@@ -149,9 +157,55 @@ export function startAnalytics() {
 
     // Теги загрузились (после согласия или отложенной загрузки) — один просмотр текущей страницы.
     window.addEventListener('alex:analytics-ready', () => {
+        loadedQuiet = isQuietPath(window.location.pathname)
         if (!isExcludedPath(window.location.pathname)) sendPageView()
+        watchChat()
     })
-    if (api()?.isLoaded() && !isExcludedPath(window.location.pathname)) sendPageView()
+    if (api()?.isLoaded()) {
+        loadedQuiet = isQuietPath(window.location.pathname)
+        if (!isExcludedPath(window.location.pathname)) sendPageView()
+        watchChat()
+    }
+}
+
+// Чат Carrot Quest приходит через тег-менеджер Метрики, то есть только после согласия.
+// Ждём его JS API и подписываемся: открытие чата — раз за загрузку страницы,
+// сообщение посетителя — только первое в каждом диалоге. Текст сообщения не берём.
+const CHAT_WAIT_MS = 60000
+const CHAT_POLL_MS = 1000
+let chatWatched = false
+
+function watchChat() {
+    if (chatWatched) return
+    chatWatched = true
+    const startedAt = Date.now()
+    const poll = () => {
+        const carrot = window.carrotquest
+        if (carrot && typeof carrot.addCallback === 'function') {
+            subscribeChat(carrot)
+            return
+        }
+        if (Date.now() - startedAt < CHAT_WAIT_MS) window.setTimeout(poll, CHAT_POLL_MS)
+    }
+    poll()
+}
+
+function subscribeChat(carrot) {
+    let opened = false
+    const conversations = new Set()
+    const messageSent = (data) => {
+        const key = data && data.id != null ? String(data.id) : 'unknown'
+        if (conversations.has(key)) return
+        conversations.add(key)
+        track('chat_message_sent')
+    }
+    carrot.addCallback('messenger_opened', () => {
+        if (opened) return
+        opened = true
+        track('chat_open')
+    })
+    carrot.addCallback('conversation_started', messageSent)
+    carrot.addCallback('user_replied', messageSent)
 }
 
 // Переход к сети-партнёру из любого списка лабораторий: выбор, затем исходящий переход.
