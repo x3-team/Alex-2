@@ -118,6 +118,11 @@ const menuItems = [
         title: 'Настройки корзины',
         route: 'admin.cart-settings.edit',
         urlPrefix: '/admin/cart-settings'
+      },
+      {
+        title: 'Платежи',
+        route: 'admin.payments.index',
+        urlPrefix: '/admin/payments'
       }
     ]
   },
