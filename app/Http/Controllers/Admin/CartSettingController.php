@@ -42,6 +42,8 @@ class CartSettingController extends Controller
             'services.*.description' => 'required|string',
             'services.*.price' => 'required|numeric|min:0',
             'services.*.is_active' => 'boolean',
+            'removed_ids' => 'nullable|array',
+            'removed_ids.*' => 'integer',
         ]);
 
 
@@ -51,9 +53,14 @@ class CartSettingController extends Controller
             'price' => $validated['main_product']['price'],
         ], JSON_UNESCAPED_UNICODE));
 
-        // Синхронизируем дополнительные услуги
-        $incomingIds = collect($validated['services'])->pluck('id')->filter();
-        CartService::whereNotIn('id', $incomingIds)->delete();
+        // Удаляем только то, что админ явно убрал кнопкой «Удалить». Услуга, которой просто
+        // нет в форме (открыта старая вкладка, параллельная правка), остаётся как была.
+        // Удаление мягкое: запись остаётся в БД для заказов, которые на неё ссылаются.
+        $removedIds = collect($validated['removed_ids'] ?? [])
+            ->diff(collect($validated['services'])->pluck('id')->filter());
+        if ($removedIds->isNotEmpty()) {
+            CartService::whereIn('id', $removedIds)->delete();
+        }
 
         foreach ($validated['services'] as $index => $serviceData) {
             $serviceData['order'] = $index;
