@@ -83,6 +83,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/cart-settings', [\App\Http\Controllers\Admin\CartSettingController::class, 'edit'])->name('cart-settings.edit');
     Route::put('/cart-settings', [\App\Http\Controllers\Admin\CartSettingController::class, 'update'])->name('cart-settings.update');
 
+    // Офисы лаборатории для корзины
+    Route::get('/lab-offices', [\App\Http\Controllers\Admin\LabOfficeController::class, 'index'])->name('lab-offices.index');
+    Route::post('/lab-offices', [\App\Http\Controllers\Admin\LabOfficeController::class, 'store'])->name('lab-offices.store');
+    Route::get('/lab-offices/template.csv', [\App\Http\Controllers\Admin\LabOfficeController::class, 'template'])->name('lab-offices.template');
+    Route::post('/lab-offices/import', [\App\Http\Controllers\Admin\LabOfficeController::class, 'import'])->name('lab-offices.import');
+    Route::put('/lab-offices/{labOffice}', [\App\Http\Controllers\Admin\LabOfficeController::class, 'update'])->name('lab-offices.update');
+    Route::post('/lab-offices/{labOffice}/toggle', [\App\Http\Controllers\Admin\LabOfficeController::class, 'toggle'])->name('lab-offices.toggle');
+
     Route::get('/quiz', [\App\Http\Controllers\Admin\QuizController::class, 'index'])->name('quiz.index');
     Route::post('/quiz', [\App\Http\Controllers\Admin\QuizController::class, 'store'])->name('quiz.store');
 
@@ -217,6 +225,8 @@ Route::get('/search', [\App\Http\Controllers\Public\SearchController::class, 'in
 Route::redirect('/alex-lab/search', '/search', 301);
 // Корзина скрыта (не боевая): 404 для всех, кроме админов — см. CartController@index
 Route::get('/cart', [\App\Http\Controllers\Public\CartController::class, 'index'])->name('cart.index');
+// Офисы для выбора в корзине: 404, пока заказ не включён (админу видно) — см. CartOfficeController
+Route::get('/cart/offices', [\App\Http\Controllers\Public\CartOfficeController::class, 'index'])->name('cart.offices');
 
 // Блог
 Route::get('/blog', [PublicBlogController::class, 'index'])->name('blog.index');
