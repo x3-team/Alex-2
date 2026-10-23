@@ -99,6 +99,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::put('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
 
+        // Платежи ЮKassa: список, ручная сверка, возврат
+        Route::get('/payments', [\App\Http\Controllers\Admin\PaymentController::class, 'index'])->name('payments.index');
+        Route::post('/payments/{payment}/sync', [\App\Http\Controllers\Admin\PaymentController::class, 'sync'])->name('payments.sync');
+        Route::post('/payments/{payment}/refund', [\App\Http\Controllers\Admin\PaymentController::class, 'refund'])->name('payments.refund');
+
 
     Route::get('/robots', [\App\Http\Controllers\Admin\AdminRobotsController::class, 'index'])
         ->name('robots.index');
