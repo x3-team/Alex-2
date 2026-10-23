@@ -118,6 +118,11 @@ const menuItems = [
         title: 'Настройки корзины',
         route: 'admin.cart-settings.edit',
         urlPrefix: '/admin/cart-settings'
+      },
+      {
+        title: 'Офисы лаборатории',
+        route: 'admin.lab-offices.index',
+        urlPrefix: '/admin/lab-offices'
       }
     ]
   },
