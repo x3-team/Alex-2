@@ -4,7 +4,7 @@
 // размещением, номером шага и кодом ошибки — фильтр параметров в rules.js.
 // Ответы, варианты, текст результата, возраст и контакты не попадают никуда.
 import { newSubmissionId } from '@/utils/submissionId'
-import { track } from './index'
+import { track, trackFormStart } from './index'
 
 export const QUIZ_ID = 'allergy_quiz'
 
@@ -131,6 +131,11 @@ export function createQuizJournal({ placement = 'page', version = 'v0' } = {}) {
         },
         formOpened() {
             log('allergist_form_open', { form_id: 'allergist_request' })
+            trackFormStart({
+                form_id: 'allergist_request',
+                form_version: 'v1',
+                placement: placement === 'page' ? 'quiz' : placement,
+            })
         },
         failed(stage, code) {
             log('quiz_error', { error_stage: stage, error_code: code })

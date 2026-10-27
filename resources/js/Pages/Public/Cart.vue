@@ -472,7 +472,13 @@ const handleEmailInput = (event) => {
             <!-- ЛИЧНЫЕ ДАННЫЕ -->
             <section class="section-block">
               <h2 class="section-title">Личные данные</h2>
-              <form class="personal-form" @submit.prevent>
+              <form
+                  class="personal-form"
+                  data-analytics-form="test_order"
+                  data-analytics-form-version="v1"
+                  data-analytics-placement="cart"
+                  @submit.prevent
+              >
                 <div class="form-row-two">
 
                   <!-- ФИО -->
