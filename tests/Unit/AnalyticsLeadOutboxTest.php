@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Mail\DoctorAppointmentMail;
 use App\Models\AnalyticsOutbox;
 use App\Models\Order;
+use App\Support\Analytics\OutboxSender;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\Http;
@@ -84,7 +85,17 @@ class AnalyticsLeadOutboxTest extends TestCase
             'analytics.metrika.oauth_token' => 'token',
         ]);
 
+        Http::fake([
+            'https://www.google-analytics.com/*' => Http::response('', 204),
+            'https://api-metrika.yandex.net/*' => Http::response('', 200),
+        ]);
+
         $this->appointment([], self::COOKIES)->assertOk();
+
+        $sender = app(OutboxSender::class);
+        foreach (AnalyticsOutbox::all() as $row) {
+            $sender->deliver($row->fresh());
+        }
 
         $this->assertSame(['sent'], AnalyticsOutbox::pluck('status')->unique()->values()->all());
 
@@ -92,11 +103,14 @@ class AnalyticsLeadOutboxTest extends TestCase
             if (! str_contains($request->url(), 'google-analytics.com/mp/collect')) {
                 return false;
             }
-            $body = $request->data();
+            $body = json_decode($request->body(), true);
+            if (! is_array($body)) {
+                return false;
+            }
 
-            return $body['client_id'] === '123456789.1700000000'
-                && $body['events'][0]['name'] === 'generate_lead'
-                && $body['events'][0]['params']['form_id'] === 'doctor_appointment'
+            return ($body['client_id'] ?? null) === '123456789.1700000000'
+                && ($body['events'][0]['name'] ?? null) === 'generate_lead'
+                && ($body['events'][0]['params']['form_id'] ?? null) === 'doctor_appointment'
                 && ! str_contains($request->body(), 'Иван')
                 && ! str_contains($request->body(), '900');
         });

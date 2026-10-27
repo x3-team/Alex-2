@@ -93,7 +93,7 @@ class QuizJournalTest extends TestCase
         $journal = file_get_contents(base_path('resources/js/analytics/quizJournal.js'));
         $this->assertStringContainsString("window.alexAnalytics?.consent() === 'granted'", $journal);
         // Наружу — только через общий фильтр track(), напрямую в счётчики журнал не пишет.
-        $this->assertStringContainsString("import { track } from './index'", $journal);
+        $this->assertStringContainsString("import { track, trackFormStart } from './index'", $journal);
         $this->assertStringNotContainsString('reachGoal', $journal);
         $this->assertStringNotContainsString('gtag', $journal);
     }

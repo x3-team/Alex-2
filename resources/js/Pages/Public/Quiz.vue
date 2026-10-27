@@ -551,7 +551,13 @@ const submitDoctorAppointment = async () => {
           <h3 class="modal-title">Запись к врачу-аллергологу</h3>
           <p class="modal-desc">Заполните форму, и мы свяжемся с вами для уточнения деталей приема.</p>
 
-          <form @submit.prevent="submitDoctorAppointment" class="modal-form">
+          <form
+              @submit.prevent="submitDoctorAppointment"
+              class="modal-form"
+              data-analytics-form="allergist_request"
+              data-analytics-form-version="v1"
+              data-analytics-placement="quiz"
+          >
             <div class="form-group">
               <label>ФИО *</label>
               <input v-model="doctorForm.fullName" type="text" placeholder="Иванов Иван Иванович" required />
