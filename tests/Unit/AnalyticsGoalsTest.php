@@ -111,7 +111,7 @@ class AnalyticsGoalsTest extends TestCase
         }
         $this->assertStringContainsString("quiz_error: { params: [...QUIZ_PARAMS, 'error_stage', 'error_code'], ym: 'diag_event', ga: 'quiz_error' }", $rules);
         $this->assertStringContainsString("const QUIZ_PARAMS = ['quiz_id', 'quiz_version', 'quiz_placement']", $rules);
-        $this->assertStringContainsString("form_start: { params: FORM_PARAMS, ym: 'form_start', ga: 'form_start' }", $rules);
+        $this->assertStringContainsString("form_start: { params: FORM_PARAMS, ym: 'form_start', ga: false }", $rules);
         $this->assertStringContainsString("const FORM_PARAMS = ['form_id', 'form_version', 'placement']", $rules);
 
         // Во внешние счётчики уходят только перечисленные поля журнала.
