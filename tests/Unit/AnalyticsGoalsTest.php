@@ -176,6 +176,8 @@ class AnalyticsGoalsTest extends TestCase
             $this->assertStringContainsString($needle, $rules);
         }
 
+        $this->assertStringContainsString("form_start: { params: FORM_PARAMS, ym: 'form_start', ga: false }", $rules);
+
         $app = file_get_contents(base_path('resources/js/app.js'));
         $this->assertStringContainsString('startAnalytics();', $app);
     }

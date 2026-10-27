@@ -25,7 +25,8 @@ export const EVENTS = Object.freeze({
     partner_outbound: { params: ['placement', 'partner_id', 'destination_domain'], ym: 'partner_outbound', ga: 'partner_outbound' },
     navigation_error: { params: ['placement', 'partner_id', 'error_code'], ym: 'diag_event', ga: 'navigation_error' },
     contact_click: { params: ['placement', 'contact_method'], ym: (p) => (p.contact_method === 'email' ? 'contact_email' : 'contact_phone'), ga: 'contact_click' },
-    form_start: { params: FORM_PARAMS, ym: 'form_start', ga: 'form_start' },
+    // form_start: в GA4 событие уже есть (enhanced measurement); из JS — только reachGoal Метрики exact match form_start.
+    form_start: { params: FORM_PARAMS, ym: 'form_start', ga: false },
     faq_open: { params: ['placement', 'element_id'], ym: 'faq_open', ga: 'faq_open' },
     demo_download_click: { params: ['asset_id'], ym: 'demo_download_click', ga: 'demo_download_click' },
     site_mode_select: { params: ['placement', 'site_mode'], ym: 'site_mode_select', ga: 'site_mode_select' },

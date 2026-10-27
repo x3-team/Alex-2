@@ -63,18 +63,21 @@ function sendBuiltEvent(event) {
     const a = api()
     a.load()
     window.ym?.(a.ymId, 'reachGoal', event.ymGoal, event.params)
-    window.gtag?.('event', event.gaEvent, event.params)
+    if (event.gaEvent) {
+        window.gtag?.('event', event.gaEvent, event.params)
+    }
 }
 
 const formStartSent = new Set()
 
 // Первое открытие или начало заполнения формы за загрузку страницы (без ПДн).
 export function trackFormStart({ form_id, form_version = 'v1', placement = 'page' } = {}) {
-    if (!form_id || formStartSent.has(form_id)) return
+    const dedupeKey = `${form_id}:${placement}`
+    if (!form_id || formStartSent.has(dedupeKey)) return
     if (!allowedHere()) return
     const event = buildEvent('form_start', { form_id, form_version, placement }, context())
     if (!event) return
-    formStartSent.add(form_id)
+    formStartSent.add(dedupeKey)
     sendBuiltEvent(event)
 }
 
@@ -132,10 +135,13 @@ function onDocumentClick(event) {
 function onFormFieldFocus(event) {
     const field = event.target
     if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) return
+    if (field instanceof HTMLInputElement && (field.type === 'hidden' || field.type === 'submit' || field.type === 'button')) return
     const form = field.closest('[data-analytics-form]')
     if (!form) return
+    const formId = form.getAttribute('data-analytics-form')
+    if (!formId) return
     trackFormStart({
-        form_id: form.getAttribute('data-analytics-form'),
+        form_id: formId,
         form_version: form.getAttribute('data-analytics-form-version') || 'v1',
         placement: form.getAttribute('data-analytics-placement') || placementOf(form),
     })
