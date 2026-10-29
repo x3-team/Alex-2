@@ -10,6 +10,8 @@ const props = defineProps({
 const form = useForm({
   main_product: { ...props.mainProduct },
   services: props.services.length ? props.services.map(s => ({...s})) : [{ id: null, title: '', description: '', price: 0, is_active: true }],
+  // Сервер удаляет только явно убранные услуги, а не всё, чего нет в форме.
+  removed_ids: [],
 })
 
 const addService = () => {
@@ -17,7 +19,8 @@ const addService = () => {
 }
 
 const removeService = (index) => {
-  form.services.splice(index, 1)
+  const [removed] = form.services.splice(index, 1)
+  if (removed?.id) form.removed_ids.push(removed.id)
 }
 
 const submit = () => {
