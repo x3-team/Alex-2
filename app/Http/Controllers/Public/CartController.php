@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\CartService;
-use App\Models\Setting;
+use App\Support\CartCatalog;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -17,24 +17,7 @@ class CartController extends Controller
             abort(404);
         }
 
-        $defaults = [
-            'id' => 'alex2',
-            'title' => 'Сдача анализа ALEX2',
-            'description' => 'Мультикомплексный анализ на 300 аллергенов за один забор крови. Включает в себя общий IgE',
-            'price' => 24900,
-            'tags' => ['+ Забор крови', '+IgE'],
-        ];
-        $saved = Setting::get('cart_main_product');
-        $decoded = is_string($saved) ? json_decode($saved, true) : null;
-        $mainProduct = $defaults;
-        if (is_array($decoded)) {
-            foreach (['title', 'description', 'price'] as $key) {
-                if (array_key_exists($key, $decoded) && $decoded[$key] !== '' && $decoded[$key] !== null) {
-                    $mainProduct[$key] = $decoded[$key];
-                }
-            }
-        }
-        $mainProduct['price'] = (float) $mainProduct['price'];
+        $mainProduct = CartCatalog::mainProduct();
 
         // 2. Дополнительные услуги из базы данных (преобразуем в массив для гарантии)
         $additionalServices = CartService::where('is_active', true)
@@ -56,10 +39,15 @@ class CartController extends Controller
             ]
         ];
 
+        $bridgeOn = (bool) config('order_bridge.enabled');
         $response = Inertia::render('Public/Cart', [
             'mainProduct' => $mainProduct,
             'additionalServices' => $additionalServices,
             'labs' => $labs,
+            'orderBridge' => [
+                'enabled' => $bridgeOn,
+                'consentText' => $bridgeOn ? (string) config('order_bridge.consent_text') : '',
+            ],
             'meta' => [
                 'title' => 'Корзина — запись на тест ALEX²',
                 'description' => 'Оформите запись на тест на аллергию ALEX².',
