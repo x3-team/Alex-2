@@ -53,6 +53,22 @@ Checklist:
 
 Подробности: [DEPLOY.md](./DEPLOY.md).
 
+## Staging (test.alexallergotest.ru, doc.test.alexallergotest.ru)
+
+Всё новое с внешними интеграциями (ЮKassa, Medmis, ДНКОМ, АльфаЛАБ) сначала проверяется на staging. Подробности, пути и отличия от прода: [STAGING.md](./STAGING.md).
+
+1. PR открыт в `production`, CI зелёный.
+2. Выкладка PR на staging **до мержа**: Actions → «Staging (manual)», `action=deploy`, `ref=pull/<номер>`, `confirm=I_CONFIRM_STAGING`; флаги интеграций — через `order_bridge` и т.п. Команда «залей» для staging не нужна, это не прод.
+3. Проверка на staging (Basic Auth, логин и пароль — в `~/staging/basic-auth.txt` на VPS), отчёт Виталию со ссылкой.
+4. Дальше обычный порядок: merge → «залей» → прод.
+
+Правила staging:
+- На staging — только тестовые ключи и стенды (GitHub secrets `STAGING_*`). Боевые ключи ЮKassa, Medmis, ДНКОМ, Метрики и GA4 туда не попадают; скрипт сам очищает ключи, совпадающие с продом.
+- Почта только в лог, аналитика выключена, поисковикам закрыто (Basic Auth, noindex, robots `Disallow: /`).
+- БД staging — обезличенная копия прода (`action=refresh-db`). Реальные персональные данные туда не заносить.
+- Workflow staging не трогает прод: свой каталог, БД, php-fpm и supervisor-группа `alex-staging`; общее — только `nginx reload`.
+- Пароли staging в чат и репозиторий не писать, только путь к файлу на сервере.
+
 ## Никогда
 
 - `.env` / `.env.production`
@@ -61,7 +77,7 @@ Checklist:
 - полный слепой rsync без excludes
 - `rsync --delete`. Если rsync всё же с `--delete`, обязательны `--exclude 'public/storage'` (без хвостового слэша) и `--filter 'P public/storage'`, иначе симлинк удаляется и `/storage/*` отдаёт 404
 - `migrate --force` без явной просьбы / без миграций в релизе
-- правки nginx
+- правки nginx прода (конфиг staging меняет только `scripts/staging/staging.sh`)
 - ломать статьи, ссылки, SEO
 - merge в `main`
 

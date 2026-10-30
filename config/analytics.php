@@ -4,6 +4,9 @@
 // журнал отправки (analytics_outbox) и доставка в GA4 Measurement Protocol и офлайн-конверсии Метрики.
 // Ключи — только в .env на сервере. Пока ключа нет, отправка в платформу не выполняется.
 return [
+    // Теги Метрики и GA4 в браузере (resources/views/app.blade.php). На staging false.
+    'client_enabled' => filter_var(env('ANALYTICS_CLIENT_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+
     'ga4' => [
         'measurement_id' => env('GA4_MEASUREMENT_ID', 'G-YZ7B5FSFW0'),
         'api_secret' => env('GA4_MP_API_SECRET'),

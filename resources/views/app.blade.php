@@ -485,6 +485,8 @@
                 // Тот же список, что QUIET_PATH в rules.js: цели квиза есть, просмотров и карты кликов нет.
                 var QUIET = /^\/quiz(\/|$)/;
                 var excludedHere = {{ $analyticsExcluded ? 'true' : 'false' }};
+                // ANALYTICS_CLIENT_ENABLED=false (staging): баннер и window.alexAnalytics остаются, теги не грузятся.
+                var ANALYTICS_ENABLED = {{ config('analytics.client_enabled', true) ? 'true' : 'false' }};
                 var loaded = false;
 
                 function cookieDomain() {
@@ -512,7 +514,7 @@
                 }
 
                 function load() {
-                    if (loaded || consent() !== 'granted' || EXCLUDED.test(location.pathname)) return;
+                    if (!ANALYTICS_ENABLED || loaded || consent() !== 'granted' || EXCLUDED.test(location.pathname)) return;
                     loaded = true;
 
                     // Google tag пишет в свою очередь gaLayer, Метрика читает ecommerce из ymLayer (ТЗ §3.2).

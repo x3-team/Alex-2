@@ -1,0 +1,175 @@
+# Staging-контур test.alexallergotest.ru / doc.test.alexallergotest.ru на том же VPS.
+# Только ручной запуск. Прод не трогает: пишет в /var/www/test.alexallergotest.ru, БД alex2_staging,
+# свои конфиги nginx/supervisor/php-fpm; из общих действий — только nginx reload.
+# Порядок и правила: docs/STAGING.md.
+name: Staging (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: inspect (только чтение) | setup | refresh-db | certs | deploy | smoke
+        type: choice
+        required: true
+        default: inspect
+        options: [inspect, setup, refresh-db, certs, deploy, smoke]
+      ref:
+        description: "Что выложить при deploy: pull/133 (PR поверх свежего production), ветка, тег или SHA"
+        required: true
+        default: production
+      order_bridge:
+        description: ORDER_BRIDGE_ENABLED на staging при deploy (keep — не менять)
+        type: choice
+        default: keep
+        options: [keep, "true", "false"]
+      confirm:
+        description: Для всего, кроме inspect, введите I_CONFIRM_STAGING
+        required: false
+        default: ""
+
+concurrency:
+  group: staging-vps
+  cancel-in-progress: false
+
+jobs:
+  staging:
+    name: Staging ${{ inputs.action }} (${{ inputs.ref }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Те же SSH-секреты, что у deploy.yml.
+    environment: production
+
+    steps:
+      - name: Require explicit confirm
+        env:
+          ACTION: ${{ inputs.action }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ "$ACTION" != "inspect" ] && [ "$CONFIRM" != "I_CONFIRM_STAGING" ]; then
+            echo "Refusing: confirm must be exactly I_CONFIRM_STAGING"
+            exit 1
+          fi
+
+      - name: Resolve ref
+        id: ref
+        env:
+          REF: ${{ inputs.ref }}
+        run: |
+          if [[ ! "$REF" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+            echo "Refusing: unexpected characters in ref"
+            exit 1
+          fi
+          if [[ "$REF" =~ ^pull/([0-9]+)$ ]]; then
+            echo "checkout=refs/pull/${BASH_REMATCH[1]}/merge" >> "$GITHUB_OUTPUT"
+          else
+            echo "checkout=$REF" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ref.outputs.checkout }}
+
+      - name: Use staging tools from the dispatched workflow ref
+        run: |
+          # Скрипты staging всегда из ветки, с которой запущен workflow, а не из выкладываемого PR.
+          git fetch --depth=1 origin "$GITHUB_SHA"
+          rm -rf scripts/staging
+          git checkout "$GITHUB_SHA" -- scripts/staging
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.ALEXADMIN_SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.ALEX_SSH_HOST }}
+        run: |
+          test -n "$SSH_PRIVATE_KEY"
+          test -n "$SSH_HOST"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Upload staging tools
+        env:
+          SSH_HOST: ${{ secrets.ALEX_SSH_HOST }}
+          SSH_USER: ${{ secrets.ALEX_SSH_USER }}
+        run: |
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" scripts/staging/ "${SSH_USER}@${SSH_HOST}:staging-tools/"
+
+      - name: Rsync code to staging root
+        if: inputs.action == 'deploy'
+        env:
+          SSH_HOST: ${{ secrets.ALEX_SSH_HOST }}
+          SSH_USER: ${{ secrets.ALEX_SSH_USER }}
+        run: |
+          # Каталог staging захардкожен: прод (ALEX_APP_ROOT) этот шаг не трогает.
+          # --delete убирает файлы прошлой ветки; живые данные staging защищены exclude/P.
+          rsync -az --delete \
+            --filter 'P .env' \
+            --filter 'P storage/' \
+            --filter 'P public/storage' \
+            --filter 'P public/videos/' \
+            --filter 'P public/build/' \
+            --filter 'P public/**' \
+            --filter 'P vendor/' \
+            --filter 'P node_modules/' \
+            --filter 'P bootstrap/cache/' \
+            --filter 'P bootstrap/ssr/' \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'node_modules/' \
+            --exclude 'vendor/' \
+            --exclude '.env' \
+            --exclude '.env.*' \
+            --exclude 'storage/' \
+            --exclude 'bootstrap/cache/' \
+            --exclude 'bootstrap/ssr/' \
+            --exclude 'public/build/' \
+            --exclude 'public/hot' \
+            --exclude 'public/storage' \
+            --exclude 'public/videos/' \
+            --exclude 'tests/' \
+            --exclude '.phpunit.cache/' \
+            --exclude '.phpunit.result.cache' \
+            --exclude '.cursor/' \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            ./ "${SSH_USER}@${SSH_HOST}:/var/www/test.alexallergotest.ru/"
+
+      - name: Apply test-stand secrets (STAGING_*)
+        if: inputs.action == 'setup' || inputs.action == 'deploy'
+        env:
+          SSH_HOST: ${{ secrets.ALEX_SSH_HOST }}
+          SSH_USER: ${{ secrets.ALEX_SSH_USER }}
+          YOOKASSA_SHOP_ID: ${{ secrets.STAGING_YOOKASSA_SHOP_ID }}
+          YOOKASSA_SECRET_KEY: ${{ secrets.STAGING_YOOKASSA_SECRET_KEY }}
+          MEDMIS_BASE_URL: ${{ secrets.STAGING_MEDMIS_BASE_URL }}
+          MEDMIS_LOGIN: ${{ secrets.STAGING_MEDMIS_LOGIN }}
+          MEDMIS_PASSWORD: ${{ secrets.STAGING_MEDMIS_PASSWORD }}
+          DNKOM_URL: ${{ secrets.STAGING_DNKOM_URL }}
+          DNKOM_PASSWORD: ${{ secrets.STAGING_DNKOM_PASSWORD }}
+        run: |
+          # Через stdin, чтобы значения не попали в командную строку на сервере.
+          ssh -i ~/.ssh/deploy_key "${SSH_USER}@${SSH_HOST}" \
+            "test -f /var/www/test.alexallergotest.ru/.env || exit 0; bash ~/staging-tools/staging.sh apply-secrets" <<EOF
+          YOOKASSA_SHOP_ID=${YOOKASSA_SHOP_ID}
+          YOOKASSA_SECRET_KEY=${YOOKASSA_SECRET_KEY}
+          MEDMIS_BASE_URL=${MEDMIS_BASE_URL}
+          MEDMIS_LOGIN=${MEDMIS_LOGIN}
+          MEDMIS_PASSWORD=${MEDMIS_PASSWORD}
+          DNKOM_URL=${DNKOM_URL}
+          DNKOM_PASSWORD=${DNKOM_PASSWORD}
+          EOF
+
+      - name: Run ${{ inputs.action }} on VPS
+        env:
+          SSH_HOST: ${{ secrets.ALEX_SSH_HOST }}
+          SSH_USER: ${{ secrets.ALEX_SSH_USER }}
+          ACTION: ${{ inputs.action }}
+          REF: ${{ inputs.ref }}
+          ORDER_BRIDGE: ${{ inputs.order_bridge }}
+        run: |
+          sha="$(git rev-parse HEAD)"
+          ob=""
+          if [ "$ORDER_BRIDGE" = "true" ] || [ "$ORDER_BRIDGE" = "false" ]; then ob="$ORDER_BRIDGE"; fi
+          ssh -i ~/.ssh/deploy_key "${SSH_USER}@${SSH_HOST}" \
+            "STAGING_REF='${REF}' STAGING_SHA='${sha}' ORDER_BRIDGE_ENABLED='${ob}' bash ~/staging-tools/staging.sh '${ACTION}'"
