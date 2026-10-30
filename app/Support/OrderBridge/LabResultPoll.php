@@ -16,7 +16,7 @@ class LabResultPoll
 
     public function run(): void
     {
-        if (! BridgeConfig::enabled() || ! BridgeConfig::outboundReady()) {
+        if (! BridgeConfig::backgroundEnabled() || ! BridgeConfig::outboundReady()) {
             return;
         }
 

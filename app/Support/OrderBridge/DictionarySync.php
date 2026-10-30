@@ -10,7 +10,7 @@ class DictionarySync
 
     public function run(): void
     {
-        if (! BridgeConfig::enabled() || ! BridgeConfig::outboundReady()) {
+        if (! BridgeConfig::backgroundEnabled() || ! BridgeConfig::outboundReady()) {
             return;
         }
 

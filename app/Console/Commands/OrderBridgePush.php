@@ -15,7 +15,7 @@ class OrderBridgePush extends Command
 
     public function handle(LabOrderPush $push): int
     {
-        if (! BridgeConfig::enabled()) {
+        if (! BridgeConfig::backgroundEnabled()) {
             return self::SUCCESS;
         }
 

@@ -13,6 +13,8 @@ class MedmisClient
 
     private ?string $access = null;
 
+    public const TEST_MARK = 'TEST';
+
     private ?array $statusItems = null;
 
     public function ensurePatient(LabPatient $patient): string
@@ -26,7 +28,7 @@ class MedmisClient
             throw new LabBridgeException('medmis_phone');
         }
 
-        $found = $this->findPatient($digits, (string) $patient->birth_date);
+        $found = $this->findPatient($digits, (string) $patient->birth_date, (bool) $patient->is_test);
         if ($found === null) {
             try {
                 $found = $this->createPatient($patient, $digits);
@@ -34,7 +36,7 @@ class MedmisClient
                 if ($e->reason !== 'medmis_conflict') {
                     throw $e;
                 }
-                $found = $this->findPatient($digits, (string) $patient->birth_date);
+                $found = $this->findPatient($digits, (string) $patient->birth_date, (bool) $patient->is_test);
                 if ($found === null) {
                     throw $e;
                 }
@@ -152,7 +154,8 @@ class MedmisClient
         return null;
     }
 
-    private function findPatient(string $digits, string $birthDate): ?string
+    // Тестовый заказ цепляется только к пациенту с фамилией TEST…, чтобы не писать визит живому человеку.
+    private function findPatient(string $digits, string $birthDate, bool $testOnly = false): ?string
     {
         $data = $this->request('GET', '/v1/Patients', [
             'mobilephone' => $digits,
@@ -165,6 +168,9 @@ class MedmisClient
             }
             $birthday = (string) ($item['birthday'] ?? '');
             $id = $item['id'] ?? null;
+            if ($testOnly && ! str_starts_with(mb_strtoupper((string) ($item['lastname'] ?? '')), self::TEST_MARK)) {
+                continue;
+            }
             if ($birthday !== '' && str_starts_with($birthday, $birthDate) && is_string($id) && $id !== '') {
                 return $id;
             }
@@ -176,7 +182,7 @@ class MedmisClient
     private function createPatient(LabPatient $patient, string $digits): string
     {
         $payload = [
-            'lastname' => $patient->last_name,
+            'lastname' => $patient->is_test ? self::TEST_MARK.' '.$patient->last_name : $patient->last_name,
             'firstname' => $patient->first_name,
             'birthday' => $patient->birth_date.'T00:00:00',
             'mobilePhone' => $digits,
@@ -187,6 +193,9 @@ class MedmisClient
             'agreePush' => false,
             'branchId' => config('order_bridge.medmis.branch_id'),
         ];
+        if ($patient->is_test) {
+            $payload['tags'] = '|'.self::TEST_MARK.'|';
+        }
         if ($patient->middle_name) {
             $payload['middlename'] = $patient->middle_name;
         }

@@ -21,6 +21,8 @@ return new class extends Migration
             $table->text('email')->nullable();
             $table->char('phone_lookup', 64)->index();
             $table->char('identity_lookup', 64)->index();
+            // Карточка из скрытого доступа: в Medmis уходит с пометкой TEST, с боевыми не смешивается.
+            $table->boolean('is_test')->default(false);
             $table->timestamps();
         });
 
@@ -45,6 +47,7 @@ return new class extends Migration
             $table->timestamp('medmis_dnkom_reported_at')->nullable();
             $table->timestamp('consent_at');
             $table->string('consent_text_version', 32);
+            $table->boolean('is_test')->default(false);
             $table->timestamps();
         });
 

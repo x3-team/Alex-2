@@ -10,6 +10,9 @@ class VisitNote
     {
         $day = $order->visit_date?->format('d.m.Y') ?? '';
         $lines = ['Желаемое время визита: '.$day.' '.$order->visit_time];
+        if ($order->is_test) {
+            array_unshift($lines, 'TEST: тестовый заказ с сайта, не выполнять');
+        }
         if (is_string($dnkomNr) && $dnkomNr !== '') {
             $lines[] = 'Номер заявки ДНКОМ: '.$dnkomNr;
         }

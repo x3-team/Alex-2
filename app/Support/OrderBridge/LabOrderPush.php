@@ -39,7 +39,7 @@ class LabOrderPush
 
     public function run(int $rowId): void
     {
-        if (! BridgeConfig::enabled() || ! BridgeConfig::outboundReady()) {
+        if (! BridgeConfig::backgroundEnabled() || ! BridgeConfig::outboundReady()) {
             return;
         }
 
@@ -86,7 +86,7 @@ class LabOrderPush
 
     public function resurrect(): void
     {
-        if (! BridgeConfig::enabled() || ! BridgeConfig::outboundReady()) {
+        if (! BridgeConfig::backgroundEnabled() || ! BridgeConfig::outboundReady()) {
             return;
         }
 

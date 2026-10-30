@@ -56,4 +56,36 @@ class YooKassaClient
 
         return $url;
     }
+
+    /**
+     * Платёж из API ЮKassa: телу вебхука не верим, статус и metadata берём отсюда.
+     *
+     * @return array{status: ?string, lab_order_id: ?string}
+     */
+    public function fetch(string $paymentId): array
+    {
+        try {
+            $response = Http::timeout(20)
+                ->withBasicAuth(
+                    (string) config('order_bridge.yookassa.shop_id'),
+                    (string) config('order_bridge.yookassa.secret_key')
+                )
+                ->acceptJson()
+                ->get('https://api.yookassa.ru/v3/payments/'.rawurlencode($paymentId));
+        } catch (\Throwable $e) {
+            throw new LabBridgeException('transport');
+        }
+
+        if (! $response->successful()) {
+            throw new LabBridgeException('payment_http');
+        }
+
+        $status = $response->json('status');
+        $labOrderId = $response->json('metadata.lab_order_id');
+
+        return [
+            'status' => is_string($status) ? $status : null,
+            'lab_order_id' => is_scalar($labOrderId) ? (string) $labOrderId : null,
+        ];
+    }
 }

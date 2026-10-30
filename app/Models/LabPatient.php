@@ -17,6 +17,7 @@ class LabPatient extends Model
         'sex',
         'phone',
         'email',
+        'is_test',
     ];
 
     protected $hidden = [
@@ -39,6 +40,7 @@ class LabPatient extends Model
         'sex' => 'encrypted',
         'phone' => 'encrypted',
         'email' => 'encrypted',
+        'is_test' => 'boolean',
     ];
 
     protected static function booted(): void

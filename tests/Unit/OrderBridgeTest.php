@@ -23,6 +23,10 @@ class OrderBridgeTest extends TestCase
 
     private int $nextResults = 0;
 
+    private string $yookassaStatus = 'succeeded';
+
+    private const PREVIEW_KEY = 'preview-key-0123456789abcdefghijklmnop';
+
     protected function setUp(): void
     {
         $views = dirname(__DIR__, 2).'/storage/framework/views';
@@ -192,6 +196,96 @@ class OrderBridgeTest extends TestCase
         $this->assertSame('paid', LabOrder::query()->firstOrFail()->payment_status);
     }
 
+    public function test_forged_webhook_does_not_mark_paid(): void
+    {
+        $this->ready();
+        $this->yookassaStatus = 'pending';
+        Http::fake(fn (Request $request) => $this->fakeHttp($request));
+
+        $response = $this->postJson('/api/lab-order', $this->payload([
+            'payment_mode' => 'online',
+            'submission_id' => 'sub-bridge-forged',
+        ]))->assertOk();
+
+        $this->postJson('/api/lab-order/payment', [
+            'event' => 'payment.succeeded',
+            'object' => [
+                'id' => 'pay-1',
+                'status' => 'succeeded',
+                'metadata' => ['lab_order_id' => (string) $response->json('lab_order_id')],
+            ],
+        ])->assertOk();
+
+        $this->assertSame('pending', LabOrder::query()->firstOrFail()->payment_status);
+    }
+
+    public function test_preview_link_needs_the_exact_long_key(): void
+    {
+        config(['order_bridge.enabled' => false, 'order_bridge.preview_key' => null]);
+        $this->get('/cart/preview/'.self::PREVIEW_KEY)->assertNotFound();
+
+        config(['order_bridge.preview_key' => 'short-key']);
+        $this->get('/cart/preview/short-key')->assertNotFound();
+
+        config(['order_bridge.preview_key' => self::PREVIEW_KEY]);
+        $this->get('/cart/preview/wrong-'.self::PREVIEW_KEY)->assertNotFound();
+
+        $this->get('/cart/preview/'.self::PREVIEW_KEY)
+            ->assertRedirect('/cart')
+            ->assertCookie(\App\Support\OrderBridge\PreviewAccess::COOKIE, null, false);
+    }
+
+    public function test_preview_cookie_turns_the_bridge_on_only_for_that_browser(): void
+    {
+        config(['order_bridge.enabled' => false, 'order_bridge.preview_key' => self::PREVIEW_KEY]);
+        Http::fake();
+
+        $this->get('/cart')->assertNotFound();
+        $this->postJson('/api/lab-order', $this->payload())->assertNotFound();
+
+        $cookie = $this->get('/cart/preview/'.self::PREVIEW_KEY)
+            ->getCookie(\App\Support\OrderBridge\PreviewAccess::COOKIE, false)->getValue();
+        $this->assertNotSame(self::PREVIEW_KEY, $cookie);
+
+        $this->withUnencryptedCookie(\App\Support\OrderBridge\PreviewAccess::COOKIE, $cookie)
+            ->get('/cart')->assertOk()->assertInertia(fn (Assert $page) => $page
+                ->where('orderBridge.enabled', true));
+        $this->withUnencryptedCookie(\App\Support\OrderBridge\PreviewAccess::COOKIE, $cookie)
+            ->withCredentials()->postJson('/api/lab-order', $this->payload())->assertOk();
+
+        $order = LabOrder::query()->firstOrFail();
+        $this->assertTrue($order->is_test);
+        $this->assertTrue($order->patient->is_test);
+        $this->assertStringStartsWith('TEST ', Order::query()->findOrFail($order->site_order_id)->customer_name);
+
+        // Другой браузер (без cookie) и подделанная cookie — сайт как сейчас.
+        $this->withUnencryptedCookie(\App\Support\OrderBridge\PreviewAccess::COOKIE, 'forged')
+            ->get('/cart')->assertNotFound();
+        Http::assertNothingSent();
+    }
+
+    public function test_preview_order_goes_to_medmis_and_dnkom_marked_test(): void
+    {
+        $this->ready();
+        config(['order_bridge.enabled' => false, 'order_bridge.preview_key' => self::PREVIEW_KEY]);
+        Http::fake(fn (Request $request) => $this->fakeHttp($request));
+
+        $cookie = $this->get('/cart/preview/'.self::PREVIEW_KEY)
+            ->getCookie(\App\Support\OrderBridge\PreviewAccess::COOKIE, false)->getValue();
+        $this->withUnencryptedCookie(\App\Support\OrderBridge\PreviewAccess::COOKIE, $cookie)
+            ->withCredentials()->postJson('/api/lab-order', $this->payload(['payment_mode' => 'on_site']))->assertOk();
+        $this->artisan('order-bridge:push')->assertOk();
+
+        $patient = json_decode($this->recordedBody(fn (string $body, Request $request) => $request->method() === 'POST'
+            && str_ends_with($request->url(), '/v1/Patients')), true);
+        $this->assertStringStartsWith('TEST ', $patient['lastname']);
+        $this->assertSame('|TEST|', $patient['tags']);
+
+        $utf = iconv('Windows-1251', 'UTF-8', $this->recordedBody(fn (string $body) => str_contains($body, 'query-create-referral')));
+        $this->assertStringContainsString('TEST: тестовый заказ', $utf);
+        $this->assertSame('555', LabOrder::query()->firstOrFail()->dnkom_nr);
+    }
+
     public function test_poll_stores_encrypted_pdf_and_marks_done(): void
     {
         $this->ready();
@@ -308,6 +402,13 @@ class OrderBridgeTest extends TestCase
         }
         if (str_contains($url, '/v1/Appointments')) {
             return Http::response(['id' => '22222222-2222-2222-2222-222222222222']);
+        }
+        if (str_contains($url, 'yookassa.ru/v3/payments/') && $method === 'GET') {
+            return Http::response([
+                'id' => 'pay-1',
+                'status' => $this->yookassaStatus,
+                'metadata' => ['lab_order_id' => (string) LabOrder::query()->value('id')],
+            ]);
         }
         if (str_contains($url, 'yookassa.ru')) {
             return Http::response([

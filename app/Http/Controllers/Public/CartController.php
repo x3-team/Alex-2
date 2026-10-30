@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\CartService;
 use App\Support\CartCatalog;
+use App\Support\OrderBridge\BridgeConfig;
+use App\Support\OrderBridge\PreviewAccess;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -12,8 +14,8 @@ class CartController extends Controller
 {
     public function index(Request $request)
     {
-        // Корзина пока не боевая: публике — 404, админ видит страницу для доработки.
-        if (! $request->user()?->is_admin) {
+        // Корзина пока не боевая: публике — 404, админ и браузер со скрытым доступом видят страницу.
+        if (! $request->user()?->is_admin && ! PreviewAccess::active($request)) {
             abort(404);
         }
 
@@ -39,7 +41,7 @@ class CartController extends Controller
             ]
         ];
 
-        $bridgeOn = (bool) config('order_bridge.enabled');
+        $bridgeOn = BridgeConfig::enabled();
         $response = Inertia::render('Public/Cart', [
             'mainProduct' => $mainProduct,
             'additionalServices' => $additionalServices,

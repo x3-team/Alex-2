@@ -114,8 +114,9 @@ class LabOrderIntake
      */
     private function create(Request $request, array $data): LabOrder
     {
+        $isTest = PreviewAccess::active($request);
         $hash = LabPatientIdentity::phoneHash((string) $data['phone_digits']);
-        $patient = LabPatient::query()->where('phone_lookup', $hash)->first();
+        $patient = LabPatient::query()->where('phone_lookup', $hash)->where('is_test', $isTest)->first();
         if ($patient && $patient->birth_date !== $data['birth_ymd']) {
             throw ValidationException::withMessages([
                 'phone' => 'Телефон уже указан у другого пациента.',
@@ -133,6 +134,7 @@ class LabOrderIntake
                 'sex' => $data['sex'],
                 'phone' => $data['phone'],
                 'email' => $data['email'] ?? null,
+                'is_test' => $isTest,
             ]);
             $created = true;
         }
@@ -151,6 +153,7 @@ class LabOrderIntake
             'status' => 'created',
             'consent_at' => now(),
             'consent_text_version' => (string) config('order_bridge.consent_text_version'),
+            'is_test' => $isTest,
         ]);
 
         foreach ([
@@ -174,11 +177,12 @@ class LabOrderIntake
         $pay = $data['payment_mode'] === 'online' ? 'онлайн' : 'на месте';
         $when = \Carbon\Carbon::parse($data['visit_ymd'])->format('d.m.Y').' '.$data['visit_time'];
         $fullName = trim($data['last_name'].' '.$data['first_name'].' '.($data['middle_name'] ?? ''));
+        $testNote = $isTest ? 'TEST: тестовый заказ по скрытой ссылке, не выполнять. ' : '';
         $site = LeadIntake::accept($request, [
-            'customer_name' => $fullName,
+            'customer_name' => ($isTest ? 'TEST ' : '').$fullName,
             'customer_phone' => (string) $data['phone'],
             'customer_email' => $data['email'] ?? null,
-            'comment' => "Оплата: {$pay}. Желаемое время визита: {$when}. Лабораторный заказ #{$order->id}.",
+            'comment' => "{$testNote}Оплата: {$pay}. Желаемое время визита: {$when}. Лабораторный заказ #{$order->id}.",
             'items' => array_merge([
                 'type' => 'test_order',
                 'title' => 'Запись на тест',

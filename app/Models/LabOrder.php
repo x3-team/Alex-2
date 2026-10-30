@@ -28,12 +28,14 @@ class LabOrder extends Model
         'medmis_dnkom_reported_at',
         'consent_at',
         'consent_text_version',
+        'is_test',
     ];
 
     protected $casts = [
         'visit_date' => 'date',
         'consent_at' => 'datetime',
         'medmis_dnkom_reported_at' => 'datetime',
+        'is_test' => 'boolean',
     ];
 
     public function patient(): BelongsTo

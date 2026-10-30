@@ -5,6 +5,10 @@
 return [
     'enabled' => filter_var(env('ORDER_BRIDGE_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
 
+    // Секретная ссылка /cart/preview/{ключ}: связка включается только в браузере, открывшем её.
+    // Пусто или короче 32 символов — доступа по ссылке нет.
+    'preview_key' => env('ORDER_BRIDGE_PREVIEW_KEY'),
+
     'consent_text' => 'Я даю согласие на передачу моих персональных данных в медицинскую информационную систему и лабораторию ДНКОМ для оформления и выполнения заказа на исследование. Текст согласия будет заменён.',
     'consent_text_version' => 'placeholder-1',
 
