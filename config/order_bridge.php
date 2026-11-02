@@ -45,8 +45,9 @@ return [
         'sender_unpaid' => env('DNKOM_SENDER_UNPAID'),
         'receiver' => env('DNKOM_RECEIVER'),
         'password' => env('DNKOM_PASSWORD'),
-        'code_test' => env('DNKOM_CODE_TEST'),
-        'code_blood' => env('DNKOM_CODE_BLOOD'),
+        // Коды услуг ДНКОМ (от Виталия 02.11.2026): тест ALEX² и взятие крови. Не секрет, env только для замены.
+        'code_test' => env('DNKOM_CODE_TEST', '60.825'),
+        'code_blood' => env('DNKOM_CODE_BLOOD', '50.101'),
     ],
 
     'yookassa' => [

@@ -286,6 +286,14 @@ class OrderBridgeTest extends TestCase
         $this->assertSame('555', LabOrder::query()->firstOrFail()->dnkom_nr);
     }
 
+    public function test_dnkom_service_codes_default_to_alex_and_blood_draw(): void
+    {
+        $config = require dirname(__DIR__, 2).'/config/order_bridge.php';
+
+        $this->assertSame('60.825', $config['dnkom']['code_test']);
+        $this->assertSame('50.101', $config['dnkom']['code_blood']);
+    }
+
     public function test_poll_stores_encrypted_pdf_and_marks_done(): void
     {
         $this->ready();
