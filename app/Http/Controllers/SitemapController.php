@@ -47,11 +47,8 @@ class SitemapController extends Controller
         $baseUrl = SeoOrigin::make()->siteBaseUrl();
         $staticLastmod = '2026-09-25';
 
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . PHP_EOL;
-        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . PHP_EOL;
-
-        $xml .= $this->addUrl($baseUrl, $staticLastmod, 'weekly', '1.0');
-        $xml .= $this->addUrl($baseUrl . '/materials', $staticLastmod, 'daily', '0.9');
+        // Сначала собираем материалы и видео: по ним считается lastmod у /materials.
+        $xml = '';
 
         $blogs = Blog::query()
             ->where('is_active', true)
@@ -97,6 +94,19 @@ class SitemapController extends Controller
                 '0.7'
             );
         }
+
+        // /materials меняется с выходом или правкой материала/видео: lastmod = самый свежий из них.
+        $materialsLastmod = collect([$blogs, $videos])
+            ->flatten(1)
+            ->map(fn ($item) => $item->updated_at ?: $item->published_at)
+            ->filter()
+            ->max();
+
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . PHP_EOL
+            . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . PHP_EOL
+            . $this->addUrl($baseUrl, $staticLastmod, 'weekly', '1.0')
+            . $this->addUrl($baseUrl . '/materials', $materialsLastmod ?: $staticLastmod, 'daily', '0.9')
+            . $xml;
 
         $store = new DoctorMaterialsStore();
         $store->ensureDefaultCategory();
@@ -253,7 +263,7 @@ class SitemapController extends Controller
         return $xml;
     }
 
-    private function addUrl(string $loc, ?string $lastmod, string $changefreq, string $priority): string
+    private function addUrl(string $loc, CarbonInterface|string|null $lastmod, string $changefreq, string $priority): string
     {
         $out = "  <url>\n" .
             "    <loc>{$loc}</loc>\n";

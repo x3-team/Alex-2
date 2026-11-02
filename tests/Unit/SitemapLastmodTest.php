@@ -32,6 +32,7 @@ class SitemapLastmodTest extends TestCase
 
         $this->assertStringContainsString('$lastmod = self::w3cLastmod($lastmod);', $src);
         $this->assertStringContainsString("\$this->addUrl(\$baseUrl . '/blog', \$blogIndexLastmod", $src);
+        $this->assertStringContainsString("\$this->addUrl(\$baseUrl . '/materials', \$materialsLastmod ?: \$staticLastmod", $src);
         $this->assertMatchesRegularExpression(self::W3C, (string) SitemapController::w3cLastmod('2026-01-01 00:00:00'));
     }
 
