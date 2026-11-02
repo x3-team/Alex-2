@@ -8,16 +8,28 @@ use App\Models\User;
 use App\Services\DetectSite;
 use App\Support\DoctorMaterialsStore;
 use App\Support\SeoOrigin;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Response;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 
 class SitemapController extends Controller
 {
+    public const CACHE_KEY_PATIENTS = 'sitemap_categories_v3';
+    public const CACHE_KEY_DOCTORS = 'sitemap_doctors_v1';
+
+    /** Сбросить кэш карт сайта обоих доменов (после сохранения/публикации статьи). */
+    public static function forgetCache(): void
+    {
+        Cache::forget(self::CACHE_KEY_PATIENTS);
+        Cache::forget(self::CACHE_KEY_DOCTORS);
+    }
+
     public function index()
     {
         $isDoctorsHost = DetectSite::make()->isDoctorsHost();
-        $cacheKey = $isDoctorsHost ? 'sitemap_doctors_v1' : 'sitemap_categories_v2';
+        $cacheKey = $isDoctorsHost ? self::CACHE_KEY_DOCTORS : self::CACHE_KEY_PATIENTS;
 
         $sitemap = Cache::remember($cacheKey, 3600, function () use ($isDoctorsHost) {
             return $isDoctorsHost
@@ -128,37 +140,45 @@ class SitemapController extends Controller
             '/alex-lab/privacy' => '2026-08-26',
         ];
 
+        // Опубликованные статьи пациентского блога (те же условия, что у списка статей в карте).
+        $publishedPatientBlogs = function ($q) {
+            $q->where('is_active', true)
+                ->whereNotNull('published_at')
+                ->where('published_at', '<=', now());
+            if (Schema::hasColumn('blogs', 'noindex')) {
+                $q->where(function ($inner) {
+                    $inner->where('noindex', false)->orWhereNull('noindex');
+                });
+            }
+            if (Schema::hasColumn('blogs', 'audience')) {
+                $q->where(function ($inner) {
+                    $inner->where('audience', 'patients')->orWhereNull('audience');
+                });
+            }
+        };
+
+        // /blog меняется с выходом или правкой статьи: lastmod = самая свежая статья.
+        $blogIndexLastmod = Blog::query()
+            ->where($publishedPatientBlogs)
+            ->max('updated_at') ?: $staticLastmods['/blog'];
+
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . PHP_EOL;
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . PHP_EOL;
 
         $xml .= $this->addUrl($baseUrl, $staticLastmods['/'], 'daily', '1.0');
-        $xml .= $this->addUrl($baseUrl . '/blog', $staticLastmods['/blog'], 'daily', '0.9');
+        $xml .= $this->addUrl($baseUrl . '/blog', $blogIndexLastmod, 'daily', '0.9');
         $xml .= $this->addUrl($baseUrl . '/blog/authors', $staticLastmods['/blog/authors'], 'weekly', '0.8');
 
         $categories = \App\Models\Category::query()
-            ->whereHas('blogs', function ($q) {
-                $q->where('is_active', true)
-                    ->whereNotNull('published_at')
-                    ->where('published_at', '<=', now());
-                if (Schema::hasColumn('blogs', 'noindex')) {
-                    $q->where(function ($inner) {
-                        $inner->where('noindex', false)->orWhereNull('noindex');
-                    });
-                }
-                if (Schema::hasColumn('blogs', 'audience')) {
-                    $q->where(function ($inner) {
-                        $inner->where('audience', 'patients')->orWhereNull('audience');
-                    });
-                }
-            })
+            ->whereHas('blogs', $publishedPatientBlogs)
             ->select('id', 'slug', 'updated_at')
             ->orderBy('name')
             ->get();
 
         foreach ($categories as $category) {
+            // max() отдаёт сырую строку из БД ("Y-m-d H:i:s"), формат приводит addUrl().
             $lastmod = $category->blogs()
-                ->where('is_active', true)
-                ->whereNotNull('published_at')
+                ->where($publishedPatientBlogs)
                 ->max('updated_at');
             $xml .= $this->addUrl(
                 $baseUrl . '/blog/' . $category->slug,
@@ -237,16 +257,36 @@ class SitemapController extends Controller
     {
         $out = "  <url>\n" .
             "    <loc>{$loc}</loc>\n";
+        $lastmod = self::w3cLastmod($lastmod);
         if ($lastmod) {
-            // Дата YYYY-MM-DD → W3C date; уже W3C оставляем
-            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $lastmod)) {
-                $lastmod = $lastmod . 'T00:00:00+03:00';
-            }
             $out .= "    <lastmod>{$lastmod}</lastmod>\n";
         }
         $out .= "    <changefreq>{$changefreq}</changefreq>\n" .
             "    <priority>{$priority}</priority>\n" .
             "  </url>\n";
         return $out;
+    }
+
+    /**
+     * Любое значение lastmod → W3C Datetime (Google/Яндекс не принимают "Y-m-d H:i:s").
+     * YYYY-MM-DD (статические страницы) — полночь по Москве; время из БД — в часовом поясе приложения.
+     */
+    public static function w3cLastmod(CarbonInterface|string|null $value): ?string
+    {
+        if ($value instanceof CarbonInterface) {
+            return $value->toW3cString();
+        }
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return $value . 'T00:00:00+03:00';
+        }
+        try {
+            return Carbon::parse($value, config('app.timezone'))->toW3cString();
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

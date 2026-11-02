@@ -460,6 +460,7 @@ class BlogController extends Controller
             $blog->tags()->detach();
         }
         Cache::forget('sitemap');
+        \App\Http\Controllers\SitemapController::forgetCache();
         return redirect()->route('admin.blog.index')->with('success', 'Блог создан');
     }
     public function edit(Blog $blog)
@@ -629,6 +630,7 @@ class BlogController extends Controller
             $blog->tags()->detach();
         }
         Cache::forget('sitemap');
+        \App\Http\Controllers\SitemapController::forgetCache();
         return redirect()->route('admin.blog.index')->with('success', 'Пост обновлён!');
     }
 
@@ -636,6 +638,7 @@ class BlogController extends Controller
     {
         $blog->delete(); // Теперь это soft delete
         Cache::forget('sitemap');
+        \App\Http\Controllers\SitemapController::forgetCache();
         return redirect()->route('admin.blog.index')->with('success', 'Пост перемещён в корзину');
     }
     public function restore($id)
@@ -643,6 +646,7 @@ class BlogController extends Controller
         $blog = Blog::onlyTrashed()->findOrFail($id);
         $blog->restore();
         Cache::forget('sitemap');
+        \App\Http\Controllers\SitemapController::forgetCache();
         return redirect()->route('admin.blog.trashed')->with('success', 'Пост восстановлен');
     }
 
