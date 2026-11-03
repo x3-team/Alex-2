@@ -54,6 +54,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->encryptCookies(except: [
             'XSRF-TOKEN',
+            // Читается и в api-маршрутах (без расшифровки cookie); внутри HMAC, а не ключ.
+            \App\Support\OrderBridge\PreviewAccess::COOKIE,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

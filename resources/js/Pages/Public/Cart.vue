@@ -24,6 +24,10 @@ const props = defineProps({
   labs: {
     type: Array,
     default: () => []
+  },
+  orderBridge: {
+    type: Object,
+    default: () => ({ enabled: false, consentText: '' })
   }
 })
 
@@ -35,7 +39,18 @@ const phone = ref('')
 const email = ref('')
 const promo = ref('')
 const consent = ref(false)
+const sex = ref('')
+const visitDate = ref('')
+const visitTime = ref('')
+const paymentMode = ref('')
+const consentLab = ref(false)
 let submissionId = null
+
+const canContinue = computed(() => {
+  if (!consent.value) return false
+  if (props.orderBridge?.enabled && !consentLab.value) return false
+  return true
+})
 
 // Опции для выбора города
 const cities = [
@@ -200,6 +215,12 @@ const handleContinue = async () => {
     return
   }
 
+  const bridge = !!props.orderBridge?.enabled
+  if (bridge && (!birthDate.value.trim() || !sex.value || !visitDate.value.trim() || !visitTime.value || !paymentMode.value || !consentLab.value)) {
+    alert('Укажите дату рождения, пол, желаемые дату и время визита и способ оплаты.')
+    return
+  }
+
   const quiz = readQuizLead()
   const lines = [{ title: props.mainProduct.title, price: Number(props.mainProduct.price) || 0 }]
   props.additionalServices.forEach((service) => {
@@ -209,16 +230,24 @@ const handleContinue = async () => {
   })
 
   submissionId ||= newSubmissionId()
-  try {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-    const response = await fetch('/api/test-order', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': csrfToken || '',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: JSON.stringify({
+  const payload = bridge
+    ? {
+        full_name: name,
+        phone: tel,
+        email: email.value.trim() || null,
+        birth_date: birthDate.value.trim(),
+        sex: sex.value,
+        visit_date: visitDate.value.trim(),
+        visit_time: visitTime.value,
+        payment_mode: paymentMode.value,
+        agreed_to_terms: true,
+        consent_lab: true,
+        quiz_answers: quiz?.quiz_answers || null,
+        quiz_result_id: quiz?.quiz_result_id || null,
+        quiz_result_title: quiz?.quiz_result_title || null,
+        submission_id: submissionId,
+      }
+    : {
         full_name: name,
         phone: tel,
         email: email.value.trim() || null,
@@ -230,13 +259,38 @@ const handleContinue = async () => {
         quiz_result_id: quiz?.quiz_result_id || null,
         quiz_result_title: quiz?.quiz_result_title || null,
         submission_id: submissionId,
-      }),
+      }
+
+  try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+    const response = await fetch(bridge ? '/api/lab-order' : '/api/test-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': csrfToken || '',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: JSON.stringify(payload),
     })
-    if (!response.ok) throw new Error('save failed')
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      const first = data?.errors ? Object.values(data.errors).flat()[0] : null
+      throw new Error(first || 'save failed')
+    }
+    if (bridge && paymentMode.value === 'online' && !data.confirmation_url) {
+      alert('Заказ сохранён. Ссылка на оплату сейчас недоступна.')
+    }
+    if (data.confirmation_url) {
+      window.location.assign(data.confirmation_url)
+      return
+    }
     router.visit('/login')
   } catch (error) {
     console.error(error)
-    alert('Не удалось сохранить заявку. Попробуйте ещё раз.')
+    alert(error?.message && error.message !== 'save failed'
+      ? error.message
+      : 'Не удалось сохранить заявку. Попробуйте ещё раз.')
   }
 }
 
@@ -290,8 +344,8 @@ const handlePhoneInput = (event) => {
 }
 
 // Дата рождения: Форматирование ДД.ММ.ГГГГ
-const handleBirthDateInput = (event) => {
-  let input = event.target.value.replace(/\D/g, '').substring(0, 8)
+const formatDay = (raw) => {
+  let input = raw.replace(/\D/g, '').substring(0, 8)
   let formatted = ''
 
   if (input.length > 0) {
@@ -304,8 +358,19 @@ const handleBirthDateInput = (event) => {
     formatted += '.' + input.substring(4, 8)
   }
 
+  return formatted
+}
+
+const handleBirthDateInput = (event) => {
+  const formatted = formatDay(event.target.value)
   event.target.value = formatted
   birthDate.value = formatted
+}
+
+const handleVisitDateInput = (event) => {
+  const formatted = formatDay(event.target.value)
+  event.target.value = formatted
+  visitDate.value = formatted
 }
 
 // E-mail: Запрет русской раскладки (кириллицы) и пробелов
@@ -542,6 +607,45 @@ const handleEmailInput = (event) => {
                     <span class="field-info-text">На указанную почту придут данные от личного кабинета. В нём можно онлайн отслеживать результаты.</span>
                   </div>
                 </div>
+
+                <template v-if="orderBridge.enabled">
+                  <div class="field-group field-group--full">
+                    <label class="field-label field-label--md">Пол</label>
+                    <select v-model="sex" class="field-input">
+                      <option value="">Выберите</option>
+                      <option value="male">Мужской</option>
+                      <option value="female">Женский</option>
+                    </select>
+                  </div>
+                  <div class="form-row-two">
+                    <div class="field-group">
+                      <label class="field-label field-label--md">Желаемая дата визита</label>
+                      <input
+                          type="text"
+                          :value="visitDate"
+                          @input="handleVisitDateInput"
+                          class="field-input"
+                          placeholder="ДД.ММ.ГГГГ"
+                          maxlength="10"
+                      />
+                    </div>
+                    <div class="field-group">
+                      <label class="field-label field-label--md">Желаемое время</label>
+                      <input v-model="visitTime" type="time" class="field-input"/>
+                    </div>
+                  </div>
+                  <div class="field-group field-group--full">
+                    <label class="field-label field-label--md">Оплата</label>
+                    <label class="consent-row">
+                      <input v-model="paymentMode" type="radio" value="online" class="consent-checkbox"/>
+                      <span class="consent-text">Оплатить онлайн</span>
+                    </label>
+                    <label class="consent-row">
+                      <input v-model="paymentMode" type="radio" value="on_site" class="consent-checkbox"/>
+                      <span class="consent-text">Оплата на месте</span>
+                    </label>
+                  </div>
+                </template>
               </form>
             </section>
           </main>
@@ -630,10 +734,14 @@ const handleEmailInput = (event) => {
                   <input type="checkbox" v-model="consent" class="consent-checkbox"/>
                   <span class="consent-text">Я даю <span class="consent-link">согласие</span> на передачу моих персональных данных с целью осуществления доставки (возврата) товара третьим лицам</span>
                 </label>
+                <label v-if="orderBridge.enabled" class="consent-row">
+                  <input type="checkbox" v-model="consentLab" class="consent-checkbox"/>
+                  <span class="consent-text">{{ orderBridge.consentText }}</span>
+                </label>
               </div>
 
               <div class="continue-btn-wrapper">
-                <button class="continue-btn" :disabled="!consent" @click="handleContinue">
+                <button class="continue-btn" :disabled="!canContinue" @click="handleContinue">
                   <span>Продолжить</span>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="12" r="10" stroke="#ffffff" stroke-width="2"/>

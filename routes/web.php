@@ -217,6 +217,11 @@ Route::get('/search', [\App\Http\Controllers\Public\SearchController::class, 'in
 Route::redirect('/alex-lab/search', '/search', 301);
 // Корзина скрыта (не боевая): 404 для всех, кроме админов — см. CartController@index
 Route::get('/cart', [\App\Http\Controllers\Public\CartController::class, 'index'])->name('cart.index');
+// Скрытый доступ к новой корзине по ключу из .env (ORDER_BRIDGE_PREVIEW_KEY), см. PreviewAccess.
+Route::get('/cart/preview/off', [\App\Http\Controllers\Public\OrderPreviewController::class, 'leave']);
+Route::get('/cart/preview/{key}', [\App\Http\Controllers\Public\OrderPreviewController::class, 'enter'])
+    ->where('key', '[A-Za-z0-9_-]{1,128}')
+    ->middleware('throttle:10,1');
 
 // Блог
 Route::get('/blog', [PublicBlogController::class, 'index'])->name('blog.index');
